@@ -22,14 +22,14 @@ updates:
       prefix: "[Husky Pre-Commit Checks]"
       include: "scope"
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/backend"
     schedule:
       interval: "weekly"
     commit-message:
       prefix: "[Node.JS - Backend]"
       include: "scope"      
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/frontend"
     schedule:
       interval: "weekly"
     commit-message:
