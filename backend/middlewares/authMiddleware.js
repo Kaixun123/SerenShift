@@ -1,8 +1,8 @@
-const UserAccountModel = require("../models/userAccountModel")
+const EmployeeModel = require("../models/EmployeeModel")
 
 const get_account_entity_by_id_public = async (id) => {
     return new Promise(async (resolve, reject) => {
-        let user = await UserAccountModel.findOne({
+        let user = await EmployeeModel.findOne({
             where: {
                 id: id
             },
@@ -17,7 +17,7 @@ const get_account_entity_by_id_public = async (id) => {
 
 const get_account_entity_by_id_admin = async (id) => {
     return new Promise(async (resolve, reject) => {
-        let user = await UserAccountModel.findOne({
+        let user = await EmployeeModel.findOne({
             where: {
                 id: id
             },
@@ -32,7 +32,7 @@ const get_account_entity_by_id_admin = async (id) => {
 
 const get_account_entity_by_id = async (id) => {
     return new Promise(async (resolve, reject) => {
-        let user = await UserAccountModel.findOne({
+        let user = await EmployeeModel.findOne({
             where: {
                 id: id
             },

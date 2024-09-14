@@ -1,5 +1,5 @@
 const { Op } = require("sequelize")
-const UserAccountModel = require("../models/userAccountModel")
+const EmployeeModel = require("../models/EmployeeModel")
 const { ERROR_CODE } = require("../services/error/errorHandling")
 const bcrypt = require("bcryptjs")
 const { get_account_entity_by_id_admin, get_account_entity_by_id_public } = require("../middlewares/authMiddleware")
@@ -9,7 +9,7 @@ const { get_user_id } = require("../services/database/accountService")
 const login = async (req, res) => {
     try {
         let { user, password } = req.body
-        let userAccount = await UserAccountModel.findOne({
+        let userAccount = await EmployeeModel.findOne({
             where: {
                 [Op.or]: [
                     { email: user.toLowerCase() },
@@ -36,7 +36,7 @@ const login = async (req, res) => {
         }
 
         if (hash !== userAccount.password) {
-            let update_account = await UserAccountModel.update({
+            let update_account = await EmployeeModel.update({
                 password_retries: userAccount.password_retries + 1,
                 account_lock_till: userAccount.password_retries + 1 >= 5 ? new Date(new Date().getTime() + 5 * 60000) : null
             }, {
@@ -51,7 +51,7 @@ const login = async (req, res) => {
             throw new Error("Invalid credentials")
         } else {
             // Check if account is locked
-            let update_account = await UserAccountModel.update({
+            let update_account = await EmployeeModel.update({
                 password_retries: 0,
                 account_lock_till: null,
                 last_login: new Date()
@@ -127,7 +127,7 @@ const register = async (req, res) => {
             contact_number,
         } = req.body
 
-        let account_search = await UserAccountModel.findAll({
+        let account_search = await EmployeeModel.findAll({
             where: {
                 [Op.or]: [
                     { email },
@@ -147,7 +147,7 @@ const register = async (req, res) => {
         let salt = await bcrypt.genSalt(10)
         let hash = await bcrypt.hash(password, salt)
 
-        let account_creation = await UserAccountModel.create({
+        let account_creation = await EmployeeModel.create({
             first_name,
             last_name,
             email: email.toLowerCase(),

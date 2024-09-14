@@ -1,9 +1,9 @@
 const { DataTypes, Model } = require("sequelize");
 const { sequelize } = require("../services/database/mysql");
 
-class UserAccountModel extends Model {}
+class EmployeeModel extends Model {}
 
-UserAccountModel.init(
+EmployeeModel.init(
     {
       id: {
         type: DataTypes.INTEGER(6),
@@ -40,7 +40,7 @@ UserAccountModel.init(
         type: DataTypes.INTEGER(6),
         allowNull: false,
         references: {
-            model: 'user_accounts',
+            model: 'employees',
             key: 'id'
         }
       },
@@ -82,9 +82,9 @@ UserAccountModel.init(
     },
     {
         sequelize,
-        modelName: "UserAccountModel",
-        modelName: "user_accounts"
+        modelName: "EmployeeModel",
+        modelName: "employees"
     }
 );
 
-module.exports = UserAccountModel;
+module.exports = EmployeeModel;
