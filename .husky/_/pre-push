@@ -1,2 +1,5 @@
 #!/usr/bin/env sh
-. npx validate-branch-name
+. "$(dirname "$0")/h"
+
+# Run branch name validation
+npx validate-branch-name
