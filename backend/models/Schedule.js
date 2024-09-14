@@ -1,9 +1,9 @@
 const { DataTypes, Model } = require("sequelize");
 const { sequelize } = require("../services/database/mysql");
 
-class ScheduleModel extends Model { }
+class Schedule extends Model { }
 
-ScheduleModel.init(
+Schedule.init(
     {
         schedule_id: {
             type: DataTypes.INTEGER(6),
@@ -20,40 +20,21 @@ ScheduleModel.init(
             allowNull: false,
         },
         schedule_type: {
-            type: DataTypes.STRING(50),
+            type: DataTypes.ENUM,
+            values: ['Regular', 'Ad Hoc', 'Consecutive'],
             allowNull: false,
         },
         created_by: {
             type: DataTypes.INTEGER(6),
             allowNull: false,
-            references: {
-                model: 'employees',
-                key: 'id'
-            }
-        },
-        created_timestamp: {
-            type: DataTypes.DATE,
-            allowNull: false,
         },
         last_update_by: {
             type: DataTypes.INTEGER(6),
-            allowNull: false,
-            references: {
-                model: 'employees',
-                key: 'id'
-            }
-        },
-        last_update_timestamp: {
-            type: DataTypes.DATE,
             allowNull: false,
         },
         verify_by: {
             type: DataTypes.INTEGER(6),
             allowNull: false,
-            references: {
-                model: 'employees',
-                key: 'id'
-            }
         },
         verify_timestamp: {
             type: DataTypes.DATE,
@@ -65,9 +46,11 @@ ScheduleModel.init(
     },
     {
         sequelize,
-        modelName: "ScheduleModel",
-        modelName: "schedule"
+        timestamps: true,
+        createdAt: 'created_timestamp',
+        updatedAt: 'last_update_timestamp',
+        modelName: 'Schedules',
     }
 );
 
-module.exports = ScheduleModel;
+module.exports = Schedule;

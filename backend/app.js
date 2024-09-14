@@ -5,15 +5,14 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const cors = require("cors");
 const cookieSession = require("cookie-session");
-// const config = require("./server-config");
 var fs = require("fs");
-var proxy = require("express-http-proxy");
 const express = require("express");
 const morgan = require("morgan");
 const helmet = require("helmet");
 
 const app = express();
-const PORT = process.env.PORT | 4000;
+const EXPRESS_PORT = process.env.EXPRESS_PORT;
+const { sequelize } = require("./services/database/mysql");
 app.use(express.static("./public"));
 app.use(morgan("tiny"));
 
@@ -72,11 +71,14 @@ app.use((req, res, next) => {
   });
 });
 
-var server = app.listen(PORT, () => {
-  console.info(`server is running on port ${PORT}`);
-  if (process.send) {
-    process.send("ready");
-  }
+var server = null;
+sequelize.sync().then(() => {
+  server = app.listen(EXPRESS_PORT, () => {
+    console.info(`server is running on port ${EXPRESS_PORT}`);
+    if (process.send) {
+      process.send("ready");
+    }
+  });
 });
 
 process.on("SIGINT", () => {

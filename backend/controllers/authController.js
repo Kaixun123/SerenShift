@@ -1,20 +1,15 @@
 const { Op } = require("sequelize")
-const EmployeeModel = require("../models/EmployeeModel")
+const Employee = require("../models")
 const { ERROR_CODE } = require("../services/error/errorHandling")
 const bcrypt = require("bcryptjs")
-const { get_account_entity_by_id_admin, get_account_entity_by_id_public } = require("../middlewares/authMiddleware")
 const jwt = require("jsonwebtoken");
-const { get_user_id } = require("../services/database/accountService")
 
 const login = async (req, res) => {
     try {
         let { user, password } = req.body
-        let userAccount = await EmployeeModel.findOne({
+        let userAccount = await Employee.findOne({
             where: {
-                [Op.or]: [
-                    { email: user.toLowerCase() },
-                    { contact_number: user.toLowerCase() }
-                ]
+                email: user
             }
         }).then((result) => {
             return result.dataValues
@@ -23,66 +18,40 @@ const login = async (req, res) => {
         })
 
         if (!userAccount) {
-            throw new Error("Invalid credentials")
+            return res.status(403).json({
+                status: 403,
+                message: "Invalid credentials"
+            })
         }
-
         let hash = await bcrypt.hash(password, userAccount.salt)
-
-        if (userAccount.account_lock_till) {
-            let now = new Date()
-            if (now < userAccount.account_lock_till) {
-                throw new Error("Account is locked")
-            }
-        }
-
         if (hash !== userAccount.password) {
-            let update_account = await EmployeeModel.update({
-                password_retries: userAccount.password_retries + 1,
-                account_lock_till: userAccount.password_retries + 1 >= 5 ? new Date(new Date().getTime() + 5 * 60000) : null
-            }, {
-                where: {
-                    id: userAccount.id
-                }
-            }).then((result) => {
-                return result
-            }).catch((err) => {
-                throw new Error(err)
+            return res.status(403).json({
+                status: 403,
+                message: "Invalid credentials"
             })
-            throw new Error("Invalid credentials")
         } else {
-            // Check if account is locked
-            let update_account = await EmployeeModel.update({
-                password_retries: 0,
-                account_lock_till: null,
-                last_login: new Date()
-            }, {
-                where: {
-                    id: userAccount.id
-                }
-            }).then((result) => {
-                return result
-            }).catch((err) => {
-                console.log(err)
-                throw new Error(err)
-            })
-
             // Generate JWT
-            let user_data = await get_account_entity_by_id_admin(userAccount?.id)
+            let retrievedEmployee = await Employee.findOne({
+                where: {
+                    email: user
+                }
+            });
             // Setting Cookie
             const token = jwt.sign({
-                id: user_data.id,
-                email: user_data.email,
-                first_name: user_data.first_name,
-                account_type: user_data.account_type
+                id: retrievedEmployee.id,
+                email: retrievedEmployee.email,
+                first_name: retrievedEmployee.first_name,
+                last_name: retrievedEmployee.last_name,
+                role: retrievedEmployee.role
             }, process.env.TOKEN_KEY, {
                 expiresIn: "7d"
             })
             res.cookie("user", {
-                id: user_data.id,
-                email: user_data.email,
-                first_name: user_data.first_name,
-                last_name: user_data.last_name,
-                account_type: user_data.account_type,
+                id: retrievedEmployee.id,
+                email: retrievedEmployee.email,
+                first_name: retrievedEmployee.first_name,
+                last_name: retrievedEmployee.last_name,
+                role: retrievedEmployee.role,
                 token: token
             }, {
                 maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
@@ -99,7 +68,7 @@ const login = async (req, res) => {
         }
 
     } catch (err) {
-        console.log({err})
+        console.log({ err })
         return res.status(500).send({
             status: 500,
             ...ERROR_CODE.INTERNAL_SERVER_ERROR
@@ -108,7 +77,11 @@ const login = async (req, res) => {
 }
 const logout = async (req, res) => {
     try {
-
+        res.clearCookie("user")
+        return res.status(200).send({
+            status: 200,
+            message: "Logout Successful"
+        })
     } catch (err) {
         console.log(`ERROR: ${JSON.stringify(err)}`)
         return res.status(500).send({
@@ -124,14 +97,16 @@ const register = async (req, res) => {
             last_name,
             email,
             password,
-            contact_number,
+            country,
+            department,
+            position,
+
         } = req.body
 
-        let account_search = await EmployeeModel.findAll({
+        let account_search = await Employee.findAll({
             where: {
                 [Op.or]: [
                     { email },
-                    { contact_number }
                 ]
             }
         }).then((result) => {
@@ -147,13 +122,15 @@ const register = async (req, res) => {
         let salt = await bcrypt.genSalt(10)
         let hash = await bcrypt.hash(password, salt)
 
-        let account_creation = await EmployeeModel.create({
+        let account_creation = await Employee.create({
             first_name,
             last_name,
             email: email.toLowerCase(),
-            contact_number,
             password: hash,
-            salt
+            salt,
+            country,
+            department,
+            position,
         }).then((result) => {
             return result
         }).catch((err) => {
@@ -174,12 +151,9 @@ const register = async (req, res) => {
 }
 const authorisation = async (req, res) => {
     try {
-        let user_id = await get_user_id(req)
-        let user_data = await get_account_entity_by_id_admin(user_id)
         return res.status(200).json({
             status: 200,
             message: "Authentication Successful",
-            data: user_data
         })
     } catch (err) {
         console.log(`ERROR: ${err}`)

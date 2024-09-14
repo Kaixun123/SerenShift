@@ -1,9 +1,9 @@
 const { DataTypes, Model } = require("sequelize");
 const { sequelize } = require("../services/database/mysql");
 
-class ApplicationModel extends Model { }
+class Application extends Model { }
 
-ApplicationModel.init(
+Application.init(
   {
     application_id: {
       type: DataTypes.INTEGER(6),
@@ -20,64 +20,50 @@ ApplicationModel.init(
       allowNull: false,
     },
     application_type: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.ENUM,
+      values: ['Regular', 'Ad Hoc', 'Consecutive'],
       allowNull: false,
     },
     created_by: {
       type: DataTypes.INTEGER(6),
       allowNull: false,
-      references: {
-        model: 'employees',
-        key: 'id'
-      }
-    },
-    created_timestamp: {
-      type: DataTypes.DATE,
-      allowNull: false,
     },
     last_update_by: {
       type: DataTypes.INTEGER(6),
       allowNull: false,
-      references: {
-        model: 'employees',
-        key: 'id'
-      }
-    },
-    last_update_timestamp: {
-      type: DataTypes.DATE,
-      allowNull: false,
     },
     verify_by: {
       type: DataTypes.INTEGER(6),
-      allowNull: false,
-      references: {
-        model: 'employees',
-        key: 'id'
-      }
+      allowNull: true,
     },
     verify_timestamp: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     linked_application: {
       type: DataTypes.INTEGER(6),
     },
     status: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.ENUM,
+      values: ['Pending', 'Approved', 'Rejected', 'Withdrawn'],
       allowNull: false,
     },
     requestor_remarks: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     approver_remarks: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(255),
+      allowNull: true,
     }
   },
   {
     sequelize,
-    modelName: "ApplicationModel",
-    modelName: "application"
+    timestamps: true,
+    createdAt: 'created_timestamp',
+    updatedAt: 'last_update_timestamp',
+    tableName: "Applications",
   }
 );
 
-module.exports = ApplicationModel;
+module.exports = Application;
