@@ -7,6 +7,14 @@ const ensureHR = (req, res, next) => {
     }
 }
 
+const ensureManagerAndAbove = (req, res, next) => {
+    if (req.user.role === "Manager" || req.user.role === "HR") {
+        return next();
+    } else {
+        return res.status(403).end();
+    }
+}
+
 const ensureManager = (req, res, next) => {
     if (req.user.role === "Manager") {
         return next();
