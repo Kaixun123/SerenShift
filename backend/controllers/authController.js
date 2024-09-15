@@ -1,172 +1,72 @@
-const { Op } = require("sequelize")
-const Employee = require("../models")
-const { ERROR_CODE } = require("../services/error/errorHandling")
-const bcrypt = require("bcryptjs")
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+const { Employee } = require('../models');
 
-const login = async (req, res) => {
-    try {
-        let { user, password } = req.body
-        let userAccount = await Employee.findOne({
-            where: {
-                email: user
-            }
-        }).then((result) => {
-            return result.dataValues
-        }).catch((err) => {
-            throw new Error(err)
-        })
-
-        if (!userAccount) {
-            return res.status(403).json({
-                status: 403,
-                message: "Invalid credentials"
-            })
-        }
-        let hash = await bcrypt.hash(password, userAccount.salt)
-        if (hash !== userAccount.password) {
-            return res.status(403).json({
-                status: 403,
-                message: "Invalid credentials"
-            })
-        } else {
-            // Generate JWT
-            let retrievedEmployee = await Employee.findOne({
-                where: {
-                    email: user
-                }
-            });
-            // Setting Cookie
-            const token = jwt.sign({
-                id: retrievedEmployee.id,
-                email: retrievedEmployee.email,
-                first_name: retrievedEmployee.first_name,
-                last_name: retrievedEmployee.last_name,
-                role: retrievedEmployee.role
-            }, process.env.TOKEN_KEY, {
-                expiresIn: "7d"
-            })
-            res.cookie("user", {
-                id: retrievedEmployee.id,
-                email: retrievedEmployee.email,
-                first_name: retrievedEmployee.first_name,
-                last_name: retrievedEmployee.last_name,
-                role: retrievedEmployee.role,
-                token: token
-            }, {
-                maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+const login = (req, res) => {
+    passport.authenticate('local', (err, user, info) => {
+        if (err) return res.status(500).json({ error: err });
+        if (!user) return res.status(401).json({ message: info.message });
+        req.logIn(user, (err) => {
+            if (err)
+                return res.status(500).json({ error: err });
+            const token = jwt.sign(
+                { id: user.id },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' }
+            );
+            res.cookie('jwt', token, {
                 httpOnly: true,
-                signed: true,
-                secure: process.env.NODE_ENV === "production" ? true : false,
-            })
+                secure: false
+            });
+            return res.status(200).json({ message: 'Login successfully' });
+        });
+    })(req, res);
 
-            return res.status(200).json({
-                status: 200,
-                message: "Login Successful",
-                data: user_data
-            })
+};
+
+const me = async (req, res) => {
+    let retrievedEmployee = await Employee.findByPk(req.user.id);
+    let retrievedManager = await Employee.findByPk(retrievedEmployee.reporting_manager);
+    if (!retrievedEmployee)
+        req.logout(() => {
+            res.clearCookie('jwt');
+            res.status(404).json({ message: 'Employee not found' });
+        });
+    else {
+        let response = {
+            id: retrievedEmployee.id,
+            first_name: retrievedEmployee.first_name,
+            last_name: retrievedEmployee.last_name,
+            department: retrievedEmployee.department,
+            position: retrievedEmployee.position,
+            country: retrievedEmployee.country,
+            email: retrievedEmployee.email,
+            role: retrievedEmployee.role,
         }
-
-    } catch (err) {
-        console.log({ err })
-        return res.status(500).send({
-            status: 500,
-            ...ERROR_CODE.INTERNAL_SERVER_ERROR
-        })
-    }
-}
-const logout = async (req, res) => {
-    try {
-        res.clearCookie("user")
-        return res.status(200).send({
-            status: 200,
-            message: "Logout Successful"
-        })
-    } catch (err) {
-        console.log(`ERROR: ${JSON.stringify(err)}`)
-        return res.status(500).send({
-            status: 500,
-            ...ERROR_CODE.INTERNAL_SERVER_ERROR
-        })
-    }
-}
-const register = async (req, res) => {
-    try {
-        let {
-            first_name,
-            last_name,
-            email,
-            password,
-            country,
-            department,
-            position,
-
-        } = req.body
-
-        let account_search = await Employee.findAll({
-            where: {
-                [Op.or]: [
-                    { email },
-                ]
+        if (retrievedManager) {
+            response.manager = {
+                first_name: retrievedManager.first_name,
+                last_name: retrievedManager.last_name,
+                department: retrievedManager.department,
+                position: retrievedManager.position,
+                country: retrievedManager.country,
+                email: retrievedManager.email,
             }
-        }).then((result) => {
-            return result
-        }).catch((err) => {
-            throw new Error(err)
-        })
-
-        if (account_search.length > 0) {
-            throw new Error("Account already exists")
         }
-
-        let salt = await bcrypt.genSalt(10)
-        let hash = await bcrypt.hash(password, salt)
-
-        let account_creation = await Employee.create({
-            first_name,
-            last_name,
-            email: email.toLowerCase(),
-            password: hash,
-            salt,
-            country,
-            department,
-            position,
-        }).then((result) => {
-            return result
-        }).catch((err) => {
-            throw new Error(err)
-        })
-
-        return res.status(200).send({
-            status: 200,
-            message: "Account created successfully"
-        })
-    } catch (err) {
-        console.log(`ERROR: ${err}`)
-        return res.status(500).send({
-            status: 500,
-            ...ERROR_CODE.INTERNAL_SERVER_ERROR
-        })
+        return res.status(200).json(response);
     }
 }
-const authorisation = async (req, res) => {
-    try {
-        return res.status(200).json({
-            status: 200,
-            message: "Authentication Successful",
-        })
-    } catch (err) {
-        console.log(`ERROR: ${err}`)
-        return res.status(500).send({
-            status: 500,
-            ...ERROR_CODE.INTERNAL_SERVER_ERROR
-        })
-    }
+
+const logout = (req, res) => {
+    req.logout(() => {
+        res.clearCookie('jwt');
+        res.clearCookie('connect.sid');
+        res.status(200).json({ message: 'Logged out successfully' });
+    });
 }
 
 module.exports = {
     login,
     logout,
-    register,
-    authorisation
-}
+    me
+};

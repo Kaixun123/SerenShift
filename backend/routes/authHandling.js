@@ -1,16 +1,30 @@
 const express = require('express');
-const router = express.Router();//change handler to this router
-const authentication = require('../services/security/authentication')
-const authorisation = require('../services/security/authorisation')
-const multer = require('multer');
-
-//DB Files
+const router = express.Router();
+const { check, validationResult } = require("express-validator");
+const { ensureLoggedIn } = require("../middlewares/authMiddleware");
 const authController = require('../controllers/authController')
+// Validation Rules
+const loginFormValidationRules = () => {
+    return [
+        check("emailAddress").isEmail().notEmpty().trim(),
+        check("password").notEmpty().trim(),
+    ];
+}
+// Validation Middleware
+const vaildateParameters = (req, res, next) => {
+    const errors = validationResult(req);
+    if (errors.isEmpty()) {
+        return next();
+    }
+    const extractedErrors = [];
+    errors.array().map((err) => extractedErrors.push({ [err.param]: err.msg }));
+    return res.status(422).json({
+        errors: extractedErrors,
+    });
+};
 
-//Route
-router.post('/login', (req, res) => authController.login(req, res))
-router.post('/logout', (req, res) => authController.logout(req, res))
-router.post('/register', (req, res) => authController.register(req, res))
-router.post("/authorisation", authentication, (req, res) => authController.authorisation(req, res))
+router.post('/login', loginFormValidationRules(), vaildateParameters, (req, res) => authController.login(req, res))
+router.get('/logout', ensureLoggedIn, (req, res) => authController.logout(req, res))
+router.get('/me', ensureLoggedIn, (req, res) => authController.me(req, res))
 
 module.exports = router;

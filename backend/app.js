@@ -1,37 +1,41 @@
 //Import Files and Modules
 "use strict";
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-require("dotenv").config();
-const cors = require("cors");
-const cookieSession = require("cookie-session");
-var fs = require("fs");
 const express = require("express");
 const morgan = require("morgan");
+const bodyParser = require("body-parser");
 const helmet = require("helmet");
-
+const cors = require("cors");
 const app = express();
+
+require("dotenv").config();
 const EXPRESS_PORT = process.env.EXPRESS_PORT;
 const { sequelize } = require("./services/database/mysql");
-app.use(express.static("./public"));
-app.use(morgan("tiny"));
+
+const passport = require("passport");
+const session = require("express-session");
+const SequelizeStore = require("connect-session-sequelize")(session.Store);
+require("./services/security/passport");
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    store: new SequelizeStore({
+      db: sequelize,
+      checkExpirationInterval: 15 * 60 * 1000,
+      expiration: 1 * 60 * 60 * 1000,
+    }),
+    resave: false,
+    saveUninitialized: false,
+    proxy: false,
+    cookie: {
+      secure: false,
+      httpOnly: true,
+      path: "/",
+    },
+  })
+);
 
 app.use(helmet({}));
-
-app.use(cookieParser(process.env.TOKEN_KEY));
-
-const corsOptions = {
-  origin: true,
-  credentials: true, //included credentials as true
-  preflightContinue: true,
-};
-
-app.use(cors(corsOptions));
-
-app.use(express.static("./public"));
-app.use(morgan("tiny"));
-
-var jsonParser = bodyParser.json();
 app.use(
   bodyParser.urlencoded({
     extended: true,
@@ -39,25 +43,22 @@ app.use(
 );
 app.use(bodyParser.json());
 
-app.use(function (req, res, next) {
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
-  res.header(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type,Content-Type, Authorization,Authentication,withCredentials, Content-Length, X-Requested-With, Accept, x-access-token,credentials, Origin, X-Content-Type-Options"
-  );
-  res.header(
-    "Access-Control-Expose-Headers",
-    "x-access-token, Authorization, Authentication, withCredentials, credentials, Set-Cookie"
-  );
-  res.header("Access-Control-Allow-Credentials", true);
-  next();
-});
+let corsOptions = {
+  origin: true,
+  credentials: true, //included credentials as true
+  preflightContinue: true,
+};
+
+app.use(cors(corsOptions));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use(express.static("./public"));
+app.use(morgan("tiny"));
 
 // App Routes
 app.use("/auth", require("./routes/authHandling"));
+app.use("/dummy", require("./routes/dummyHandling"));
 
 //Error Handling
 app.use((req, res, next) => {
