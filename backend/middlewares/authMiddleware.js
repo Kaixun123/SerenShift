@@ -34,5 +34,6 @@ const ensureLoggedIn = (req, res, next) => {
 module.exports = {
     ensureLoggedIn,
     ensureManager,
+    ensureManagerAndAbove,
     ensureHR
 };
