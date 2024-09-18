@@ -1,3 +1,24 @@
+#### git ignore -> used this to block out items that you should not be committing to our repo ###
+
+# Ignore all .env files
+.env
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore Python compiled files
+__pycache__/
+*.pyc
+
+# Ignore log files
+*.log
+
+# Ignore all .DS_Store files (Mac-specific)
+*.DS_Store
+
+# Ignore specific secret key file
+
+
 # Logs
 logs
 *.log
@@ -134,3 +155,6 @@ dist
 
 # Ignore Sequlize config file
 backend/config/config.json
+
+# Ignore Husky Folder
+.husky/
