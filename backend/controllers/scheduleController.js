@@ -65,7 +65,7 @@ const splitScheduleByDate = (startDate, endDate) => {
 };
 
 // Function to fetch own schedule
-const fetchOwnSchedule = async (userId) => {
+const fetchTeamIndividualSchedule = async (userId) => {
     try {
         let ownSchedules = await Schedule.findAll({
             where: { created_by: userId }
@@ -106,7 +106,7 @@ const fetchTeamSchedule = async (userId, colleagueIds) => {
         let wfhDates = {}
 
         for (const colleague of colleagues) {
-            const colleagueSchedule = await fetchOwnSchedule(colleague.user_id); // Add await
+            const colleagueSchedule = await fetchTeamIndividualSchedule(colleague.user_id); // Add await
             console.log(colleagueSchedule);
             const colleagueName = colleague.first_name + " " + colleague.last_name;
 
@@ -137,21 +137,21 @@ const fetchTeamSchedule = async (userId, colleagueIds) => {
 };
 
 // Function to retrieve own schedule
-const retrieveOwnSchedule = async (req, res, next) => {
-    try {
-        const userId = req.user.id;
-        const schedule = await fetchOwnSchedule(userId);
+// const retrieveOwnSchedule = async (req, res, next) => {
+//     try {
+//         const userId = req.user.id;
+//         const schedule = await fetchOwnSchedule(userId);
 
-        if (schedule.length === 0) {
-            return res.status(404).json({ message: "No schedules found for this user." });
-        }
+//         if (schedule.length === 0) {
+//             return res.status(404).json({ message: "No schedules found for this user." });
+//         }
 
-        return res.status(200).json(schedule);
-    } catch (error) {
-        console.error("Error retrieving own schedule:", error);
-        return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
-    }
-};
+//         return res.status(200).json(schedule);
+//     } catch (error) {
+//         console.error("Error retrieving own schedule:", error);
+//         return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
+//     }
+// };
 
 // Function to retrieve team schedule
 const retrieveTeamSchedule = async (req, res, next) => {
@@ -172,6 +172,6 @@ const retrieveTeamSchedule = async (req, res, next) => {
 };
 
 module.exports = {
-    retrieveOwnSchedule,
+    // retrieveOwnSchedule,
     retrieveTeamSchedule
 };
