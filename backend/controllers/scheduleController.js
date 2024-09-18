@@ -99,72 +99,54 @@ const fetchTeamIndividualSchedule = async (userId) => {
     }
 };
 
-// Function to fetch team schedule
-const fetchTeamSchedule = async (userId, colleagueIds) => {
+const retrieveTeamSchedule = async (req, res, next) => {
     try {
+        const userId = req.user.id; // Retrieve user ID from authenticated user
+        const { start_date, end_date, colleague_id } = req.query; // Extract query parameters
+
+        // Fetch colleagues based on userId
         let colleagues = await employeeController.fetchColleagues(userId);
-        let wfhDates = {}
+        let wfhDates = {};
 
         for (const colleague of colleagues) {
-            const colleagueSchedule = await fetchTeamIndividualSchedule(colleague.user_id); // Add await
-            console.log(colleagueSchedule);
+            // If colleague_id is provided, filter colleagues by the specified ID
+            if (colleague.user_id !== parseInt(colleague_id)) {
+                continue; // Skip colleagues not matching the filter
+            }
+
+            const colleagueSchedule = await fetchTeamIndividualSchedule(colleague.user_id); // Fetch schedule for colleague
             const colleagueName = colleague.first_name + " " + colleague.last_name;
 
+            // Iterate over each schedule and split into date blocks
             for (const data of colleagueSchedule) {
-                dateBlocks = splitScheduleByDate(data.start_date, data.end_date);
-                console.log(dateBlocks);
+                // Filter the schedule by start_date and end_date if provided
+                if (start_date && moment(data.start_date).isBefore(moment(start_date))) continue;
+                if (end_date && moment(data.end_date).isAfter(moment(end_date))) continue;
 
+                // Split schedule into date blocks (AM, PM, Full Day)
+                const dateBlocks = splitScheduleByDate(data.start_date, data.end_date);
+
+                // Process each date block
                 for (const date of dateBlocks) {
                     if (wfhDates[date.date]) {
                         if (wfhDates[date.date][date.period]) {
                             wfhDates[date.date][date.period].push(colleagueName);
-                        }
-                        else {
+                        } else {
                             wfhDates[date.date][date.period] = [colleagueName];
                         }
                     } else {
-                        wfhDates[date.date] = {[date.period]: [colleagueName]};
+                        wfhDates[date.date] = { [date.period]: [colleagueName] };
                     }
                 }
             }
         }
 
-        return wfhDates;
-    } catch (error) {
-        console.error("Error fetching team schedule:", error);
-        throw new Error("Error fetching team schedule.");
-    }
-};
-
-// Function to retrieve own schedule
-// const retrieveOwnSchedule = async (req, res, next) => {
-//     try {
-//         const userId = req.user.id;
-//         const schedule = await fetchOwnSchedule(userId);
-
-//         if (schedule.length === 0) {
-//             return res.status(404).json({ message: "No schedules found for this user." });
-//         }
-
-//         return res.status(200).json(schedule);
-//     } catch (error) {
-//         console.error("Error retrieving own schedule:", error);
-//         return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
-//     }
-// };
-
-// Function to retrieve team schedule
-const retrieveTeamSchedule = async (req, res, next) => {
-    try {
-        const userId = req.user.id; // Now passing req to get the user ID
-        const teamSchedule = await fetchTeamSchedule(userId);
-
-        // Check if the response object has no keys (no schedules found)
-        if (Object.keys(teamSchedule).length === 0) {
-            return res.status(404).json({ message: "No schedules found for this team." });
+        // Check if no schedules were found
+        if (Object.keys(wfhDates).length === 0) {
+            return res.status(404).json({ message: "No WFH schedules found for this team." });
         }
 
-        return res.status(200).json(teamSchedule);
+        return res.status(200).json(wfhDates); // Return the WFH dates
     } catch (error) {
         console.error("Error retrieving team schedule:", error);
         return res.status(500).json({ error: "An error occurred while retrieving the team schedule." });
@@ -172,6 +154,5 @@ const retrieveTeamSchedule = async (req, res, next) => {
 };
 
 module.exports = {
-    // retrieveOwnSchedule,
     retrieveTeamSchedule
 };
