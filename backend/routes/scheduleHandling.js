@@ -23,7 +23,7 @@ const vaildateParameters = (req, res, next) => {
 };
 
 router.get("/ownSchedule", ensureLoggedIn, (req, res) => scheduleController.retrieveOwnSchedule(req, res));
-router.get("/useColleagueIds", ensureLoggedIn, (req, res) => scheduleController.retrieveColleagueIds(req, res));
+router.get("/teamSchedule", ensureLoggedIn, (req, res) => scheduleController.retrieveTeamSchedule(req, res));
 // router.get("/manager", ensureManager, (req, res) => employeeController.manager(req, res));
 // router.get("/hr", ensureHR, (req, res) => employeeController.hr(req, res));
 // router.get("/colleagues", ensureLoggedIn, (req, res) => employeeController.retrieveColleagues(req, res));
