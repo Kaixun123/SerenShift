@@ -154,5 +154,6 @@ const retrieveTeamSchedule = async (req, res, next) => {
 };
 
 module.exports = {
-    retrieveTeamSchedule
+    retrieveTeamSchedule,
+    splitScheduleByDate
 };
