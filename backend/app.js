@@ -61,6 +61,7 @@ app.use("/auth", require("./routes/authHandling"));
 app.use("/dummy", require("./routes/dummyHandling"));
 app.use("/employee", require("./routes/employeeHandling"));
 app.use("/schedule", require("./routes/scheduleHandling"));
+app.use("/application", require("./routes/applicationHandling"))
 
 //Error Handling
 app.use((req, res, next) => {
