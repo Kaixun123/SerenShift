@@ -73,13 +73,11 @@ app.use((req, res, next) => {
 });
 
 var server = null;
-sequelize.sync().then(() => {
-  server = app.listen(EXPRESS_PORT, () => {
-    console.info(`server is running on port ${EXPRESS_PORT}`);
-    if (process.send) {
-      process.send("ready");
-    }
-  });
+server = app.listen(EXPRESS_PORT, () => {
+  console.info(`server is running on port ${EXPRESS_PORT}`);
+  if (process.send) {
+    process.send("ready");
+  }
 });
 
 process.on("SIGINT", () => {
