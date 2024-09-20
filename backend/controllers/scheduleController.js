@@ -65,6 +65,41 @@ const splitScheduleByDate = (startDate, endDate) => {
 };
 
 // Function to fetch own schedule
+const fetchOwnSchedule = async (userId) => {
+    try {
+        let ownSchedules = await Schedule.findAll({
+            where: { created_by: userId }
+        });
+
+        if (!ownSchedules || ownSchedules.length === 0) {
+            return [];
+        }
+
+        let response = [];
+        ownSchedules.forEach(schedule => {
+            response.push({
+                schedule_id: schedule.schedule_id,
+                start_date: schedule.start_date,
+                end_date: schedule.end_date,
+                schedule_type: schedule.schedule_type,
+                created_by: schedule.created_by,
+                last_update_by: schedule.last_update_by,
+                verify_by: schedule.verify_by,
+                verify_timestamp: schedule.verify_timestamp,
+                linked_schedule: schedule.linked_schedule,
+                created_timestamp: schedule.created_timestamp,
+                last_update_timestamp: schedule.last_update_timestamp
+            });
+        });
+
+        return response;
+    } catch (error) {
+        console.error("Error fetching schedule:", error);
+        throw new Error("Error fetching schedule.");
+    }
+};
+
+// Function to fetch own schedule
 const fetchTeamIndividualSchedule = async (userId) => {
     try {
         let ownSchedules = await Schedule.findAll({
@@ -137,21 +172,40 @@ const fetchTeamSchedule = async (userId, colleagueIds) => {
 };
 
 // Function to retrieve own schedule
-// const retrieveOwnSchedule = async (req, res, next) => {
-//     try {
-//         const userId = req.user.id;
-//         const schedule = await fetchOwnSchedule(userId);
+const retrieveOwnSchedule = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const schedule = await fetchOwnSchedule(userId);
 
-//         if (schedule.length === 0) {
-//             return res.status(404).json({ message: "No schedules found for this user." });
-//         }
+        if (schedule.length === 0) {
+            return res.status(404).json({ message: "No schedules found for this user." });
+        }
 
-//         return res.status(200).json(schedule);
-//     } catch (error) {
-//         console.error("Error retrieving own schedule:", error);
-//         return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
-//     }
-// };
+        let wfhDates = {};
+        for (const block of schedule) {
+            dateBlocks = splitScheduleByDate(block.start_date, block.end_date);
+            console.log(dateBlocks);
+
+            for (const date of dateBlocks) {
+                if (wfhDates[date.date]) {
+                    if (wfhDates[date.date][date.period]) {
+                        wfhDates[date.date][date.period].push([date.start_time, date.end_time]);
+                    }
+                    else {
+                        wfhDates[date.date][date.period] = [[date.start_time, date.end_time]];
+                    }
+                } else {
+                    wfhDates[date.date] = {[date.period]: [[date.start_time, date.end_time]]};
+                }
+            }
+        }
+
+        return res.status(200).json(wfhDates);
+    } catch (error) {
+        console.error("Error retrieving own schedule:", error);
+        return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
+    }
+};
 
 // Function to retrieve team schedule
 const retrieveTeamSchedule = async (req, res, next) => {
@@ -172,6 +226,6 @@ const retrieveTeamSchedule = async (req, res, next) => {
 };
 
 module.exports = {
-    // retrieveOwnSchedule,
+    retrieveOwnSchedule,
     retrieveTeamSchedule
 };
