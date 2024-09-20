@@ -77,6 +77,8 @@ Employee.init(
     createdAt: 'created_timestamp',
     updatedAt: 'last_update_timestamp',
     tableName: "Employees",
+    paranoid: true,
+    deletedAt: 'deleted_timestamp',
   }
 );
 

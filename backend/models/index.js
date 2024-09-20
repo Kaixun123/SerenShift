@@ -1,4 +1,5 @@
 const Application = require('./Application');
+const Blacklist = require('./Blacklist');
 const Employee = require('./Employee');
 const Schedule = require('./Schedule');
 
@@ -108,8 +109,29 @@ Schedule.hasMany(Schedule, {
     as: 'linked_schedules',
 });
 
+Employee.hasMany(Blacklist, {
+    foreignKey: 'created_by',
+    as: 'blacklists',
+});
+
+Blacklist.belongsTo(Employee, {
+    foreignKey: 'created_by',
+    as: 'creator',
+});
+
+Employee.hasMany(Blacklist, {
+    foreignKey: 'last_update_by',
+    as: 'blacklists_updated',
+});
+
+Blacklist.belongsTo(Employee, {
+    foreignKey: 'last_update_by',
+    as: 'updater',
+});
+
 module.exports = {
     Application,
+    Blacklist,
     Employee,
     Schedule,
 };

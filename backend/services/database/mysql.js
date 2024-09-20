@@ -29,11 +29,6 @@ sequelize
       process.env.DB_HOST,
       process.env.DB_NAME
     );
-    if (process.env.DB_SYNC === "true") {
-      await sequelize.sync({ alter: true }).then(() => {
-        console.log("Database Synchronised Successfully");
-      })
-    }
   })
   .catch((err) => {
     console.error("Unable to connect to the database: ", err);

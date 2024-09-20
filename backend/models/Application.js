@@ -21,7 +21,7 @@ Application.init(
     },
     application_type: {
       type: DataTypes.ENUM,
-      values: ['Regular', 'Ad Hoc', 'Consecutive'],
+      values: ['Regular', 'Ad Hoc'],
       allowNull: false,
     },
     created_by: {
