@@ -1,4 +1,5 @@
 const { Employee } = require('../models');
+const { fetchColleagues } = require('../services/common/employeeHelper');
 
 const manager = (req, res, next) => {
     return res.status(200).json({ message: 'Only Managers should be able to see this' });
@@ -14,30 +15,6 @@ const employee = (req, res, next) => {
 
 const anybody = (req, res, next) => {
     return res.status(200).json({ message: 'Anybody can see this' });
-}
-
-const fetchColleagues = async (userId) => {
-    let currentEmployee = await Employee.findByPk(userId);
-    let colleagues = await Employee.findAll({
-        where: {
-            reporting_manager: currentEmployee.reporting_manager,
-        }
-    });
-    
-    let response = [];
-    colleagues.forEach(colleague => {
-        response.push({
-            user_id: colleague.id,
-            first_name: colleague.first_name,
-            last_name: colleague.last_name,
-            department: colleague.department,
-            position: colleague.position,
-            country: colleague.country,
-            email: colleague.email,
-        });
-    });
-
-    return response;  // Return the colleague data instead of sending a response
 }
 
 // Original function to return colleagues directly via res
@@ -71,5 +48,4 @@ module.exports = {
     anybody,
     retrieveColleagues,
     getEmployee,
-    fetchColleagues
 };
