@@ -59,8 +59,8 @@ app.use(morgan("tiny"));
 // App Routes
 app.use("/auth", require("./routes/authHandling"));
 app.use("/dummy", require("./routes/dummyHandling"));
-app.use("/employee", require("./routes/employeeHandling"));
-app.use("/schedule", require("./routes/scheduleHandling"));
+app.use("/api/employee", require("./routes/employeeHandling"));
+app.use("/api/schedule", require("./routes/scheduleHandling"));
 
 //Error Handling
 app.use((req, res, next) => {
