@@ -1,10 +1,11 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const {ensureLoggedIn} = require("../middlewares/authMiddleware");
-const withdrawController = require("../controllers/withdrawController");
+const withdrawController = require('../controllers/withdrawController');
+const { ensureLoggedIn } = require("../middlewares/authMiddleware");
 
 
-router.get("/withdrawRequest", ensureLoggedIn, (req, res) => withdrawController.withdrawPendingApplications(req, res));
+// Update the route to handle a PUT request
+router.put("/withdrawPending", ensureLoggedIn, (req, res) => withdrawController.withdrawPendingApplications(req, res));
 
 
 module.exports = router;
