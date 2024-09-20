@@ -94,6 +94,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
+      deleted_timestamp: {
+        allowNull: true,
+        type: Sequelize.DATE,
+      },
     });
 
     // Create Applications table
