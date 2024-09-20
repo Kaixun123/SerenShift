@@ -3,6 +3,12 @@ const passport = require('passport');
 const { Employee } = require('../models');
 
 const login = (req, res) => {
+    console.log('Request Body:', req.body);
+    const { emailAddress, password } = req.body;
+    if (!emailAddress || !password) {
+        return res.status(422).json({ message: 'Email and password are required' });
+    }
+
     passport.authenticate('local', (err, user, info) => {
         if (err) return res.status(500).json({ error: err });
         if (!user) return res.status(401).json({ message: info.message });

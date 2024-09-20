@@ -6,8 +6,8 @@ const authController = require('../controllers/authController')
 // Validation Rules
 const loginFormValidationRules = () => {
     return [
-        check("emailAddress").isEmail().notEmpty().trim(),
-        check("password").notEmpty().trim(),
+        check("email").isEmail().withMessage("Invalid email address").notEmpty().trim(),
+        check("password").notEmpty().withMessage("Password cannot be empty").trim(),
     ];
 }
 // Validation Middleware
@@ -16,8 +16,11 @@ const vaildateParameters = (req, res, next) => {
     if (errors.isEmpty()) {
         return next();
     }
-    const extractedErrors = [];
-    errors.array().map((err) => extractedErrors.push({ [err.param]: err.msg }));
+    const extractedErrors = errors.array().map((err) => ({
+        field: err.param,  // This will give the parameter name (e.g., email, password)
+        message: err.msg,  // This will give the actual error message (e.g., Invalid email)
+    }));
+    
     return res.status(422).json({
         errors: extractedErrors,
     });
