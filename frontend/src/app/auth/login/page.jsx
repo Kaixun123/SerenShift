@@ -19,13 +19,16 @@ const LoginPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (validateEmailDomain(email)){
-            const response = await fetch( process.env.NEXT_PUBLIC_FRONTEND_URL + '/auth/login', {
+        if (validateEmailDomain(email)) {
+            const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({email, password,}),
+                body: JSON.stringify({
+                    emailAddress: email,
+                    password,
+                }),
             });
 
             if (response.ok) {
@@ -49,7 +52,7 @@ const LoginPage = () => {
                     isClosable: true,
                 });
             }
-        }else{
+        } else {
             toast({
                 title: 'Incorrect email Address',
                 description: 'you have entered a invalid email address.',
@@ -59,8 +62,8 @@ const LoginPage = () => {
             setEmail("");
             setPassword("");
         }
-        
-        
+
+
     };
 
     return (
@@ -99,7 +102,7 @@ const LoginPage = () => {
                             <FormLabel>Password</FormLabel>
                             <InputGroup size='md'>
                                 <Input
-                                    type={show ? "text":"password"}
+                                    type={show ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     mb={6}
