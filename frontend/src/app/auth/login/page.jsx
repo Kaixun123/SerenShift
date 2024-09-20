@@ -20,7 +20,7 @@ const LoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (validateEmailDomain(email)) {
-            const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/auth/login', {
+            const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
