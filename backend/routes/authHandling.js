@@ -6,7 +6,7 @@ const authController = require('../controllers/authController')
 // Validation Rules
 const loginFormValidationRules = () => {
     return [
-        check("email").isEmail().withMessage("Invalid email address").notEmpty().trim(),
+        check("emailAddress").isEmail().withMessage("Invalid email address").notEmpty().trim(),
         check("password").notEmpty().withMessage("Password cannot be empty").trim(),
     ];
 }
@@ -16,13 +16,9 @@ const vaildateParameters = (req, res, next) => {
     if (errors.isEmpty()) {
         return next();
     }
-    const extractedErrors = errors.array().map((err) => ({
-        field: err.param,  // This will give the parameter name (e.g., email, password)
-        message: err.msg,  // This will give the actual error message (e.g., Invalid email)
-    }));
-    
     return res.status(422).json({
-        errors: extractedErrors,
+        message: "Invaild Input Receieved",
+        errors: errors.array()
     });
 };
 
