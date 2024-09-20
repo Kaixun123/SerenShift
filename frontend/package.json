@@ -19,7 +19,8 @@
     "framer-motion": "^11.5.4",
     "next": "14.2.12",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "SerenShift": "file:"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.24.7",

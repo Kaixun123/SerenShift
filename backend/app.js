@@ -57,8 +57,8 @@ app.use(express.static("./public"));
 app.use(morgan("tiny"));
 
 // App Routes
-app.use("/auth", require("./routes/authHandling"));
-app.use("/dummy", require("./routes/dummyHandling"));
+app.use("/api/auth", require("./routes/authHandling"));
+app.use("/api/dummy", require("./routes/dummyHandling"));
 app.use("/api/employee", require("./routes/employeeHandling"));
 app.use("/api/schedule", require("./routes/scheduleHandling"));
 
