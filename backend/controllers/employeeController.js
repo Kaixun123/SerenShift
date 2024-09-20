@@ -1,22 +1,6 @@
 const { Employee } = require('../models');
 const { fetchColleagues } = require('../services/common/employeeHelper');
 
-const manager = (req, res, next) => {
-    return res.status(200).json({ message: 'Only Managers should be able to see this' });
-}
-
-const hr = (req, res, next) => {
-    return res.status(200).json({ message: 'Only HR should be able to see this' });
-}
-
-const employee = (req, res, next) => {
-    return res.status(200).json({ message: 'Only logged in employees should be able to see this' });
-}
-
-const anybody = (req, res, next) => {
-    return res.status(200).json({ message: 'Anybody can see this' });
-}
-
 // Original function to return colleagues directly via res
 const retrieveColleagues = async (req, res, next) => {
     try {
