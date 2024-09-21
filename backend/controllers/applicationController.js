@@ -1,6 +1,6 @@
-const { Application } = require('../models');
-const { Employee } = require('../models');
-const scheduleController = require("./scheduleController");
+const { Application, Employee, Schedule } = require('../models');
+const { splitScheduleByDate } = require('../services/common/scheduleHelper')
+const moment = require('moment'); // Ensure moment.js is installed
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplication = async (req, res, next) => {
@@ -15,7 +15,7 @@ const retrieveApplication = async (req, res, next) => {
         });
 
         if (!ownApplication || ownApplication.length === 0) {
-            return res.status(200).json({ message: "No Pending Application." });
+            return res.status(404).json({ message: `No ${status} application.` });
         };
 
         let response = [];
@@ -41,12 +41,51 @@ const retrieveApplication = async (req, res, next) => {
         return res.status(200).json(response);
     } catch (error) {
         console.error("Error fetching application:", error);
-        throw new Error("Error fetching application.");
+        return res.status(500).json({ error: "An error occurred while fetching application." });
     }
 }
 
-// POST function - to create pending application
-const createPendingApplication = async (req, res, next) => {
+// Helper function for createNewApplication
+const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationType) => {
+    try {
+        let formattedNewDate = await splitScheduleByDate(newStartDate, newEndDate);
+        for (const newDate of formattedNewDate) {
+
+            // dataArray can be both existingPending OR approvedApplication
+            for (const data of dataArray) {
+                // Split the existing date range into blocks by day
+                const dateBlocks = await splitScheduleByDate(data.start_date, data.end_date);
+
+                for (const block of dateBlocks) {
+                    // Ensure comparison happens only on the same date
+                    if (block.date === newDate.date) {
+
+                        // Convert newDate to full date-time for proper range comparison
+                        let newStartDate = moment(`${newDate.date} ${newDate.start_time}`, 'YYYY-MM-DD HH:mm:ss');
+                        let newEndDate = moment(`${newDate.date} ${newDate.end_time}`, 'YYYY-MM-DD HH:mm:ss');
+
+                        let existingStartDate = moment(`${block.date} ${block.start_time}`, 'YYYY-MM-DD HH:mm:ss')
+                        let existingEndDate = moment(`${block.date} ${block.end_time}`, 'YYYY-MM-DD HH:mm:ss')
+
+                        // Overlap condition: check if the new date period overlaps with the existing/approved date period
+                        // (1) condition is to check if the new start_date is before existing/approved end_date && new end_date is after existing/approved start_date (full or partial overlap)
+                        // (2) condition is to check if the new start_date is before existing/approved start_date && new end_date is after existing/approved start_date (1-day edge case)
+                        if ((newStartDate.isBefore(existingEndDate) && newEndDate.isAfter(existingStartDate))
+                            || newStartDate.isBefore(existingStartDate) && newEndDate.isAfter(existingStartDate)) {
+                            return true
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error(`Error fetching ${applicationType} application:`, error);
+        throw new Error(`Error fetching ${applicationType} application.`);
+    }
+}
+
+// POST function - to create new application
+const createNewApplication = async (req, res, next) => {
     try {
 
         let { id, application_type, start_date, end_date, requestor_remarks } = req.body
@@ -59,13 +98,26 @@ const createPendingApplication = async (req, res, next) => {
             return res.status(404).json({ message: "Reporting Manager not found." });
         };
 
-        // check if the new start_date & end_date duplicate with the approved application
-        let checkDuplicateApplication = scheduleController.splitScheduleByDate(start_date, end_date);
-        if (checkDuplicateApplication.length != 0) {
-            return res.status(404).json({ message: "Duplicate application." });
+        // retrieve existing pending application to use for overlapping check later
+        let existingPending = await Application.findAll({
+            where: {
+                created_by: id,
+                status: 'Pending'
+            }
+        })
+
+        // retrieve approved application based on user id
+        let approvedApplication = await Schedule.findAll({
+            where: { created_by: id }
+        })
+
+        let existingPendingRes = await checkforOverlap(start_date, end_date, existingPending, 'existing');
+        let approvedApplicationRes = await checkforOverlap(start_date, end_date, approvedApplication, 'approved')
+        if (existingPendingRes || approvedApplicationRes) {
+            return res.status(404).json({ message: `Invalid application period. New application cannot overlap with the existing or approved application.` });
         }
 
-        // if no duplicate, create a new pending application
+        // if no duplicate, create a new application
         let newApplication = await Application.create({
             start_date: start_date,
             end_date: end_date,
@@ -76,14 +128,14 @@ const createPendingApplication = async (req, res, next) => {
             requestor_remarks: requestor_remarks,
         })
 
-        return res.status(201).json({ message: "Successcully creating a pending application.", result: newApplication })
+        return res.status(201).json({ message: "New application successfully created.", result: newApplication })
     } catch (error) {
-        console.error("Error creating a pending application:", error);
-        return res.status(500).json({ error: "An error occurred while creating a pending application." });
+        console.error("Error creating new application:", error);
+        return res.status(500).json({ error: "An error occurred while creating new application." });
     }
 }
 
 module.exports = {
     retrieveApplication,
-    createPendingApplication
+    createNewApplication
 }

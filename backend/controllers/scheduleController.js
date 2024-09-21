@@ -100,6 +100,5 @@ const retrieveTeamSchedule = async (req, res, next) => {
 };
 
 module.exports = {
-    retrieveTeamSchedule,
-    splitScheduleByDate
+    retrieveTeamSchedule
 };
