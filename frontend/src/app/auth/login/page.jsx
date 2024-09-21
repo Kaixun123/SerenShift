@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react';
 import { Box, Button, FormControl, FormLabel, Input, Heading, VStack, useToast, InputGroup, InputRightElement } from '@chakra-ui/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const LoginPage = () => {
@@ -20,7 +19,7 @@ const LoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (validateEmailDomain(email)) {
-            const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/api/auth/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
