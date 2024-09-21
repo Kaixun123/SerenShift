@@ -1,5 +1,5 @@
 {
-    "name": "SerenShfit",
+    "name": "SerenShift",
     "version": "1.0.0",
     "description": "Backend inside the template for Full Stack Development with ReactJS, NodeJS, ExpressJS, MySQL with Sequelise ORM",
     "main": "app.js",
