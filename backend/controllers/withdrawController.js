@@ -3,7 +3,7 @@ const { Application, Employee } = require('../models');
 const withdrawController = {
     withdrawPendingApplications: async (req, res) => {
         try {
-            // Get the staff member's ID from the cookie
+            // Get the current employee using the user ID from the request
             let currentEmployee = await Employee.findByPk(req.user.id);
             
             if (!currentEmployee) {
@@ -16,32 +16,37 @@ const withdrawController = {
                 return res.status(400).json({ message: 'Staff ID not found' });
             }
 
-            // Find applications with status 'pending' and created by the staff member
-            const pendingApplications = await Application.findAll({ 
+            // Get the application ID from the request body
+            const { applicationId } = req.body;
+
+            if (!applicationId) {
+                return res.status(400).json({ message: 'Application ID is required' });
+            }
+
+            // Find the application with the given ID, status 'pending', and created by the staff member
+            const application = await Application.findOne({ 
                 where: { 
-                    status: 'pending',
+                    application_id: applicationId,
+                    status: 'Pending',
                     created_by: staffId
                 } 
             });
 
-            // Update status to 'withdrawn' for each pending application
-            const updatedApplications = await Promise.all(pendingApplications.map(async (application) => {
-                application.status = 'Withdrawn';
-                await application.save();
-                
-                // Print out the now withdrawn request
-                console.log('Withdrawn Application:', application);
+            if (!application) {
+                return res.status(404).json({ message: 'Application not found or not authorized' });
+            }
 
-                return application;
-            }));
+            // Update status to 'Withdrawn'
+            application.status = 'Withdrawn';
+            await application.save();
 
-            // Log the updated applications to the console
-            console.log('Updated Applications:', updatedApplications);
+            // Print out the now withdrawn request
+            console.log('Withdrawn Application:', application);
 
-            // Send a response with the updated applications
+            // Send a response with the updated application
             res.status(200).json({
-                message: 'Pending applications updated to withdrawn successfully',
-                updatedApplications: updatedApplications
+                message: 'Application updated to withdrawn successfully',
+                application: application
             });
         } catch (error) {
             res.status(500).json({ message: 'An error occurred', error });
