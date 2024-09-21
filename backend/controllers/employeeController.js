@@ -26,10 +26,6 @@ const getEmployee = async (req, res, next) => {
 }
 
 module.exports = {
-    manager,
-    hr,
-    employee,
-    anybody,
     retrieveColleagues,
     getEmployee,
 };
