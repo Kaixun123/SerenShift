@@ -10,9 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang='en' className={Fonts.rubik.variable}>
-      <body
-        className={`antialiased`}
-      >
+      <body className={`antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
