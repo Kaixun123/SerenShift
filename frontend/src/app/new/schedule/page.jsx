@@ -5,10 +5,10 @@ export default function Home() {
   return (
     <Layout>
       <TopHeader
-        mainText={"Good Morning, Princess!"}
-        subText={"Glad to see you back in the office"}
+        mainText={"New Schedule"}
+        subText={"Plan your schedule timely and wisely!"}
       />
-      <div className="p-[30px]">content</div>
+      <div className="p-[30px]">new application</div>
     </Layout>
   );
 }
