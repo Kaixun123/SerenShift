@@ -6,6 +6,16 @@ module.exports = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    colors: {
+      white: "#fff",
+      blue: {
+        primary: "#4339F2",
+      },
+      gray: {
+        primary: "#787486",
+        secondary: "#DBDBDB",
+      }
+    },
     extend: {
       colors: {
         background: "var(--background)",
