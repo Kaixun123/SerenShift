@@ -1,6 +1,6 @@
 import "./globals.css";
-import { Providers } from './providers';
-import { Fonts } from './fonts';
+import { Providers } from "./providers";
+import { Fonts } from "./fonts";
 
 export const metadata = {
   title: "SerenShift",
@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang='en' className={Fonts.rubik.variable}>
+    <html lang="en" className={Fonts.rubik.variable}>
       <body className={`antialiased`}>
         <Providers>{children}</Providers>
       </body>
