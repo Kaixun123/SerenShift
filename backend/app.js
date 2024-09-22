@@ -57,10 +57,10 @@ app.use(express.static("./public"));
 app.use(morgan("tiny"));
 
 // App Routes
-app.use("/auth", require("./routes/authHandling"));
-app.use("/dummy", require("./routes/dummyHandling"));
-app.use("/employee", require("./routes/employeeHandling"));
-app.use("/schedule", require("./routes/scheduleHandling"));
+app.use("/api/auth", require("./routes/authHandling"));
+app.use("/api/dummy", require("./routes/dummyHandling"));
+app.use("/api/employee", require("./routes/employeeHandling"));
+app.use("/api/schedule", require("./routes/scheduleHandling"));
 
 //Error Handling
 app.use((req, res, next) => {
@@ -75,13 +75,11 @@ app.use((req, res, next) => {
 });
 
 var server = null;
-sequelize.sync().then(() => {
-  server = app.listen(EXPRESS_PORT, () => {
-    console.info(`server is running on port ${EXPRESS_PORT}`);
-    if (process.send) {
-      process.send("ready");
-    }
-  });
+server = app.listen(EXPRESS_PORT, () => {
+  console.info(`server is running on port ${EXPRESS_PORT}`);
+  if (process.send) {
+    process.send("ready");
+  }
 });
 
 process.on("SIGINT", () => {

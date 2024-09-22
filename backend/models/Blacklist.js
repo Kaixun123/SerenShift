@@ -1,11 +1,11 @@
 const { DataTypes, Model } = require("sequelize");
 const { sequelize } = require("../services/database/mysql");
 
-class Schedule extends Model { }
+class Blacklist extends Model { }
 
-Schedule.init(
+Blacklist.init(
     {
-        schedule_id: {
+        blacklist_id: {
             type: DataTypes.INTEGER(6),
             allowNull: false,
             primaryKey: true,
@@ -19,7 +19,7 @@ Schedule.init(
             type: DataTypes.DATE,
             allowNull: false,
         },
-        schedule_type: {
+        blacklist_type: {
             type: DataTypes.ENUM,
             values: ['Regular', 'Ad Hoc'],
             allowNull: false,
@@ -32,25 +32,14 @@ Schedule.init(
             type: DataTypes.INTEGER(6),
             allowNull: false,
         },
-        verify_by: {
-            type: DataTypes.INTEGER(6),
-            allowNull: false,
-        },
-        verify_timestamp: {
-            type: DataTypes.DATE,
-            allowNull: false,
-        },
-        linked_schedule: {
-            type: DataTypes.INTEGER(6)
-        }
     },
     {
         sequelize,
         timestamps: true,
         createdAt: 'created_timestamp',
         updatedAt: 'last_update_timestamp',
-        modelName: 'Schedules',
+        tableName: "Blacklist",
     }
 );
 
-module.exports = Schedule;
+module.exports = Blacklist;

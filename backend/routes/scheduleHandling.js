@@ -15,10 +15,9 @@ const vaildateParameters = (req, res, next) => {
     if (errors.isEmpty()) {
         return next();
     }
-    const extractedErrors = [];
-    errors.array().map((err) => extractedErrors.push({ [err.param]: err.msg }));
     return res.status(422).json({
-        errors: extractedErrors,
+        message: "Invaild Input Receieved",
+        errors: errors.array()
     });
 };
 
@@ -28,5 +27,7 @@ router.get("/teamSchedule", ensureLoggedIn, (req, res) => scheduleController.ret
 // router.get("/hr", ensureHR, (req, res) => employeeController.hr(req, res));
 // router.get("/colleagues", ensureLoggedIn, (req, res) => employeeController.retrieveColleagues(req, res));
 // router.get("/employee", employeeIdValidationRule(), vaildateParameters, (req, res) => employeeController.getEmployee(req, res));
+
+module.exports = router;
 
 module.exports = router;

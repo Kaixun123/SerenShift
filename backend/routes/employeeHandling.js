@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { check, validationResult } = require("express-validator");
-const { ensureLoggedIn, ensureManager, ensureHR } = require("../middlewares/authMiddleware");
+const { ensureLoggedIn } = require("../middlewares/authMiddleware");
 const employeeController = require("../controllers/employeeController");
 // Validation Rules
 const employeeIdValidationRule = () => {
@@ -15,17 +15,12 @@ const vaildateParameters = (req, res, next) => {
     if (errors.isEmpty()) {
         return next();
     }
-    const extractedErrors = [];
-    errors.array().map((err) => extractedErrors.push({ [err.param]: err.msg }));
     return res.status(422).json({
-        errors: extractedErrors,
+        message: "Invaild Input Receieved",
+        errors: errors.array()
     });
 };
 
-router.get("/anybody", (req, res) => employeeController.anybody(req, res));
-router.get("/staff", ensureLoggedIn, (req, res) => employeeController.employee(req, res));
-router.get("/manager", ensureManager, (req, res) => employeeController.manager(req, res));
-router.get("/hr", ensureHR, (req, res) => employeeController.hr(req, res));
 router.get("/colleagues", ensureLoggedIn, (req, res) => employeeController.retrieveColleagues(req, res));
 router.get("/employee", employeeIdValidationRule(), vaildateParameters, (req, res) => employeeController.getEmployee(req, res));
 
