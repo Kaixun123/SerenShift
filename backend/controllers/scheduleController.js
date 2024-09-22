@@ -99,6 +99,39 @@ const retrieveTeamSchedule = async (req, res, next) => {
     }
 };
 
+const retrieveOwnSchedule = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const schedule = await fetchTeamIndividualSchedule(userId);
+
+        if (schedule.length === 0) {
+            return res.status(404).json({ message: "No schedules found for this user." });
+        }
+
+        let wfhDates = {};
+        for (const block of schedule) {
+            dateBlocks = await splitScheduleByDate(block.start_date, block.end_date);
+
+            for (const date of dateBlocks) {
+                // Initialize the date object if it doesn't exist
+                wfhDates[date.date] = wfhDates[date.date] || {};
+
+                // Initialize the period array if it doesn't exist
+                wfhDates[date.date][date.period] = wfhDates[date.date][date.period] || [];
+
+                // Push the time block into the corresponding array of key AM/PM/Full day 
+                wfhDates[date.date][date.period].push([date.start_time, date.end_time]);
+            }
+        }
+
+        return res.status(200).json(wfhDates);
+    } catch (error) {
+        console.error("Error retrieving own schedule:", error);
+        return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
+    }
+};
+
 module.exports = {
-    retrieveTeamSchedule
+    retrieveTeamSchedule, 
+    retrieveOwnSchedule
 };
