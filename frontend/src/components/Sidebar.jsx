@@ -1,11 +1,18 @@
+"use client"
+
 import Link from "next/link";
 import {
   CalendarMonthRounded,
   PeopleAltRounded,
   ArticleRounded,
 } from "@mui/icons-material";
+import { Image, Button, useToast } from '@chakra-ui/react';
+import { useRouter } from "next/navigation";
 
 export default function SideBar() {
+  const route = useRouter();
+  const toast = useToast();
+  
   const menuItems = [
     {
       href: "/",
@@ -24,18 +31,60 @@ export default function SideBar() {
     },
   ];
 
+  const handleLogout = async() => {
+    console.log("Logout clicked");
+    let response = await fetch('/api/auth/logout', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+    });
+    if (response.ok) {
+      toast({
+        title: 'Logout Success',
+        description: 'Thank you for using our service',
+        status: 'success',
+        isClosable: true,
+      });
+      route.push('/auth/login');
+    } else {
+      console.error('Login failed');
+      // Handle login failure here (e.g., show an error message)
+      toast({
+          title: 'Logout Failed',
+          description: 'An error has occured. Please try again later',
+          status: 'error',
+          isClosable: true,
+      });
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col border-r border-r-gray-secondary w-[250px]">
       <div className="flex h-[100px] p-5 items-center justify-center border-b border-b-gray-secondary">
-        ICON PUT HERE
+        <Image
+            src="/serenShiftLogo.jpg"
+            alt="Logo"
+            boxSize="60px"
+            borderRadius='full'
+            objectFit="contain"
+            mx="auto"
+            mb={4}
+        />
       </div>
-      <div className="flex flex-col p-5 gap-5">
+      <div className="flex flex-col p-5 gap-5 flex-grow-0 flex-shrink-0">
         {menuItems.map(({ href, icon: Icon, title }) => (
           <div className="flex gap-3" key={title}>
             <Icon />
             <Link href={href}>{title}</Link>
           </div>
         ))}
+      </div>
+      <div className="p-5 mt-auto">
+        <Button colorScheme="red" variant="outline" width="full" onClick={handleLogout}>
+          Logout
+        </Button>
       </div>
     </div>
   );
