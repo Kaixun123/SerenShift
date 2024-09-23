@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react';
-import { Box, Button, FormControl, FormLabel, Input, Heading, VStack, useToast, InputGroup, InputRightElement } from '@chakra-ui/react';
+import { Box, Button, FormControl, FormLabel, Input, Heading, VStack, useToast, InputGroup, InputRightElement, Image } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 
 const LoginPage = () => {
@@ -12,8 +12,8 @@ const LoginPage = () => {
     const handleClick = () => setShow(!show);
 
     const validateEmailDomain = (email) => {
-        const domain = '@allinone.com.sg';
-        return email.endsWith(domain);
+        const domainPattern = /^.*@allinone\.com\.[a-z]{2,}$/i;
+        return domainPattern.test(email);
     }
 
     const handleSubmit = async (e) => {
@@ -31,8 +31,8 @@ const LoginPage = () => {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                console.log('Login successful:', data);
+                // const data = await response.json();
+                // console.log('Login successful:', data);
                 // Handle successful login here (e.g., redirect to another page)
                 toast({
                     title: 'Login Success',
@@ -50,6 +50,8 @@ const LoginPage = () => {
                     status: 'error',
                     isClosable: true,
                 });
+                setEmail("");
+                setPassword("");
             }
         } else {
             toast({
@@ -82,9 +84,15 @@ const LoginPage = () => {
                 bg="white"
             >
                 <VStack spacing={4} align="stretch">
-                    <Heading as="h1" size="lg" textAlign="center" mb={4}>
-                        put logo if there is one
-                    </Heading>
+                    <Image
+                        src="/serenShiftLogo.jpg"
+                        alt="Logo"
+                        boxSize="150px"
+                        borderRadius='full'
+                        objectFit="contain"
+                        mx="auto"
+                        mb={4}
+                    />
                     <form onSubmit={handleSubmit}>
                         <FormControl id="email" isRequired>
                             <FormLabel>Email Address</FormLabel>
