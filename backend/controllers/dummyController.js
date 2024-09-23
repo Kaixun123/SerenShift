@@ -4,6 +4,10 @@ const manager = (req, res, next) => {
     return res.status(200).json({ message: 'Only Managers should be able to see this' });
 }
 
+const managerAndAbove = (req, res, next) => {
+    return res.status(200).json({ message: 'Only Managers and HR should be able to see this' });
+}
+
 const hr = (req, res, next) => {
     return res.status(200).json({ message: 'Only HR should be able to see this' });
 }
@@ -52,6 +56,7 @@ const getEmployee = async (req, res, next) => {
 
 module.exports = {
     manager,
+    managerAndAbove,
     hr,
     employee,
     anybody,
