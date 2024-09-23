@@ -1,7 +1,23 @@
 'use client'
 import { Layout } from "@/components/Layout";
 import TopHeader from "@/components/TopHeader";
-import { Box, Flex, Text, VStack, Badge, Button } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Text,
+  VStack,
+  Badge,
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+} from "@chakra-ui/react";
+import { useState } from "react";
 
 export default function Home() {
   // Dummy data for pending applications
@@ -29,11 +45,24 @@ export default function Home() {
     },
   ];
 
+  // State for the selected application to withdraw
+  const [selectedApp, setSelectedApp] = useState(null);
+
+  // Chakra UI modal hooks
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  // Function to handle the click event of the withdraw button
+  const handleWithdrawClick = (app) => {
+    setSelectedApp(app);
+    onOpen();
+  };
+
   const PendingArrangementCard = ({
     start_date,
     end_date,
     application_type,
     requestor_remarks,
+    onWithdraw,
   }) => {
     return (
       <Box
@@ -70,7 +99,13 @@ export default function Home() {
             </Box>
           </Flex>
 
-          <Button colorScheme="red" variant="outline" size="sm" mt="4">
+          <Button
+            colorScheme="red"
+            variant="outline"
+            size="sm"
+            mt="4"
+            onClick={() => onWithdraw({ start_date, end_date, application_type })}
+          >
             Withdraw
           </Button>
         </VStack>
@@ -94,11 +129,39 @@ export default function Home() {
               end_date={item.end_date}
               application_type={item.application_type}
               requestor_remarks={item.requestor_remarks}
+              onWithdraw={handleWithdrawClick}
             />
           ))}
         </VStack>
       </Flex>
+
+      {/* Modal for withdrawal confirmation */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Confirm Withdrawal</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>
+              Are you sure you want to withdraw the following application?
+            </Text>
+            <Text fontWeight="bold" mt={4}>
+              Type: {selectedApp?.application_type}
+            </Text>
+            <Text>Start Date: {selectedApp?.start_date}</Text>
+            <Text>End Date: {selectedApp?.end_date}</Text>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button colorScheme="red" mr={3} onClick={onClose}>
+              Yes, Withdraw
+            </Button>
+            <Button variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Layout>
   );
 }
-
