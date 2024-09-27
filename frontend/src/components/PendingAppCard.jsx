@@ -36,8 +36,8 @@ const PendingApplicationCard = ({
   return (
     <Box
       w={["100%", "80%", "70%"]}
-      maxW="900px"
-      p="6"
+      maxW="800px" // Adjust the max width to reduce empty space
+      p="4" // Adjust padding to reduce overall size
       borderWidth="1px"
       borderRadius="lg"
       overflow="hidden"
@@ -47,51 +47,51 @@ const PendingApplicationCard = ({
       ml="auto"
       mr="auto"
     >
-      <VStack spacing={4} align="stretch">
-        <Flex justify="space-between">
-          <Badge colorScheme="orange" fontSize="lg" p={1}>Pending</Badge>
-          <Badge colorScheme={getTypeBadgeColor(application_type)} fontSize="lg" p={1} borderRadius="full">
+      <Flex justify="space-between" align="flex-start">
+        {/* Left Side */}
+        <VStack spacing={2} align="flex-start" flex="1"> {/* Increased spacing */}
+          <Badge colorScheme="orange" fontSize="md" p={1} borderRadius="0" textAlign="center">
+            Pending
+          </Badge>
+          <Text fontSize="sm">
+            {requestor_remarks || "No remarks provided"}
+          </Text>
+          <Badge colorScheme={getTypeBadgeColor(application_type)} fontSize="xs" p={1} borderRadius="full" textAlign="center"> {/* Smaller font size */}
             {application_type}
           </Badge>
-        </Flex>
+        </VStack>
 
-        <Text fontWeight="bold" fontSize="lg">
-          {"Work-From-Home"}
-        </Text>
+        {/* Right Side */}
+        <VStack spacing={3} align="stretch" ml={4} flex="1">
+          {/* Combined gray box for date and time */}
+          <Box
+            bg="gray.200" // Light gray background
+            p={3}
+            borderRadius="md"
+            display="flex"
+            justifyContent="space-between" // Space between date and time
+            alignItems="center"
+          >
+            <Flex alignItems="center">
+              <CalendarTodayIcon color="action" />
+              <Text ml={2}>{formatDate(start_date)}</Text>
+            </Flex>
+            <Flex alignItems="center">
+              <AccessTimeIcon color="action" />
+              <Text ml={4}>{formatTime(start_date)}</Text> {/* Increased margin for spacing */}
+            </Flex>
+          </Box>
 
-        <Text fontSize="sm">
-          {requestor_remarks || "No remarks provided"}
-        </Text>
-
-        {/* Combined gray box for date and time */}
-        <Box
-          bg="gray.200" // Light gray background
-          p={4}
-          borderRadius="md"
-          display="flex"
-          justifyContent="space-between" // Space between date and time
-          alignItems="center"
-        >
-          <Flex alignItems="center">
-            <CalendarTodayIcon color="action" />
-            <Text ml={2}>{formatDate(start_date)}</Text>
-          </Flex>
-          <Flex alignItems="center">
-            <AccessTimeIcon color="action" />
-            <Text ml={2}>{formatTime(start_date)}</Text>
-          </Flex>
-        </Box>
-
-        <Button
-          colorScheme="red"
-          variant="outline"
-          size="sm"
-          mt="4"
-          onClick={() => onWithdraw({ start_date, application_type })}
-        >
-          Withdraw
-        </Button>
-      </VStack>
+          <Button
+            colorScheme="red"
+            variant="outline"
+            size="sm"
+            onClick={() => onWithdraw({ start_date, application_type })}
+          >
+            Withdraw
+          </Button>
+        </VStack>
+      </Flex>
     </Box>
   );
 };
