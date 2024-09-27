@@ -1,45 +1,44 @@
+import React from 'react';
 import {
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalFooter,
-    ModalBody,
-    ModalCloseButton,
-    Button,
-    Text,
-  } from "@chakra-ui/react";
-  
-  const WithdrawalModal = ({ isOpen, onClose, selectedApp, onWithdraw }) => {
-    return (
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Confirm Withdrawal</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Text>
-              Are you sure you want to withdraw the following application?
-            </Text>
-            <Text fontWeight="bold" mt={4}>
-              Type: {selectedApp?.application_type}
-            </Text>
-            <Text>Start Date: {selectedApp?.start_date}</Text>
-            <Text>End Date: {selectedApp?.end_date}</Text>
-          </ModalBody>
-  
-          <ModalFooter>
-            <Button colorScheme="red" mr={3} onClick={onWithdraw}>
-              Yes, Withdraw
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    );
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Text
+} from "@chakra-ui/react";
+
+const WithdrawalModal = ({ isOpen, onClose, applicationType, startDate, endDate }) => {
+  // Format the date to display only the date part (e.g., YYYY-MM-DD)
+  const formatDate = (datetime) => {
+    return new Date(datetime).toLocaleDateString();
   };
-  
-  export default WithdrawalModal;
-  
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Confirm Withdrawal?</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <Text>Type: {applicationType}</Text>
+          <Text>Start Date: {formatDate(startDate)}</Text>
+          <Text>End Date: {formatDate(endDate)}</Text>
+        </ModalBody>
+        <ModalFooter>
+          <Button colorScheme="red" mr={3} onClick={onClose}>
+            Yes, Withdraw
+          </Button>
+          <Button variant="ghost" onClick={onClose}>
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+};
+
+export default WithdrawalModal;

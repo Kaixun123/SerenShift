@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import TopHeader from "@/components/TopHeader";
 import { Box, Flex, VStack, useDisclosure, Text } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import PendingArrangementCard from "@/components/PendingAppCard";
+import PendingApplicationCard from "@/components/PendingAppCard";
 import WithdrawalModal from "@/components/WithdrawModal";
 
 export default function Home() {
@@ -73,7 +73,7 @@ export default function Home() {
         <VStack spacing={4}>
           {pendingApplications.length > 0 ? (
             pendingApplications.map((application) => (
-              <PendingArrangementCard
+              <PendingApplicationCard
                 key={application.application_id} // Unique key prop
                 start_date={application.start_date} // Pass the specific properties
                 end_date={application.end_date}
@@ -93,7 +93,9 @@ export default function Home() {
       <WithdrawalModal
         isOpen={isOpen}
         onClose={onClose}
-        onWithdraw={() => handleWithdraw(selectedApp.application_id)}
+        applicationType={selectedApp?.application_type}
+        startDate={selectedApp?.start_date}
+        endDate={selectedApp?.end_date}
       />
     </Layout>
   );

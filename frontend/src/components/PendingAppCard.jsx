@@ -1,12 +1,17 @@
 import { Box, Flex, Text, VStack, Badge, Button } from "@chakra-ui/react";
 
-const PendingArrangementCard = ({
+const PendingApplicationCard = ({
   start_date,
   end_date,
   application_type,
   requestor_remarks,
   onWithdraw,
 }) => {
+  // Format the date to display only the date part (e.g., YYYY-MM-DD)
+  const formatDate = (datetime) => {
+    return new Date(datetime).toLocaleDateString(); // You can customize the format if needed
+  };
+
   return (
     <Box
       w="350px"
@@ -34,11 +39,11 @@ const PendingArrangementCard = ({
         <Flex justify="space-between" fontSize="sm" color="gray.500">
           <Box>
             <Text>Start Date:</Text>
-            <Text>{start_date}</Text>
+            <Text>{formatDate(start_date)}</Text>
           </Box>
           <Box>
             <Text>End Date:</Text>
-            <Text>{end_date}</Text>
+            <Text>{formatDate(end_date)}</Text>
           </Box>
         </Flex>
 
@@ -56,4 +61,4 @@ const PendingArrangementCard = ({
   );
 };
 
-export default PendingArrangementCard;
+export default PendingApplicationCard;
