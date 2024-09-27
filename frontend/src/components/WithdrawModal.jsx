@@ -11,7 +11,7 @@ import {
   Text
 } from "@chakra-ui/react";
 
-const WithdrawalModal = ({ isOpen, onClose, applicationType, startDate, endDate }) => {
+const WithdrawalModal = ({ isOpen, onClose, applicationType, startDate, endDate, onConfirm }) => {
   // Format the date to display only the date part (e.g., YYYY-MM-DD)
   const formatDate = (datetime) => {
     return new Date(datetime).toLocaleDateString();
@@ -29,7 +29,7 @@ const WithdrawalModal = ({ isOpen, onClose, applicationType, startDate, endDate 
           <Text>End Date: {formatDate(endDate)}</Text>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mr={3} onClick={onClose}>
+          <Button colorScheme="red" mr={3} onClick={onConfirm}>
             Yes, Withdraw
           </Button>
           <Button variant="ghost" onClick={onClose}>

@@ -44,6 +44,7 @@ export default function Home() {
     fetchData();
   }, []);
 
+  // Handle withdrawal function
   const handleWithdraw = async (applicationId) => {
     try {
       const response = await fetch('/api/withdraw/withdrawPending', {
@@ -90,13 +91,16 @@ export default function Home() {
           )}
         </VStack>
       </Box>
-      <WithdrawalModal
-        isOpen={isOpen}
-        onClose={onClose}
-        applicationType={selectedApp?.application_type}
-        startDate={selectedApp?.start_date}
-        endDate={selectedApp?.end_date}
-      />
+      {selectedApp && (
+        <WithdrawalModal
+          isOpen={isOpen}
+          onClose={onClose}
+          applicationType={selectedApp.application_type}
+          startDate={selectedApp.start_date}
+          endDate={selectedApp.end_date}
+          onConfirm={() => handleWithdraw(selectedApp.application_id)} // Pass handleWithdraw function to WithdrawalModal
+        />
+      )}
     </Layout>
   );
 }
