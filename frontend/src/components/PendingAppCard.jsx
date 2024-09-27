@@ -49,8 +49,10 @@ const PendingApplicationCard = ({
     >
       <VStack spacing={4} align="stretch">
         <Flex justify="space-between">
-          <Badge colorScheme="orange">Pending</Badge>
-          <Badge colorScheme={getTypeBadgeColor(application_type)}>{application_type}</Badge>
+          <Badge colorScheme="orange" fontSize="lg" p={1}>Pending</Badge>
+          <Badge colorScheme={getTypeBadgeColor(application_type)} fontSize="lg" p={1} borderRadius="full">
+            {application_type}
+          </Badge>
         </Flex>
 
         <Text fontWeight="bold" fontSize="lg">
