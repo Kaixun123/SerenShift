@@ -1,31 +1,45 @@
 'use strict';
 
+// Helper function to generate random dates within a specific range (e.g., within the next 30 days)
+const generateRandomDate = (daysRange = 30) => {
+  let randomDate;
+  do {
+    const today = new Date();
+    const randomDays = Math.floor(Math.random() * daysRange);
+    randomDate = new Date(today);
+    randomDate.setDate(today.getDate() + randomDays);
+  } while (randomDate.getDay() === 0 || randomDate.getDay() === 6); // 0 = Sunday, 6 = Saturday
+  return randomDate;
+};
+
 // Helper function to generate start and end times for morning, afternoon, or whole day
 const generateFixedTimes = () => {
-  const MORNING_START = new Date().setHours(8, 30, 0, 0);  // 8:30 am
-  const MORNING_END = new Date().setHours(12, 0, 0, 0);    // 12:00 pm
-  const AFTERNOON_START = new Date().setHours(13, 0, 0, 0); // 1:00 pm
-  const AFTERNOON_END = new Date().setHours(17, 30, 0, 0);  // 5:30 pm
-  const WHOLE_DAY_START = new Date().setHours(8, 30, 0, 0);  // 8:30 am
-  const WHOLE_DAY_END = new Date().setHours(17, 30, 0, 0);   // 5:30 pm
+  const MORNING_START = new Date().setHours(9, 0, 0, 0);  // 9:00 am
+  const MORNING_END = new Date().setHours(13, 0, 0, 0);    // 1:00 pm
+  const AFTERNOON_START = new Date().setHours(14, 0, 0, 0); // 2:00 pm
+  const AFTERNOON_END = new Date().setHours(18, 0, 0, 0);  // 6:00 pm
+  const WHOLE_DAY_START = new Date().setHours(9, 0, 0, 0);  // 9:00 am
+  const WHOLE_DAY_END = new Date().setHours(18, 0, 0, 0);   // 6:00 pm
 
   // Randomly choose between morning, afternoon, or whole day
   const randomChoice = Math.random();
   let startTime, endTime;
 
   if (randomChoice < 0.33) {
-    // Morning: 8:30 am - 12:00 pm
     startTime = new Date(MORNING_START);
     endTime = new Date(MORNING_END);
   } else if (randomChoice < 0.66) {
-    // Afternoon: 1:00 pm - 5:30 pm
     startTime = new Date(AFTERNOON_START);
     endTime = new Date(AFTERNOON_END);
   } else {
-    // Whole day: 8:30 am - 5:30 pm
     startTime = new Date(WHOLE_DAY_START);
     endTime = new Date(WHOLE_DAY_END);
   }
+
+  // Add randomness to the start date
+  const randomDate = generateRandomDate(30); // Generate random date within the next 30 days
+  startTime.setFullYear(randomDate.getFullYear(), randomDate.getMonth(), randomDate.getDate());
+  endTime.setFullYear(randomDate.getFullYear(), randomDate.getMonth(), randomDate.getDate());
 
   return { startDate: startTime, endDate: endTime };
 };
@@ -85,7 +99,7 @@ module.exports = {
       // Step 3: Create a random number of schedule entries for each employee
       const scheduleCount = getRandomInt(1, 5); // Generate between 1 and 5 schedules per employee
       for (let i = 0; i < scheduleCount; i++) {
-        const { startDate, endDate } = generateFixedTimes(); // Generate fixed start and end times
+        const { startDate, endDate } = generateFixedTimes(); // Generate fixed start and end times with random dates
         schedules.push({
           start_date: startDate,
           end_date: endDate,
@@ -102,7 +116,7 @@ module.exports = {
       // Step 4: Create a random number of application entries for each employee
       const applicationCount = getRandomInt(1, 5); // Generate between 1 and 5 applications per employee
       for (let i = 0; i < applicationCount; i++) {
-        const { startDate, endDate } = generateFixedTimes(); // Generate fixed start and end times
+        const { startDate, endDate } = generateFixedTimes(); // Generate fixed start and end times with random dates
         const isRegular = Math.random() < 0.2;  // 20% chance of generating a Regular application
         if (isRegular) {
           const regularApplications = generateWeeklyRegularApplications(startDate, 4); // Repeat for 4 weeks
