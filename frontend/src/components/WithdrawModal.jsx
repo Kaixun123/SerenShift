@@ -10,7 +10,7 @@ import {
     Text,
   } from "@chakra-ui/react";
   
-  const WithdrawalModal = ({ isOpen, onClose, selectedApp }) => {
+  const WithdrawalModal = ({ isOpen, onClose, selectedApp, onWithdraw }) => {
     return (
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
@@ -29,7 +29,7 @@ import {
           </ModalBody>
   
           <ModalFooter>
-            <Button colorScheme="red" mr={3} onClick={onClose}>
+            <Button colorScheme="red" mr={3} onClick={onWithdraw}>
               Yes, Withdraw
             </Button>
             <Button variant="ghost" onClick={onClose}>

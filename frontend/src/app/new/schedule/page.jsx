@@ -44,6 +44,28 @@ export default function Home() {
     fetchData();
   }, []);
 
+  const handleWithdraw = async (applicationId) => {
+    try {
+      const response = await fetch('/api/withdraw/withdrawPending', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ applicationId }),
+      });
+
+      if (response.ok) {
+        // Update the pending applications state
+        setPendingApplications((prev) => prev.filter(app => app.application_id !== applicationId));
+        onClose();
+      } else {
+        console.error('Failed to withdraw application');
+      }
+    } catch (error) {
+      console.error('Error withdrawing application:', error);
+    }
+  };
+
   return (
     <Layout>
       <TopHeader />
@@ -57,8 +79,8 @@ export default function Home() {
                 end_date={application.end_date}
                 application_type={application.application_type}
                 requestor_remarks={application.requestor_remarks}
-                onWithdraw={(id) => {
-                  setSelectedApp(id);
+                onWithdraw={() => {
+                  setSelectedApp(application);
                   onOpen();
                 }}
               />
@@ -68,13 +90,11 @@ export default function Home() {
           )}
         </VStack>
       </Box>
-      {selectedApp && (
-        <WithdrawalModal
-          isOpen={isOpen}
-          onClose={onClose}
-          applicationId={selectedApp}
-        />
-      )}
+      <WithdrawalModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onWithdraw={() => handleWithdraw(selectedApp.application_id)}
+      />
     </Layout>
   );
 }
