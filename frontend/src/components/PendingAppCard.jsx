@@ -1,4 +1,6 @@
 import { Box, Flex, Text, VStack, Badge, Button } from "@chakra-ui/react";
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 const PendingApplicationCard = ({
   start_date,
@@ -59,16 +61,24 @@ const PendingApplicationCard = ({
           {requestor_remarks || "No remarks provided"}
         </Text>
 
-        <Flex justify="space-between" fontSize="sm">
-          <Box>
-            <Text>Start Date:</Text>
-            <Text>{formatDate(start_date)}</Text>
-          </Box>
-          <Box>
-            <Text>Start Time:</Text>
-            <Text>{formatTime(start_date)}</Text>
-          </Box>
-        </Flex>
+        {/* Combined gray box for date and time */}
+        <Box
+          bg="gray.200" // Light gray background
+          p={4}
+          borderRadius="md"
+          display="flex"
+          justifyContent="space-between" // Space between date and time
+          alignItems="center"
+        >
+          <Flex alignItems="center">
+            <CalendarTodayIcon color="action" />
+            <Text ml={2}>{formatDate(start_date)}</Text>
+          </Flex>
+          <Flex alignItems="center">
+            <AccessTimeIcon color="action" />
+            <Text ml={2}>{formatTime(start_date)}</Text>
+          </Flex>
+        </Box>
 
         <Button
           colorScheme="red"
