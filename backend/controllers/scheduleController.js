@@ -71,18 +71,20 @@ const retrieveTeamSchedule = async (req, res, next) => {
                 // Process each date block
                 for (const date of dateBlocks) {
                     // Initialize the date object if it doesn't exist
-                    if (!wfhDates[date.date]) {
-                        wfhDates[date.date] = {};
-                    }
+                    if (date.period != 'Partial Day') {
+                        if (!wfhDates[date.date]) {
+                            wfhDates[date.date] = {};
+                        }
 
-                    // Initialize the time period (AM, PM, Full Day) if it doesn't exist
-                    if (!wfhDates[date.date][date.period]) {
-                        wfhDates[date.date][date.period] = [];
-                    }
+                        // Initialize the time period (AM, PM, Full Day) if it doesn't exist
+                        if (!wfhDates[date.date][date.period]) {
+                            wfhDates[date.date][date.period] = [];
+                        }
 
-                    // Add colleague's name to the time slot if not already added
-                    if (!wfhDates[date.date][date.period].includes(colleagueName)) {
-                        wfhDates[date.date][date.period].push(colleagueName);
+                        // Add colleague's name to the time slot if not already added
+                        if (!wfhDates[date.date][date.period].includes(colleagueName)) {
+                            wfhDates[date.date][date.period].push(colleagueName);
+                        }
                     }
                 }
             }
@@ -138,6 +140,6 @@ const retrieveOwnSchedule = async (req, res) => {
 };
 
 module.exports = {
-    retrieveTeamSchedule, 
+    retrieveTeamSchedule,
     retrieveOwnSchedule
 };
