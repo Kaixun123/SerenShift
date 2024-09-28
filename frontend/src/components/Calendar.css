@@ -10,6 +10,7 @@ overflow: hidden;
 
 .fc-event {
  text-indent: 5px;
+ font-weight: bold;
 }
 
 .calendar-fullscreen {
