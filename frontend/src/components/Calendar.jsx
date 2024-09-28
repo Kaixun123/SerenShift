@@ -6,7 +6,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
-
+import tippy from 'tippy.js'; // Import Tippy.js
+import 'tippy.js/dist/tippy.css'; // Import Tippy.js styles
 
 const Calendar = () => {
   const [events, setEvents] = useState([]);
@@ -56,6 +57,24 @@ const Calendar = () => {
     return event; // Return the event unmodified if no condition matches
   });
 
+  const handleEventDidMount = (eventInfo) => {
+    // Create a Tippy.js instance for each event element
+    const options = {
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+    const instance = tippy(eventInfo.el, {
+      content: `
+        <strong>${eventInfo.event.title}</strong><br>
+        Time: ${eventInfo.event.start.toLocaleString(options).split(', ')[1].slice(0,5)}
+        to ${eventInfo.event.end ? eventInfo.event.end.toLocaleString(options).split(', ')[1].slice(0,5) : 'N/A'}<br>
+      `,
+      allowHTML: true,
+      interactive: true,
+      theme: 'light',
+    });
+  }
+
   return (
     <div>
       <strong>Legend:</strong>
@@ -64,6 +83,7 @@ const Calendar = () => {
       plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
       initialView="dayGridMonth"
       events={eventsWithColors}
+      eventDidMount={handleEventDidMount}
       headerToolbar={{
         left: 'prev,next today',
         center: 'title',
