@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react';
-import { Box, Button, FormControl, FormLabel, Input, Heading, VStack } from '@chakra-ui/react';
-import { useRouter } from 'next/navigation';
+import { Box, FormControl, FormLabel, Input, Heading, VStack } from '@chakra-ui/react';
 
 const ProfilePage = () => {
     const [employeeId, setEmployeeId] = useState(0);
