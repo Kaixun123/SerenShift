@@ -1,0 +1,40 @@
+/* Remove the dot from the list view */
+.fc-list-event-dot {
+    display: none !important;
+    /* Hide the colored dots */
+}
+
+.fc-list-event-title,
+.fc-list-event-time {
+    color: #000 !important;
+    /* Event text color */
+}
+
+.fc-list-event {
+    background-color: transparent !important;
+    /* Make the background transparent */
+    border: none !important;
+    padding: 5px !important;
+}
+
+/* Ensure equal height for all day boxes, even without events */
+.fc-daygrid-day-frame {
+    min-height: 90px !important;
+    /* Adjust the height as per your requirement */
+}
+
+/* Remove the dot from the list view */
+.fc-list-event-dot {
+    display: none !important;
+}
+
+.fc-list-event-title,
+.fc-list-event-time {
+    color: #000 !important;
+}
+
+.fc-list-event {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 5px !important;
+}
