@@ -1,0 +1,30 @@
+name: Run Jest Test Cases For Backend
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+jobs:
+  test:
+    name: Run Jest Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        working-directory: backend
+        run: npm install
+      - name: Run Jest tests
+        working-directory: backend
+        run: npm test -- --coverage
+      - name: Upload Jest Coverage
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: backend/coverage
