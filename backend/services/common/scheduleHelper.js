@@ -63,7 +63,7 @@ async function splitScheduleByDate(startDate, endDate) {
             // Handle case where start is before business hours
             start = currentDayStart;
         }
-
+        
         if (start.isSameOrBefore(currentDayStart) && end.isSameOrAfter(currentDayEnd)) {
             // Full day schedule (09:00 to 18:00)
             blocks.push({
