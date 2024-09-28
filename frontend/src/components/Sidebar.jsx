@@ -15,7 +15,7 @@ export default function SideBar() {
   
   const menuItems = [
     {
-      href: "/",
+      href: "/schedule/own",
       icon: CalendarMonthRounded,
       title: "Own Calendar",
     },
