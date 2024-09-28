@@ -71,18 +71,20 @@ const retrieveTeamSchedule = async (req, res, next) => {
                 // Process each date block
                 for (const date of dateBlocks) {
                     // Initialize the date object if it doesn't exist
-                    if (!wfhDates[date.date]) {
-                        wfhDates[date.date] = {};
-                    }
+                    if (date.period != 'Partial Day') {
+                        if (!wfhDates[date.date]) {
+                            wfhDates[date.date] = {};
+                        }
 
-                    // Initialize the time period (AM, PM, Full Day) if it doesn't exist
-                    if (!wfhDates[date.date][date.period]) {
-                        wfhDates[date.date][date.period] = [];
-                    }
+                        // Initialize the time period (AM, PM, Full Day) if it doesn't exist
+                        if (!wfhDates[date.date][date.period]) {
+                            wfhDates[date.date][date.period] = [];
+                        }
 
-                    // Add colleague's name to the time slot if not already added
-                    if (!wfhDates[date.date][date.period].includes(colleagueName)) {
-                        wfhDates[date.date][date.period].push(colleagueName);
+                        // Add colleague's name to the time slot if not already added
+                        if (!wfhDates[date.date][date.period].includes(colleagueName)) {
+                            wfhDates[date.date][date.period].push(colleagueName);
+                        }
                     }
                 }
             }
@@ -107,24 +109,30 @@ const retrieveOwnSchedule = async (req, res) => {
         if (schedule.length === 0) {
             return res.status(404).json({ message: "No schedules found for this user." });
         }
-
-        let wfhDates = {};
+        
+        let calendarEvents = [];
         for (const block of schedule) {
-            dateBlocks = await splitScheduleByDate(block.start_date, block.end_date);
-
+            const dateBlocks = await splitScheduleByDate(block.start_date, block.end_date);
+            console.log(block)
+            console.log(dateBlocks);
             for (const date of dateBlocks) {
-                // Initialize the date object if it doesn't exist
-                wfhDates[date.date] = wfhDates[date.date] || {};
+                const startTime = date.start_time;
+                const endTime = date.end_time;
+                const title = `WFH (${date.period})`;
 
-                // Initialize the period array if it doesn't exist
-                wfhDates[date.date][date.period] = wfhDates[date.date][date.period] || [];
-
-                // Push the time block into the corresponding array of key AM/PM/Full day 
-                wfhDates[date.date][date.period].push([date.start_time, date.end_time]);
+                calendarEvents.push({
+                    title: title,
+                    start: `${date.date}T${startTime}`,
+                    end: `${date.date}T${endTime}`,
+                    allDay: date.period === "Full Day", // Set allDay if it's a full-day block
+                    extendedProps: {
+                        type: `${date.period}`
+                    }
+                });
             }
         }
 
-        return res.status(200).json(wfhDates);
+        return res.status(200).json(calendarEvents);
     } catch (error) {
         console.error("Error retrieving own schedule:", error);
         return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
@@ -132,6 +140,6 @@ const retrieveOwnSchedule = async (req, res) => {
 };
 
 module.exports = {
-    retrieveTeamSchedule, 
+    retrieveTeamSchedule,
     retrieveOwnSchedule
 };
