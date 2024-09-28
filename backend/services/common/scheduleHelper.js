@@ -6,35 +6,45 @@ async function splitScheduleByDate(startDate, endDate) {
     let blocks = [];
 
     // Define the time blocks for AM, PM, and full-day
-    const AM_START = moment('09:00:00', 'HH:mm:ss');
-    const AM_END = moment('13:00:00', 'HH:mm:ss');
-    const PM_START = moment('14:00:00', 'HH:mm:ss');
-    const PM_END = moment('18:00:00', 'HH:mm:ss');
-    const FULL_DAY_START = moment('09:00:00', 'HH:mm:ss');
-    const FULL_DAY_END = moment('18:00:00', 'HH:mm:ss');
+    const AM_START_TIME = "09:00:00";
+    const AM_END_TIME = "13:00:00";
+    const PM_START_TIME = "14:00:00";
+    const PM_END_TIME = "18:00:00";
+    const FULL_DAY_START_TIME = "09:00:00";
+    const FULL_DAY_END_TIME = "18:00:00";
 
     // Loop through each day between start and end
     while (start.isSameOrBefore(end, 'day')) {
         let currentDayStart = moment(start.format('YYYY-MM-DD') + " 09:00", 'YYYY-MM-DD HH:mm');
         let currentDayEnd = moment(start.format('YYYY-MM-DD') + " 18:00", 'YYYY-MM-DD HH:mm');
 
-        // If the start and end are on the same day and within business hours
+        // If the start and end are on the same day
         if (start.isSame(end, 'day')) {
-            if (start.isSameOrAfter(AM_START) && end.isSameOrBefore(AM_END)) {
-                // AM block (09:00 to 13:00)
+            // Check for AM block (09:00 to 13:00)
+            if (start.format('HH:mm:ss') === AM_START_TIME && end.format('HH:mm:ss') === AM_END_TIME) {
                 blocks.push({
                     date: start.format('YYYY-MM-DD'),
                     period: 'AM',
-                    start_time: start.format('HH:mm:ss'),
-                    end_time: end.format('HH:mm:ss')
+                    start_time: AM_START_TIME,
+                    end_time: AM_END_TIME
                 });
-            } else if (start.isSameOrAfter(PM_START) && end.isSameOrBefore(PM_END)) {
-                // PM block (14:00 to 18:00)
+            }
+            // Check for PM block (14:00 to 18:00)
+            else if (start.format('HH:mm:ss') === PM_START_TIME && end.format('HH:mm:ss') === PM_END_TIME) {
                 blocks.push({
                     date: start.format('YYYY-MM-DD'),
                     period: 'PM',
-                    start_time: start.format('HH:mm:ss'),
-                    end_time: end.format('HH:mm:ss')
+                    start_time: PM_START_TIME,
+                    end_time: PM_END_TIME
+                });
+            }
+            // Check for Full-day block (09:00 to 18:00)
+            else if (start.format('HH:mm:ss') === FULL_DAY_START_TIME && end.format('HH:mm:ss') === FULL_DAY_END_TIME) {
+                blocks.push({
+                    date: start.format('YYYY-MM-DD'),
+                    period: 'Full Day',
+                    start_time: FULL_DAY_START_TIME,
+                    end_time: FULL_DAY_END_TIME
                 });
             } else {
                 // Partial day spanning both AM and PM
@@ -59,30 +69,30 @@ async function splitScheduleByDate(startDate, endDate) {
             blocks.push({
                 date: start.format('YYYY-MM-DD'),
                 period: 'Full Day',
-                start_time: FULL_DAY_START.format('HH:mm:ss'),
-                end_time: FULL_DAY_END.format('HH:mm:ss')
+                start_time: FULL_DAY_START_TIME,
+                end_time: FULL_DAY_END_TIME
             });
-        } else if (start.isBefore(AM_END) && end.isBefore(AM_END)) {
+        } else if (start.isBefore(AM_END_TIME) && end.isBefore(AM_END_TIME)) {
             // AM block (09:00 to 13:00)
             blocks.push({
                 date: start.format('YYYY-MM-DD'),
                 period: 'AM',
-                start_time: AM_START.format('HH:mm:ss'),
-                end_time: AM_END.format('HH:mm:ss')
+                start_time: AM_START_TIME,
+                end_time: AM_END_TIME
             });
-        } else if (start.isAfter(PM_START) && end.isSameOrAfter(PM_END)) {
+        } else if (start.isAfter(PM_START_TIME) && end.isSameOrAfter(PM_END_TIME)) {
             // PM block (14:00 to 18:00)
             blocks.push({
                 date: start.format('YYYY-MM-DD'),
                 period: 'PM',
-                start_time: PM_START.format('HH:mm:ss'),
-                end_time: PM_END.format('HH:mm:ss')
+                start_time: PM_START_TIME,
+                end_time: PM_END_TIME
             });
         } else {
             // Partial block for the day
             blocks.push({
                 date: start.format('YYYY-MM-DD'),
-                period: start.isBefore(AM_END) ? 'AM' : 'PM',
+                period: start.isBefore(AM_END_TIME) ? 'AM' : 'PM',
                 start_time: start.format('HH:mm:ss'),
                 end_time: moment.min(currentDayEnd, end).format('HH:mm:ss')
             });
