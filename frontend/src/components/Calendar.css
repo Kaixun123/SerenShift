@@ -38,3 +38,31 @@
     border: none !important;
     padding: 5px !important;
 }
+
+/* Ensure that event text is truncated */
+.fc-event-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Add hover effect */
+.fc-event:hover .fc-event-title {
+    white-space: normal;
+    overflow: visible;
+}
+
+/* Remove the outline (border) on focus or hover */
+.fc-event {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.fc-event-timeGridWeek{
+    background-color: black
+}
+.fc-view-list .fc-list-event-title,
+.fc-view-list .fc-list-event-time {
+    color: #ffffff !important; /* Set text color */
+}
+

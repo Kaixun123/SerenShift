@@ -99,7 +99,6 @@ const TeamSchedulePage = () => {
     )
     : [];
 
-  // Customize the event content to show a ribbon with the appropriate color
   const eventContent = (eventInfo) => {
     let ribbonColor;
     if (eventInfo.event.extendedProps.timePeriod === 'Full Day') {
@@ -125,46 +124,37 @@ const TeamSchedulePage = () => {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}
+        title={eventInfo.event.title} // Show full text on hover
       >
         {eventInfo.event.title}
       </div>
     );
   };
 
-  const eventPropGetter = (event, view) => {
-    // Check if the view is a list view
-    if (view.type === 'listWeek' || view.type === 'listMonth') {
-      // Apply transparent background for list view
-      return {
-        style: {
-          backgroundColor: 'transparent', // No background color in list view
-          color: '#000', // Keep the text color black or another appropriate color
-          border: 'none', // Remove border
-          padding: '5px',
-        },
-      };
-    }
-  
-    // Apply the colors for other views based on the time period
+  const eventPropGetter = (event) => {
     let backgroundColor;
     if (event.extendedProps.timePeriod === 'Full Day') {
-      backgroundColor = '#e3826f'; // Full Day color
+      backgroundColor = '#e3826f';
     } else if (event.extendedProps.timePeriod === 'AM') {
-      backgroundColor = '#efba98'; // AM color
+      backgroundColor = '#efba98';
     } else if (event.extendedProps.timePeriod === 'PM') {
-      backgroundColor = '#e7d5c7'; // PM color
+      backgroundColor = '#e7d5c7';
     }
-  
+
     return {
       style: {
         backgroundColor: backgroundColor,
-        color: '#fff', // Text color for other views
+        color: '#fff',
         borderRadius: '4px',
         padding: '3px',
-        border: '1px solid black', // Black border for non-list views
+        height: '100%', // Ensure the event fills the whole box vertically
+        width: '100%', // Ensure the event fills the whole box horizontally
+        border: 'none', // Remove the border
+        boxShadow: 'none', // Remove any shadow or outline
       },
     };
   };
+
 
 
   // Legend component
@@ -183,65 +173,85 @@ const TeamSchedulePage = () => {
   );
 
   return (
-<Layout>
-  <Flex direction="column" flex="1" height="100vh">
-    <Box position="relative" zIndex="2">
-      <TopHeader
-        mainText={`${employee.department} Department Schedule`}
-        subText={"Viewing your team's schedule"}
-      />
-    </Box>
-
-    <Box flex="1" p={4}>
-      <Flex justifyContent="space-between" alignItems="center">
-        <Legend />
-        <Stack direction="row">
-          <MultiSelect
-            data={colleagues
-              .sort((a, b) => a.first_name.localeCompare(b.first_name))
-              .map((colleague) => ({
-                value: String(colleague.user_id),
-                label: `${colleague.first_name} ${colleague.last_name}`,
-              }))
-            }
-            placeholder="Select Colleagues"
-            value={selectedColleagueIds.map(String)}
-            onChange={handleColleagueSelect}
-            styles={{
-              input: {
-                width: '304px',
-                height: '30px',
-                maxHeight: '30px',
-              },
-            }}
+    <Layout>
+      <Flex direction="column" flex="1" height="100vh">
+        <Box position="relative" zIndex="2">
+          <TopHeader
+            mainText={`${employee.department} Department Schedule`}
+            subText={"Viewing your team's schedule"}
           />
-        </Stack>
-      </Flex>
+        </Box>
 
-      <Box height="calc(68vh)">
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-          initialView="dayGridMonth"
-          events={events}
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek',
-          }}
-          editable={false}
-          selectable={true}
-          nowIndicator={true}
-          eventPropGetter={eventPropGetter}
-          dateClick={(info) => console.log('Date clicked:', info.dateStr)}
-          eventClick={(info) => console.log('Event clicked:', info.event)}
-          eventContent={eventContent} // Custom content for the events
-          dayMaxEventRows={2} // Limit the number of visible events to 2 per day
-          height="100%"
-        />
-      </Box>
-    </Box>
-  </Flex>
-</Layout>
+        <Box flex="1" p={4}>
+          <Flex justifyContent="space-between" alignItems="center">
+            <Legend />
+            <Stack direction="row">
+              <MultiSelect
+                data={colleagues
+                  .sort((a, b) => a.first_name.localeCompare(b.first_name))
+                  .map((colleague) => ({
+                    value: String(colleague.user_id),
+                    label: `${colleague.first_name} ${colleague.last_name}`,
+                  }))
+                }
+                placeholder="Select Colleagues"
+                value={selectedColleagueIds.map(String)}
+                onChange={handleColleagueSelect}
+                styles={{
+                  input: {
+                    width: '304px',
+                    height: '30px',
+                    maxHeight: '30px',
+                  },
+                }}
+              />
+            </Stack>
+          </Flex>
+
+          <Box height="calc(68vh)">
+            <style>{`
+    /* Remove background color for events in the list view */
+    .fc-view-list .fc-list-event {
+      background-color: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* Ensure event title and time retain appropriate colors in the list view */
+    .fc-view-list .fc-list-event-title,
+    .fc-view-list .fc-list-event-time {
+      color: #000 !important;
+    }
+  `}</style>
+
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              initialView="timeGridWeek" // Start with week view or any other view
+              events={events}
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek',
+              }}
+              editable={false}
+              selectable={true}
+              nowIndicator={true}
+              eventPropGetter={eventPropGetter} // Custom logic for events
+              dateClick={(info) => console.log('Date clicked:', info.dateStr)}
+              eventClick={(info) => console.log('Event clicked:', info.event)}
+              eventContent={eventContent} // Custom content for the events
+              dayMaxEventRows={2} // Limit the number of visible events to 3 rows
+              height="100%"
+              slotMinTime="09:00:00" // Start time at 9 AM
+              slotMaxTime="18:00:00" // End time at 6 PM
+              allDaySlot={false}
+            />
+          </Box>
+
+
+        </Box>
+      </Flex>
+    </Layout>
   );
 };
 
