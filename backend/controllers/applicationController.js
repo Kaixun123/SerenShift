@@ -6,7 +6,8 @@ const moment = require('moment'); // Ensure moment.js is installed
 const retrieveApplication = async (req, res, next) => {
     try {
 
-        let { id, status } = req.body
+        let { id, status } = req.query;
+        
         let ownApplication = await Application.findAll({
             where: {
                 created_by: id,
