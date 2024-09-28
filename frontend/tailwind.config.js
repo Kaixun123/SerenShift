@@ -28,6 +28,9 @@ module.exports = {
       },
       green: {
         primary: "#3EAC3E"
+      },
+      yellow: {
+        primary: "#D39335"
       }
     },
     extend: {

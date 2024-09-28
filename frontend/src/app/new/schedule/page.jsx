@@ -1,15 +1,21 @@
 "use client";
+// import components
 import { Layout } from "@/components/Layout";
 import TopHeader from "@/components/TopHeader";
+import PendingApplicationCard from "@/components/PendingAppCard";
+import WithdrawalModal from "@/components/WithdrawModal";
 import { useEffect, useState } from "react";
 
 // chakra-ui
 import {
   FormControl,
   FormLabel,
+  Box,
+  VStack,
   Input,
   Select,
   Button,
+  Text,
   Textarea,
   Modal,
   ModalOverlay,
@@ -26,9 +32,14 @@ import { PiWarningCircle } from "react-icons/pi";
 
 // mantine
 import { DatePicker, DatesProvider } from "@mantine/dates";
+import { Pagination } from "@mantine/core";
 
-export default function Home() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+export default function NewSchedule() {
+  const {
+    isOpen: isModalSubmitOpen,
+    onOpen: onModalSubmitOpen,
+    onClose: onModalSubmitClose,
+  } = useDisclosure();
   const [loading, setLoading] = useState(false);
   const [employeeInfo, setEmployeeInfo] = useState({
     id: 0,
@@ -46,6 +57,14 @@ export default function Home() {
   const [type, setType] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
+
+  const [pendingApplications, setPendingApplications] = useState([]);
+  const [appToWithdraw, setAppToWithdraw] = useState(null);
+  const {
+    isOpen: isModalWithdrawOpen,
+    onOpen: onModalWithdrawOpen,
+    onClose: onModalWithdrawClose,
+  } = useDisclosure();
 
   const handleCalendarChange = (selectedDates) => {
     setCalendarValue(selectedDates);
@@ -78,7 +97,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    async function fetchEmployeeData() {
+    async function fetchEmployeeAndPendingAppData() {
       try {
         const response = await fetch("/api/auth/me");
         const data = await response.json();
@@ -88,12 +107,30 @@ export default function Home() {
           id: data.id,
           reporting_manager: managerName,
         });
+
+        // Retrieve Pending Application List
+        const applicationStatus = "Pending";
+        const applicationResponse = await fetch(
+          `/api/application/retrieveApplication?id=${data.id}&status=${applicationStatus}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const pendingApplication = await applicationResponse.json();
+        setPendingApplications(pendingApplication);
       } catch (error) {
-        console.error("Error fetching employee data:", error);
+        console.error(
+          "Error fetching employee or pending application data:",
+          error
+        );
       }
     }
 
-    fetchEmployeeData();
+    fetchEmployeeAndPendingAppData();
   }, []);
 
   const createNewApplication = async (e) => {
@@ -157,7 +194,7 @@ export default function Home() {
           });
         }
 
-        onOpen(true);
+        onModalSubmitOpen(true);
         if (!isOpen) {
           setCalendarValue([]);
           setFormattedDate({
@@ -174,6 +211,64 @@ export default function Home() {
       console.error("Error creating new application:", error);
     }
   };
+
+  // Handle withdrawal function
+  const handleWithdraw = async (applicationId) => {
+    try {
+      const response = await fetch("/api/withdraw/withdrawPending", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ applicationId }),
+      });
+      if (response.ok) {
+        // Update the pending applications state
+        setPendingApplications((prev) =>
+          prev.filter((app) => app.application_id !== applicationId)
+        );
+        onModalWithdrawClose();
+      } else {
+        console.error("Failed to withdraw application");
+      }
+    } catch (error) {
+      console.error("Error withdrawing application:", error);
+    }
+  };
+
+  function handlePagination(array, size) {
+    if (!array.length) {
+      return [];
+    }
+    const head = array.slice(0, size);
+    const tail = array.slice(size);
+    return [head, ...handlePagination(tail, size)];
+  }
+
+  // Pagination state
+  const [activePage, setPage] = useState(1);
+
+  // Number of applications per page
+  const applicationsPerPage = 4;
+  const paginatedApplications = handlePagination(
+    pendingApplications,
+    applicationsPerPage
+  );
+
+  // Items for the current page
+  const items = paginatedApplications[activePage - 1]?.map((application) => (
+    <PendingApplicationCard
+      key={application.application_id}
+      start_date={application.start_date}
+      end_date={application.end_date}
+      application_type={application.application_type}
+      requestor_remarks={application.requestor_remarks}
+      onWithdraw={() => {
+        setAppToWithdraw(application);
+        onModalWithdrawOpen();
+      }}
+    />
+  ));
 
   return (
     <Layout>
@@ -303,7 +398,11 @@ export default function Home() {
           </form>
         </div>
 
-        <Modal onClose={onClose} isOpen={isOpen} isCentered>
+        <Modal
+          onClose={onModalSubmitClose}
+          isOpen={isModalSubmitOpen}
+          isCentered
+        >
           <ModalOverlay />
           <ModalContent p={5}>
             <ModalCloseButton />
@@ -328,7 +427,7 @@ export default function Home() {
               <ModalFooter>
                 <Button
                   className="flex w-full"
-                  onClick={onClose}
+                  onClick={onModalSubmitClose}
                   colorScheme={responseMessage.status === 201 ? "green" : "red"}
                 >
                   {responseMessage.status === 201 ? "OK" : "Close"}
@@ -340,7 +439,35 @@ export default function Home() {
 
         {/* Right Section: Pending Application List */}
         <div className="w-1/2">
-          <h1 className="text-2xl font-bold">Pending Arrangement</h1>
+          <h1 className="text-2xl font-bold">Pending Applications</h1>
+          <Box py={5} h={"100%"}>
+            <VStack spacing={5} h={"100%"}>
+              {pendingApplications.length > 0 ? (
+                <>
+                  {items}
+                  <Pagination
+                    total={paginatedApplications.length}
+                    value={activePage}
+                    onChange={setPage}
+                    className="flex mt-5 justify-center"
+                  />
+                </>
+              ) : (
+                <Text>No pending applications found</Text>
+              )}
+            </VStack>
+          </Box>
+
+          {appToWithdraw && (
+            <WithdrawalModal
+              isOpen={isModalWithdrawOpen}
+              onClose={onModalWithdrawClose}
+              applicationType={appToWithdraw.application_type}
+              startDate={appToWithdraw.start_date}
+              endDate={appToWithdraw.end_date}
+              onConfirm={() => handleWithdraw(appToWithdraw.application_id)} // Pass handleWithdraw function to WithdrawalModal
+            />
+          )}
         </div>
       </div>
     </Layout>
