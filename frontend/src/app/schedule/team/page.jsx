@@ -9,6 +9,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'; // Month view
 import timeGridPlugin from '@fullcalendar/timegrid'; // Week view
 import interactionPlugin from '@fullcalendar/interaction'; // For interactivity
 import listPlugin from '@fullcalendar/list'; // List view plugin
+import "../../../components/Calendar.css"
 
 const TeamSchedulePage = () => {
   const [loading, setLoading] = useState(false);
@@ -99,6 +100,7 @@ const TeamSchedulePage = () => {
     : [];
 
   // Customize the event content to show a ribbon with the appropriate color
+  // Customize the event content to show a ribbon with the appropriate color
   const eventContent = (eventInfo) => {
     let ribbonColor;
     if (eventInfo.event.extendedProps.timePeriod === 'Full Day') {
@@ -117,6 +119,9 @@ const TeamSchedulePage = () => {
           padding: '3px 8px',
           borderRadius: '4px',
           fontSize: '12px',
+          width: '100%', // Ensure the content spans the full width
+          height: '100%', // Ensure the content spans the full height
+          boxSizing: 'border-box', // Include padding in element's total width/height
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -143,9 +148,13 @@ const TeamSchedulePage = () => {
         color: '#fff',
         borderRadius: '4px',
         padding: '3px',
+        height: '100%', // Ensure the event fills the whole box vertically
+        width: '95%', // Ensure the event fills the whole box horizontally
+        border: '1px solid black', // Change the border color to black
       },
     };
   };
+
 
   // Legend component
   const Legend = () => (
@@ -163,81 +172,65 @@ const TeamSchedulePage = () => {
   );
 
   return (
-    <Layout>
-      {/* Inject CSS directly into the page */}
-      <style>{`
-        .fc-list-event {
-          background-color: #e7e7e7 !important; /* Same background color for all list events */
-          border: none !important;
-          padding: 5px !important;
-        }
-        .fc-list-event-dot {
-          display: none !important; /* Hide the colored dots */
-        }
-        .fc-list-event-title, .fc-list-event-time {
-          color: #000 !important; /* Event text color */
-        }
-      `}</style>
+<Layout>
+  <Flex direction="column" flex="1" height="100vh">
+    <Box position="relative" zIndex="2">
+      <TopHeader
+        mainText={`${employee.department} Department Schedule`}
+        subText={"Viewing your team's schedule"}
+      />
+    </Box>
 
-      <Flex direction="column" flex="1" height="100vh">
-        <Box position="relative" zIndex="2">
-          <TopHeader
-            mainText={`${employee.department} Department Schedule`}
-            subText={"Viewing your team's schedule"}
+    <Box flex="1" p={4}>
+      <Flex justifyContent="space-between" alignItems="center">
+        <Legend />
+        <Stack direction="row">
+          <MultiSelect
+            data={colleagues
+              .sort((a, b) => a.first_name.localeCompare(b.first_name))
+              .map((colleague) => ({
+                value: String(colleague.user_id),
+                label: `${colleague.first_name} ${colleague.last_name}`,
+              }))
+            }
+            placeholder="Select Colleagues"
+            value={selectedColleagueIds.map(String)}
+            onChange={handleColleagueSelect}
+            styles={{
+              input: {
+                width: '304px',
+                height: '30px',
+                maxHeight: '30px',
+              },
+            }}
           />
-        </Box>
-
-        <Box flex="1" p={4}>
-          <Flex justifyContent="space-between" alignItems="center">
-            <Legend />
-            <Stack direction="row">
-              <MultiSelect
-                data={colleagues
-                  .sort((a, b) => a.first_name.localeCompare(b.first_name))
-                  .map((colleague) => ({
-                    value: String(colleague.user_id),
-                    label: `${colleague.first_name} ${colleague.last_name}`,
-                  }))
-                }
-                placeholder="Select Colleagues"
-                value={selectedColleagueIds.map(String)}
-                onChange={handleColleagueSelect}
-                styles={{
-                  input: {
-                    width: '304px',
-                    height: '30px',
-                    maxHeight: '30px',
-                  },
-                }}
-              />
-            </Stack>
-          </Flex>
-
-          <Box height="calc(68vh)">
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-              initialView="dayGridMonth"
-              events={events}
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,listWeek',
-              }}
-              editable={false}
-              selectable={true}
-              nowIndicator={true}
-              eventPropGetter={eventPropGetter}
-              dateClick={(info) => console.log('Date clicked:', info.dateStr)}
-              eventClick={(info) => console.log('Event clicked:', info.event)}
-              eventContent={eventContent} // Custom content for the events
-              dayMaxEventRows={3} // Limit the number of visible events to 2 per day
-              height="100%"
-            />
-
-          </Box>
-        </Box>
+        </Stack>
       </Flex>
-    </Layout>
+
+      <Box height="calc(68vh)">
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+          initialView="dayGridMonth"
+          events={events}
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek',
+          }}
+          editable={false}
+          selectable={true}
+          nowIndicator={true}
+          eventPropGetter={eventPropGetter}
+          dateClick={(info) => console.log('Date clicked:', info.dateStr)}
+          eventClick={(info) => console.log('Event clicked:', info.event)}
+          eventContent={eventContent} // Custom content for the events
+          dayMaxEventRows={2} // Limit the number of visible events to 2 per day
+          height="100%"
+        />
+      </Box>
+    </Box>
+  </Flex>
+</Layout>
   );
 };
 
