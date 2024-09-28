@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const helmet = require("helmet");
 const cors = require("cors");
 const app = express();
+const cookieParser = require("cookie-parser");
 
 require("dotenv").config();
 const EXPRESS_PORT = process.env.EXPRESS_PORT;
@@ -55,6 +56,7 @@ app.use(passport.session());
 
 app.use(express.static("./public"));
 app.use(morgan("tiny"));
+app.use(cookieParser());
 
 // App Routes
 app.use("/api/auth", require("./routes/authHandling"));

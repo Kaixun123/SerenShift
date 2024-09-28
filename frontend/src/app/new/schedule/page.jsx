@@ -5,7 +5,7 @@ import TopHeader from "@/components/TopHeader";
 import PendingApplicationCard from "@/components/PendingAppCard";
 import WithdrawalModal from "@/components/WithdrawModal";
 import { useEffect, useState } from "react";
-
+import { useRouter } from 'next/navigation';
 // chakra-ui
 import {
   FormControl,
@@ -21,6 +21,7 @@ import {
   ModalOverlay,
   ModalContent,
   ModalFooter,
+  ModalHeader,
   ModalBody,
   ModalCloseButton,
   useDisclosure,
@@ -35,6 +36,7 @@ import { DatePicker, DatesProvider } from "@mantine/dates";
 import { Pagination } from "@mantine/core";
 
 export default function NewSchedule() {
+  // For Submit Modal
   const {
     isOpen: isModalSubmitOpen,
     onOpen: onModalSubmitOpen,
@@ -57,13 +59,24 @@ export default function NewSchedule() {
   const [type, setType] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
+  const [isValidToken, setIsValidToken] = useState(true);  // Track token validity
+  const router = useRouter();
 
   const [pendingApplications, setPendingApplications] = useState([]);
   const [appToWithdraw, setAppToWithdraw] = useState(null);
+
+  // For Withdrawal Modal
   const {
     isOpen: isModalWithdrawOpen,
     onOpen: onModalWithdrawOpen,
     onClose: onModalWithdrawClose,
+  } = useDisclosure();
+
+   // For Token Expiry Modal
+   const {
+    isOpen: isTokenExpiryModalOpen,
+    onOpen: onTokenExpiryModalOpen,
+    onClose: onTokenExpiryModalClose,
   } = useDisclosure();
 
   const handleCalendarChange = (selectedDates) => {
@@ -95,6 +108,36 @@ export default function NewSchedule() {
       endDate: "",
     });
   };
+
+  // Function to check token validity by calling the backend
+  const checkTokenValidity = async () => {
+    try {
+        const response = await fetch("/api/auth/validate-token", {
+            method: 'GET',
+            credentials: 'include',  // Include cookies in the request
+        });
+
+        const data = await response.json();
+        if (!data.valid) {
+            setIsValidToken(false);  // Mark token as invalid
+            onTokenExpiryModalOpen();       // Open the modal
+            setTimeout(() => {
+                router.push('/auth/login');    // Redirect to home after showing popup
+            }, 3000);  // Redirect after 3 seconds
+        }
+    } catch (error) {
+        console.error('Error checking token validity:', error);
+    }
+  };
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      checkTokenValidity();
+    }, 500000); // Poll every 5 minutes
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [router]);
 
   useEffect(() => {
     async function fetchEmployeeAndPendingAppData() {
@@ -278,6 +321,19 @@ export default function NewSchedule() {
       />
 
       <div className="flex p-[30px] gap-[60px] justify-between ">
+        {/* Token Expiry Modal */}
+        <Modal isOpen={isTokenExpiryModalOpen} onClose={onTokenExpiryModalClose} isCentered size={"lg"}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Session expired</ModalHeader>
+            <ModalBody>
+              Your session has expired. You will be redirected to the login page.
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+
+
+
         {/* Left Section: Create New Application */}
         <div className="flex flex-col w-1/2 gap-[20px]">
           <div className="flex h-[350px] justify-center">

@@ -23,6 +23,7 @@ const vaildateParameters = (req, res, next) => {
 };
 
 router.post('/login', loginFormValidationRules(), vaildateParameters, (req, res) => authController.login(req, res))
+router.get('/validate-token', ensureLoggedIn, (req, res) => authController.validateToken(req, res))
 router.get('/logout', ensureLoggedIn, (req, res) => authController.logout(req, res))
 router.get('/me', ensureLoggedIn, (req, res) => authController.me(req, res))
 

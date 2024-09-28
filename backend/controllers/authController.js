@@ -22,9 +22,11 @@ const login = (req, res) => {
             );
             res.cookie('jwt', token, {
                 httpOnly: true,
-                secure: false
+                secure: true,
+                maxAge: 60 * 60 * 1000,
+                sameSite: 'None',
             });
-            return res.status(200).json({ message: 'Login successfully' });
+            return res.status(200).json({ message: 'Login successfully', token });
         });
     })(req, res);
 
@@ -63,6 +65,25 @@ const me = async (req, res) => {
     }
 }
 
+const validateToken = (req, res) => {
+    console.log('Cookies:', req.cookies);
+    const token = req.cookies.jwt;  // Access the JWT from cookies
+
+    if (!token) {
+        return res.status(401).json({ valid: false, message: 'No token provided' });
+    }
+
+    // Verify the token
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ valid: false, message: 'Invalid or expired token' });
+        }
+
+        // Token is valid, return success
+        return res.status(200).json({ valid: true, message: 'Token is valid', user: decoded });
+    });
+}
+
 const logout = (req, res) => {
     req.logout(() => {
         res.clearCookie('jwt');
@@ -74,5 +95,6 @@ const logout = (req, res) => {
 module.exports = {
     login,
     logout,
-    me
+    me,
+    validateToken
 };

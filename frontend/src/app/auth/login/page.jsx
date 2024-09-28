@@ -35,11 +35,14 @@ const LoginPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           emailAddress: email,
           password,
         }),
       });
+
+      const data = await response.json();
 
       if (response.ok) {
         // const data = await response.json();
