@@ -1,0 +1,20 @@
+/* Remove the default blue dot in the list view */
+.fc-list-event-dot {
+    display: none !important;
+    /* This hides the default FullCalendar blue dot in list view */
+}
+
+/* Ensure all day cells have equal height */
+.fc-daygrid-day {
+    height: 95px;
+}
+
+.fc-daygrid-event {
+    display: block;
+    width: 95%; /* Make the event take the full width of the block */
+    border-radius: 4px; /* Optional: add some border radius */
+    padding: 2px 0; /* Adjust padding to ensure it fits within the block */
+    text-align: center; /* Center the text */
+    box-sizing: border-box; /* Ensure padding does not affect width */
+  }
+  

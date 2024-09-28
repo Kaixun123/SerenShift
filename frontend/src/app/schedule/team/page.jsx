@@ -1,48 +1,53 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Box, Heading, Text, Stack, Flex } from '@chakra-ui/react';
+import { Box, Stack, Flex, Text } from '@chakra-ui/react';
 import TopHeader from "@/components/TopHeader";
 import { Layout } from '@/components/Layout.jsx';
-import { MultiSelect, Select } from '@mantine/core'; // Import Mantine's MultiSelect
+import { MultiSelect } from '@mantine/core';
+import FullCalendar from '@fullcalendar/react'; // Import FullCalendar
+import dayGridPlugin from '@fullcalendar/daygrid'; // Month view
+import timeGridPlugin from '@fullcalendar/timegrid'; // Week view
+import interactionPlugin from '@fullcalendar/interaction'; // For interactivity
+import listPlugin from '@fullcalendar/list'; // List view plugin
 
 const TeamSchedulePage = () => {
   const [loading, setLoading] = useState(false);
   const [colleagues, setColleagues] = useState([]);
-  const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);  // Multi-select state
+  const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [scheduleData, setScheduleData] = useState(null);
+  const [employee, setEmployee] = useState({ department: '' });
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Fetch colleagues list and schedule concurrently
+  useEffect(() => {
+    async function fetchEmployeeData() {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+        setEmployee({
+          department: `${data.department}`,
+        });
+      } catch (error) {
+        console.error("Error fetching employee data:", error);
+      }
+    }
+    fetchEmployeeData();
+  }, []);
+
   const handleApiCalls = async (colleagueIds) => {
     setLoading(true);
-    setScheduleData(null); // Clear previous schedule
+    setScheduleData(null);
 
     try {
-      // Fetch colleagues list
-      const colleaguesResponse = await fetch('/api/employee/colleagues', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
+      const colleaguesResponse = await fetch('/api/employee/colleagues');
       const colleaguesData = await colleaguesResponse.json();
 
-      // Pass selected colleague IDs as a query parameter
       const query = colleagueIds.length > 0 ? `?colleague_id=${colleagueIds.join(',')}` : '';
-      const scheduleResponse = await fetch(`/api/schedule/teamschedule${query}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
+      const scheduleResponse = await fetch(`/api/schedule/teamschedule${query}`);
       const scheduleData = await scheduleResponse.json();
 
       if (colleaguesResponse.ok && scheduleResponse.ok) {
-        setColleagues(colleaguesData); // Set the colleague data to display in the multi-select dropdown
-        setScheduleData(scheduleData); // Set the schedule data to display
-        console.log('Colleagues API response:', colleaguesData);
-        console.log('Schedule API response:', scheduleData);
+        setColleagues(colleaguesData);
+        setScheduleData(scheduleData);
       } else {
         console.error('API error occurred');
       }
@@ -53,111 +58,183 @@ const TeamSchedulePage = () => {
     }
   };
 
-  // Fetch data when the component mounts
   useEffect(() => {
     handleApiCalls([]);
-  }, []); // Empty dependency array ensures it runs only on mount
+  }, []);
 
-  // Handle colleague selection change
   const handleColleagueSelect = (selectedIds) => {
-    setSelectedColleagueIds(selectedIds);  // Update the selection
-    handleApiCalls(selectedIds);  // Trigger the API call with selected colleagues
+    setSelectedColleagueIds(selectedIds);
+    handleApiCalls(selectedIds);
   };
+
+  // Convert scheduleData into a format suitable for FullCalendar
+  const events = scheduleData
+    ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
+      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+        colleagues.map((colleague) => {
+          const eventDate = new Date(date);
+          let start, end;
+
+          if (timePeriod === 'Full Day') {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          } else if (timePeriod === 'AM') {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(13, 0, 0));
+          } else if (timePeriod === 'PM') {
+            start = new Date(eventDate.setHours(14, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          }
+
+          return {
+            title: `${colleague}`,
+            start,
+            end,
+            allDay: false,
+            timePeriod,
+          };
+        })
+      )
+    )
+    : [];
+
+  // Customize the event content to show a ribbon with the appropriate color
+  const eventContent = (eventInfo) => {
+    let ribbonColor;
+    if (eventInfo.event.extendedProps.timePeriod === 'Full Day') {
+      ribbonColor = '#e3826f';
+    } else if (eventInfo.event.extendedProps.timePeriod === 'AM') {
+      ribbonColor = '#efba98';
+    } else if (eventInfo.event.extendedProps.timePeriod === 'PM') {
+      ribbonColor = '#e7d5c7';
+    }
+
+    return (
+      <div
+        style={{
+          backgroundColor: ribbonColor,
+          color: '#fff',
+          padding: '3px 8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {eventInfo.event.title}
+      </div>
+    );
+  };
+
+  const eventPropGetter = (event) => {
+    let backgroundColor;
+    if (event.extendedProps.timePeriod === 'Full Day') {
+      backgroundColor = '#e3826f';
+    } else if (event.extendedProps.timePeriod === 'AM') {
+      backgroundColor = '#efba98';
+    } else if (event.extendedProps.timePeriod === 'PM') {
+      backgroundColor = '#e7d5c7';
+    }
+
+    return {
+      style: {
+        backgroundColor: backgroundColor,
+        color: '#fff',
+        borderRadius: '4px',
+        padding: '3px',
+      },
+    };
+  };
+
+  // Legend component
+  const Legend = () => (
+    <Box mb={4}>
+      <Text fontSize="lg" fontWeight="bold">Legend:</Text>
+      <Flex direction="row" align="center">
+        <Box w="20px" h="20px" bg="#e3826f" mr={2} />
+        <Text mr={4}>Full Day</Text>
+        <Box w="20px" h="20px" bg="#efba98" mr={2} />
+        <Text mr={4}>AM</Text>
+        <Box w="20px" h="20px" bg="#e7d5c7" mr={2} />
+        <Text>PM</Text>
+      </Flex>
+    </Box>
+  );
 
   return (
     <Layout>
+      {/* Inject CSS directly into the page */}
+      <style>{`
+        .fc-list-event {
+          background-color: #e7e7e7 !important; /* Same background color for all list events */
+          border: none !important;
+          padding: 5px !important;
+        }
+        .fc-list-event-dot {
+          display: none !important; /* Hide the colored dots */
+        }
+        .fc-list-event-title, .fc-list-event-time {
+          color: #000 !important; /* Event text color */
+        }
+      `}</style>
+
       <Flex direction="column" flex="1" height="100vh">
-        <TopHeader
-          mainText={"View Your Team Schedule"}
-          subText={"Viewing your colleagues' schedule!"}
-        />
+        <Box position="relative" zIndex="2">
+          <TopHeader
+            mainText={`${employee.department} Department Schedule`}
+            subText={"Viewing your team's schedule"}
+          />
+        </Box>
 
-        {/* Main content (Schedule) */}
-        <Box flex="1" p={4} overflow="hidden">
-          {/* Align buttons to the right */}
-          <Stack direction="row" spacing={4} mt={0}>
-            {/* Multi-select for Colleagues using Mantine */}
-            <MultiSelect
-              data={colleagues.map((colleague) => ({
-                value: String(colleague.user_id),  // Convert user_id to string
-                label: `${colleague.first_name} ${colleague.last_name}`
-              }))}
-              placeholder="Select Colleagues"
-              value={selectedColleagueIds.map(String)}  // Ensure selected IDs are strings
-              onChange={handleColleagueSelect}  // Trigger selection change
-              styles={{
-                input: {
-                  width: '300px',  // Fixed width for the input
-                  height: '30px',  // Set the height for the input box
-                  maxHeight: '30px',  // Set the maximum height for the input box
-                  overflow: 'auto',  // Allow scrolling if content exceeds max height
-                },
+        <Box flex="1" p={4}>
+          <Flex justifyContent="space-between" alignItems="center">
+            <Legend />
+            <Stack direction="row">
+              <MultiSelect
+                data={colleagues
+                  .sort((a, b) => a.first_name.localeCompare(b.first_name))
+                  .map((colleague) => ({
+                    value: String(colleague.user_id),
+                    label: `${colleague.first_name} ${colleague.last_name}`,
+                  }))
+                }
+                placeholder="Select Colleagues"
+                value={selectedColleagueIds.map(String)}
+                onChange={handleColleagueSelect}
+                styles={{
+                  input: {
+                    width: '304px',
+                    height: '30px',
+                    maxHeight: '30px',
+                  },
+                }}
+              />
+            </Stack>
+          </Flex>
+
+          <Box height="calc(68vh)">
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              initialView="dayGridMonth"
+              events={events}
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek',
               }}
+              editable={false}
+              selectable={true}
+              nowIndicator={true}
+              eventPropGetter={eventPropGetter}
+              dateClick={(info) => console.log('Date clicked:', info.dateStr)}
+              eventClick={(info) => console.log('Event clicked:', info.event)}
+              eventContent={eventContent} // Custom content for the events
+              dayMaxEventRows={3} // Limit the number of visible events to 2 per day
+              height="100%"
             />
 
-            {/* Mantine Select for Month */}
-            <Select
-              placeholder="Select Month"
-              data={[
-                { value: 'January', label: 'January' },
-                { value: 'February', label: 'February' },
-                { value: 'March', label: 'March' },
-                { value: 'April', label: 'April' },
-                { value: 'May', label: 'May' },
-                { value: 'June', label: 'June' },
-                { value: 'July', label: 'July' },
-                { value: 'August', label: 'August' },
-                { value: 'September', label: 'September' },
-                { value: 'October', label: 'October' },
-                { value: 'November', label: 'November' },
-                { value: 'December', label: 'December' }
-              ]}
-            />
-
-            {/* Mantine Select for Year */}
-            <Select
-              placeholder="Select Year"
-              data={[
-                { value: '2022', label: '2022' },
-                { value: '2023', label: '2023' },
-                { value: '2024', label: '2024' }
-              ]}
-            />
-          </Stack>
-
-          {/* Scrollable team schedule */}
-          {scheduleData && (
-            <Box
-              mt={4}
-              borderRadius="md"
-              h="calc(100vh - 220px)"  // Adjust the height to make space for other elements
-              overflowY="auto"  // Use auto to avoid unnecessary scrollbars
-              p={4}
-              sx={{
-                /* Hide the scrollbar for Webkit browsers (Chrome, Safari, etc.) */
-                '::-webkit-scrollbar': {
-                  display: 'none',
-                },
-                /* Hide scrollbar for Internet Explorer, Edge, and Firefox */
-                '-ms-overflow-style': 'none',  // IE and Edge
-                'scrollbar-width': 'none',     // Firefox
-              }}
-            >
-              <Stack spacing={4}>
-                {Object.entries(scheduleData).map(([date, schedule], index) => (
-                  <Box key={index} borderWidth="1px" borderRadius="lg" p={4} mt={4}>
-                    <Heading size="md" mb={2}>{date}</Heading>
-                    {Object.entries(schedule).map(([timePeriod, colleagues], index) => (
-                      <Box key={index} mt={2}>
-                        <Heading size="sm">{timePeriod}</Heading>
-                        <Text>{colleagues.join(', ')}</Text>
-                      </Box>
-                    ))}
-                  </Box>
-                ))}
-              </Stack>
-            </Box>
-          )}
+          </Box>
         </Box>
       </Flex>
     </Layout>
