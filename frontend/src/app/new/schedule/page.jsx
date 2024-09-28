@@ -195,7 +195,7 @@ export default function NewSchedule() {
         }
 
         onModalSubmitOpen(true);
-        if (!isOpen) {
+        if (!isModalSubmitOpen) {
           setCalendarValue([]);
           setFormattedDate({
             startDate: "",
