@@ -9,24 +9,7 @@ overflow: hidden;
 }
 
 .fc-event {
-  border: 1px solid black; /* Adds a border to all events */
-  background-color: lightblue; /* Adds a background fill */
-}
-
-.fc-event .fc-event-dot {
-  background-color: #EBC025; /* Color for meetings */
-}
-
-.am-dot .fc-event-dot {
-  background-color: #EBC025; /* Color for meetings */
-}
-
-.pm-dot .fc-event-dot {
-  background-color: #3E9CE9; /* Color for workshops */
-}
-
-.fullday-dot .fc-event-dot {
-  background-color: #5BC47B; /* Color for workshops */
+ text-indent: 5px;
 }
 
 .calendar-fullscreen {
@@ -95,4 +78,35 @@ overflow: hidden;
   bottom: 5px;
   left: 5px;
   right: 5px;
+}
+
+.legend {
+  display: flex; /* Use flexbox for horizontal layout */
+  justify-content: left; /* Space items evenly */
+  padding: 10px; /* Add some padding */
+}
+
+.legend-item {
+  display: flex;
+  align-items: center; /* Center the text vertically */
+  margin: 0 10px; /* Space between items */
+}
+
+.legend-color {
+  width: 20px; /* Width of color box */
+  height: 20px; /* Height of color box */
+  margin-right: 5px; /* Space between color box and text */
+  border-radius: 3px; /* Optional: Add rounded corners */
+}
+
+.am-color {
+  background-color: #e4b91c; /* Color for AM */
+}
+
+.pm-color {
+  background-color: #3E9CE9; /* Color for PM */
+}
+
+.full-day-color {
+  background-color: #41b671; /* Color for Full Day */
 }

@@ -5,6 +5,8 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+
 
 const Calendar = () => {
   const [events, setEvents] = useState([]);
@@ -25,38 +27,48 @@ const Calendar = () => {
   }, []);
 
   const Legend = () => (
-    <div className="legend">
-      <div className="legend-item">
-        <span className="legend-color meeting-color"></span>
-        <span>Meeting</span>
-      </div>
-      <div className="legend-item">
-        <span className="legend-color workshop-color"></span>
-        <span>Workshop</span>
-      </div>
+    <div className="legend horizontal-legend">
+        <div className="legend-item">
+            <span className="legend-color am-color"></span>
+            <span>AM</span>
+        </div>
+        <div className="legend-item">
+            <span className="legend-color pm-color"></span>
+            <span>PM</span>
+        </div>
+        <div className="legend-item">
+            <span className="legend-color full-day-color"></span>
+            <span>Full Day</span>
+        </div>
     </div>
-  );
+);
+
+  const eventsWithColors = events.map(event => {
+    if (event.extendedProps.type === 'AM') {
+      return { ...event, color: '#e4b91c' }; // Set color for AM events
+    }
+    if (event.extendedProps.type === 'PM') {
+      return { ...event, color: '#3E9CE9' }; // Set color for PM events
+    }
+    if (event.extendedProps.type === 'Full Day') {
+      return { ...event, color: '#41b671' }; // Set color for Full Day events
+    }
+    return event; // Return the event unmodified if no condition matches
+  });
 
   return (
     <div>
+      <strong>Legend:</strong>
     <Legend/>
     <FullCalendar
-      plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+      plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
       initialView="dayGridMonth"
-      events={events}
+      events={eventsWithColors}
       headerToolbar={{
         left: 'prev,next today',
         center: 'title',
-        right: 'dayGridMonth,timeGridWeek'
-      }}
-      eventClassNames={(eventInfo) => {
-        // Apply different classes based on event type or properties
-        if (eventInfo.event.extendedProps.type === 'AM') {
-          return 'am-event'; // Add a custom class to 'meeting' type events
-        }
-        return ''; // Default class for other events
-      }}
-      
+        right: 'dayGridMonth,timeGridWeek,listMonth'
+      }}  
     />
     </div>
   );
