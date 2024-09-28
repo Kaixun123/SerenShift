@@ -122,7 +122,10 @@ const retrieveOwnSchedule = async (req, res) => {
                     title: title,
                     start: `${date.date}T${startTime}`,
                     end: `${date.date}T${endTime}`,
-                    allDay: date.period === "Full day", // Set allDay if it's a full-day block
+                    allDay: date.period === "Full Day", // Set allDay if it's a full-day block
+                    extendedProps: {
+                        type: `${date.period}`
+                    }
                 });
             }
         }
