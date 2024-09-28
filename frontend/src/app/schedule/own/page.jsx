@@ -7,8 +7,8 @@ import '@/components/Calendar.css';
 export default function DummyPage() {
     return (
         <Layout>
-            <div className="flex h-screen items-center justify-center overflow-hidden p-4">
-                <div className="calendar-fullscreen">
+            <div className="flex h-screen">
+                <div className="calendar-fullscreen flex-grow">
                     <Calendar />
                 </div>
             </div>

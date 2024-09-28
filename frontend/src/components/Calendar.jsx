@@ -24,7 +24,22 @@ const Calendar = () => {
     fetchSchedule();
   }, []);
 
+  const Legend = () => (
+    <div className="legend">
+      <div className="legend-item">
+        <span className="legend-color meeting-color"></span>
+        <span>Meeting</span>
+      </div>
+      <div className="legend-item">
+        <span className="legend-color workshop-color"></span>
+        <span>Workshop</span>
+      </div>
+    </div>
+  );
+
   return (
+    <div>
+    <Legend/>
     <FullCalendar
       plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
       initialView="dayGridMonth"
@@ -34,7 +49,16 @@ const Calendar = () => {
         center: 'title',
         right: 'dayGridMonth,timeGridWeek'
       }}
+      eventClassNames={(eventInfo) => {
+        // Apply different classes based on event type or properties
+        if (eventInfo.event.extendedProps.type === 'AM') {
+          return 'am-event'; // Add a custom class to 'meeting' type events
+        }
+        return ''; // Default class for other events
+      }}
+      
     />
+    </div>
   );
 };
 

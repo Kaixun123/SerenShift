@@ -1,15 +1,44 @@
+body {
+  overflow: hidden;
+}
+
 .fc {
 color: black; /* Targets FullCalendar's text */
-height: 100%;
+height: calc(100vh - 100px); /* Adjust to fit within the sidebar height (adjust 100px based on your sidebar height) */
+overflow: hidden;
+}
+
+.fc-event {
+  border: 1px solid black; /* Adds a border to all events */
+  background-color: lightblue; /* Adds a background fill */
+}
+
+.fc-event .fc-event-dot {
+  background-color: #EBC025; /* Color for meetings */
+}
+
+.am-dot .fc-event-dot {
+  background-color: #EBC025; /* Color for meetings */
+}
+
+.pm-dot .fc-event-dot {
+  background-color: #3E9CE9; /* Color for workshops */
+}
+
+.fullday-dot .fc-event-dot {
+  background-color: #5BC47B; /* Color for workshops */
 }
 
 .calendar-fullscreen {
-font-family: Arial, Helvetica, sans-serif;
-width: 100%; /* Full width of the remaining space */
-height: 100vh; /* Full height of the viewport */
-padding: 30px; 
-overflow: auto;
-color: black;
+  font-family: Arial, Helvetica, sans-serif;
+  width: 100%; /* Full width of the remaining space */
+  height: 1000px; /* Full height of the viewport */
+  padding: 20px; 
+  overflow: hidden;
+  color: black;
+  flex-grow: 1; /* Allow calendar to take up remaining space */
+  display: flex;
+  flex-direction: column; /* Ensure it can expand */
 }
 
 .calendar {
