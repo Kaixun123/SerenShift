@@ -100,7 +100,6 @@ const TeamSchedulePage = () => {
     : [];
 
   // Customize the event content to show a ribbon with the appropriate color
-  // Customize the event content to show a ribbon with the appropriate color
   const eventContent = (eventInfo) => {
     let ribbonColor;
     if (eventInfo.event.extendedProps.timePeriod === 'Full Day') {
@@ -132,25 +131,37 @@ const TeamSchedulePage = () => {
     );
   };
 
-  const eventPropGetter = (event) => {
+  const eventPropGetter = (event, view) => {
+    // Check if the view is a list view
+    if (view.type === 'listWeek' || view.type === 'listMonth') {
+      // Apply transparent background for list view
+      return {
+        style: {
+          backgroundColor: 'transparent', // No background color in list view
+          color: '#000', // Keep the text color black or another appropriate color
+          border: 'none', // Remove border
+          padding: '5px',
+        },
+      };
+    }
+  
+    // Apply the colors for other views based on the time period
     let backgroundColor;
     if (event.extendedProps.timePeriod === 'Full Day') {
-      backgroundColor = '#e3826f';
+      backgroundColor = '#e3826f'; // Full Day color
     } else if (event.extendedProps.timePeriod === 'AM') {
-      backgroundColor = '#efba98';
+      backgroundColor = '#efba98'; // AM color
     } else if (event.extendedProps.timePeriod === 'PM') {
-      backgroundColor = '#e7d5c7';
+      backgroundColor = '#e7d5c7'; // PM color
     }
-
+  
     return {
       style: {
         backgroundColor: backgroundColor,
-        color: '#fff',
+        color: '#fff', // Text color for other views
         borderRadius: '4px',
         padding: '3px',
-        height: '100%', // Ensure the event fills the whole box vertically
-        width: '95%', // Ensure the event fills the whole box horizontally
-        border: '1px solid black', // Change the border color to black
+        border: '1px solid black', // Black border for non-list views
       },
     };
   };
