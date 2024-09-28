@@ -1,6 +1,8 @@
 import { Box, Flex, Text, VStack, Badge, Button } from "@chakra-ui/react";
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+
+// react icon
+import { IoCalendarOutline } from "react-icons/io5";
+import { LuAlarmClock } from "react-icons/lu";
 
 const PendingApplicationCard = ({
   start_date,
@@ -15,54 +17,53 @@ const PendingApplicationCard = ({
 
   // Format the time to display only the time part (e.g., HH:MM AM/PM)
   const formatTime = (datetime) => {
-    return new Date(datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // Format as time
-  };
-
-  // Determine the background and text color based on the application type
-  const isAdHoc = application_type === "Ad-hoc";
-  const boxBgColor = isAdHoc ? "black" : "white";
-  const textColor = isAdHoc ? "white" : "black";
-
-  // Determine the badge color for the application type
-  const getTypeBadgeColor = (type) => {
-    if (type === "Ad-hoc") {
-      return "whiteAlpha"; // White badge for contrast with black background
-    } else if (type === "Regular") {
-      return "pink"; // Pink badge for Regular
-    }
-    return "gray";
+    return new Date(datetime).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }); // Format as time
   };
 
   return (
     <Box
-      w={["100%", "80%", "70%"]}
-      maxW="800px" // Adjust the max width to reduce empty space
-      p="4" // Adjust padding to reduce overall size
-      borderWidth="1px"
-      borderRadius="lg"
+      w={"100%"}
+      px={"30px"} // Adjust padding to reduce overall size
+      py={"15px"}
+      borderRadius="16px"
       overflow="hidden"
-      boxShadow="md"
-      bg={boxBgColor} // Dynamic background color
-      color={textColor} // Dynamic text color
-      ml="auto"
-      mr="auto"
+      className="shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
     >
       <Flex justify="space-between" align="flex-start">
         {/* Left Side */}
-        <VStack spacing={2} align="flex-start" flex="1"> {/* Increased spacing */}
-          <Badge colorScheme="orange" fontSize="md" p={1} borderRadius="0" textAlign="center">
+        <VStack spacing={"18px"} align="flex-start" flex="1">
+          <Badge
+            fontSize="xs"
+            p={1}
+            w={"95px"}
+            borderRadius="4"
+            textAlign="center"
+            className="text-white bg-yellow-primary capitalize font-medium"
+          >
             Pending
           </Badge>
           <Text fontSize="sm">
             {requestor_remarks || "No remarks provided"}
           </Text>
-          <Badge colorScheme={getTypeBadgeColor(application_type)} fontSize="xs" p={1} borderRadius="full" textAlign="center"> {/* Smaller font size */}
+          <Badge
+            fontSize="xs"
+            p={1}
+            w={"70px"}
+            borderRadius="10px"
+            textAlign="center"
+            className={`text-white capitalize font-normal ${
+              application_type === "Regular" ? "bg-[#DF4EE3]" : "bg-[#181818]"
+            }`}
+          >
             {application_type}
           </Badge>
         </VStack>
 
         {/* Right Side */}
-        <VStack spacing={3} align="stretch" ml={4} flex="1">
+        <VStack spacing={"20px"} align="stretch" flex="1">
           {/* Combined gray box for date and time */}
           <Box
             bg="gray.200" // Light gray background
@@ -73,12 +74,27 @@ const PendingApplicationCard = ({
             alignItems="center"
           >
             <Flex alignItems="center">
-              <CalendarTodayIcon color="action" />
-              <Text ml={2}>{formatDate(start_date)}</Text>
+              <Box className="flex items-center justify-center bg-white rounded-[50%] p-2">
+                <IoCalendarOutline
+                  className="w-5 h-5"
+                  style={{ color: "#3D89FB" }}
+                />
+              </Box>
+              <Text fontSize="sm" ml={2}>
+                {formatDate(start_date)}
+              </Text>
             </Flex>
             <Flex alignItems="center">
-              <AccessTimeIcon color="action" />
-              <Text ml={4}>{formatTime(start_date)}</Text> {/* Increased margin for spacing */}
+              <Box className="flex items-center justify-center bg-white rounded-[50%] p-2">
+                <LuAlarmClock
+                  className="w-5 h-5"
+                  style={{ color: "#F29268" }}
+                />
+              </Box>
+              <Text fontSize="sm" ml={4}>
+                {formatTime(start_date)}
+              </Text>{" "}
+              {/* Increased margin for spacing */}
             </Flex>
           </Box>
 

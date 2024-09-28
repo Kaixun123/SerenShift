@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Modal,
   ModalOverlay,
@@ -8,17 +8,24 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  Text
+  Text,
 } from "@chakra-ui/react";
 
-const WithdrawalModal = ({ isOpen, onClose, applicationType, startDate, endDate, onConfirm }) => {
+const WithdrawalModal = ({
+  isOpen,
+  onClose,
+  applicationType,
+  startDate,
+  endDate,
+  onConfirm,
+}) => {
   // Format the date to display only the date part (e.g., YYYY-MM-DD)
   const formatDate = (datetime) => {
     return new Date(datetime).toLocaleDateString();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Confirm Withdrawal?</ModalHeader>
