@@ -89,12 +89,11 @@ const createNewApplication = async (req, res, next) => {
     try {
 
         let { id, application_type, start_date, end_date, requestor_remarks } = req.body
-        let employeeReportingManager = await Employee.findOne({
-            where: { id: id }
-        })
+        let employeeInfo = await Employee.findByPk(id);
+        let reportingManager = employeeInfo.reporting_manager
 
         // check if the employee has a reporting manager
-        if (!employeeReportingManager || employeeReportingManager.length === 0) {
+        if (!reportingManager || reportingManager.length === 0) {
             return res.status(404).json({ message: "Reporting Manager not found." });
         };
 
