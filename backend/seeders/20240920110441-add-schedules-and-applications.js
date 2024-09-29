@@ -150,7 +150,7 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Optional: Delete the inserted schedule and application entries if needed
+    // Delete the inserted schedule and application entries
     await queryInterface.bulkDelete('Schedules', null, {});
     await queryInterface.bulkDelete('Applications', null, {});
   }

@@ -22,8 +22,9 @@ app.use(
     secret: process.env.SESSION_SECRET,
     store: new SequelizeStore({
       db: sequelize,
-      checkExpirationInterval: 15 * 60 * 1000,
-      expiration: 1 * 60 * 60 * 1000,
+      table: 'Sessions',
+      checkExpirationInterval: 15 * 60 * 1000, // check every 15 minutes
+      expiration: 1 * 60 * 60 * 1000, // 1 hour expiry
     }),
     resave: false,
     saveUninitialized: false,

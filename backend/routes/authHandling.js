@@ -22,9 +22,10 @@ const vaildateParameters = (req, res, next) => {
     });
 };
 
+router.patch('/extendDuration', ensureLoggedIn, (req, res) => authController.extendDuration(req, res))
 router.post('/login', loginFormValidationRules(), vaildateParameters, (req, res) => authController.login(req, res))
-router.get('/validate-token', ensureLoggedIn, (req, res) => authController.validateToken(req, res))
 router.get('/logout', ensureLoggedIn, (req, res) => authController.logout(req, res))
 router.get('/me', ensureLoggedIn, (req, res) => authController.me(req, res))
+router.get('/validateToken', ensureLoggedIn, (req, res) => authController.validateToken(req, res))
 
 module.exports = router;

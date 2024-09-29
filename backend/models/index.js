@@ -2,6 +2,7 @@ const Application = require('./Application');
 const Blacklist = require('./Blacklist');
 const Employee = require('./Employee');
 const Schedule = require('./Schedule');
+const Session = require('./Session');
 
 Employee.hasMany(Employee, {
     foreignKey: 'reporting_manager',
@@ -134,4 +135,5 @@ module.exports = {
     Blacklist,
     Employee,
     Schedule,
+    Session,
 };

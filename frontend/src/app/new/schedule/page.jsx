@@ -73,8 +73,8 @@ export default function NewSchedule() {
     onClose: onModalWithdrawClose,
   } = useDisclosure();
 
-   // For Token Expiry Modal
-   const {
+  // For Token Expiry Modal
+  const {
     isOpen: isTokenExpiryModalOpen,
     onOpen: onTokenExpiryModalOpen,
     onClose: onTokenExpiryModalClose,
@@ -113,21 +113,21 @@ export default function NewSchedule() {
   // Function to check token validity by calling the backend
   const checkTokenValidity = async () => {
     try {
-        const response = await fetch("/api/auth/validate-token", {
-            method: 'GET',
-            credentials: 'include',  // Include cookies in the request
-        });
+      const response = await fetch("/api/auth/validateToken", {
+        method: 'GET',
+        credentials: 'include',  // Include cookies in the request
+      });
 
-        const data = await response.json();
-        if (!data.valid) {
-            setIsValidToken(false);  // Mark token as invalid
-            onTokenExpiryModalOpen();       // Open the modal
-            setTimeout(() => {
-                router.push('/auth/login');    // Redirect to home after showing popup
-            }, 3000);  // Redirect after 3 seconds
-        }
+      const data = await response.json();
+      if (!data.valid) {
+        setIsValidToken(false);  // Mark token as invalid
+        onTokenExpiryModalOpen();       // Open the modal
+        setTimeout(() => {
+          router.push('/auth/login');    // Redirect to home after showing popup
+        }, 3000);  // Redirect after 3 seconds
+      }
     } catch (error) {
-        console.error('Error checking token validity:', error);
+      console.error('Error checking token validity:', error);
     }
   };
 
@@ -451,10 +451,10 @@ export default function NewSchedule() {
                 onClick={createNewApplication}
                 isDisabled={
                   formattedDate.startDate != "" &&
-                  formattedDate.endDate != "" &&
-                  type != "" &&
-                  timeSlot != "" &&
-                  reason != ""
+                    formattedDate.endDate != "" &&
+                    type != "" &&
+                    timeSlot != "" &&
+                    reason != ""
                     ? false
                     : true
                 }
