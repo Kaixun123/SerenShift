@@ -1,22 +1,33 @@
-'use client';
+"use client";
 import React, { useEffect, useState } from "react";
-import { Box, Avatar, IconButton, Menu, MenuButton, MenuList, MenuItem, MenuDivider, Flex, Text, Badge, HStack, VStack } from "@chakra-ui/react";
-import NotificationsIcon from '@mui/icons-material/Notifications';
+import {
+  Box,
+  Avatar,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+  Text,
+  Badge,
+  HStack,
+  VStack,
+} from "@chakra-ui/react";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 
 export default function TopHeader({ mainText, subText }) {
-  // Move useState inside the component
-  const [employee, setEmployee] = useState({ name: '', position: ''});
+  const [employee, setEmployee] = useState({ name: "", position: "" });
 
   useEffect(() => {
     async function fetchEmployeeData() {
       try {
-        const response = await fetch('/api/auth/me'); // Assuming your endpoint is at /api/employee
+        const response = await fetch("/api/auth/me");
         const data = await response.json();
         setEmployee({
           name: `${data.first_name} ${data.last_name}`, // Assuming first_name and last_name from API
           position: data.position, // Assuming position is part of the data
         });
-        console.log(data)
       } catch (error) {
         console.error("Error fetching employee data:", error);
       }
@@ -33,9 +44,21 @@ export default function TopHeader({ mainText, subText }) {
       <HStack spacing={4}>
         {/* Notification Popover */}
         <Menu>
-          <MenuButton as={IconButton} icon={<NotificationsIcon style={{ fontSize: 30 }} />} variant="ghost" aria-label="Notifications">
+          <MenuButton
+            as={IconButton}
+            icon={<NotificationsIcon style={{ fontSize: 30 }} />}
+            variant="ghost"
+            aria-label="Notifications"
+          >
             <Box position="relative">
-              <Badge colorScheme="red" borderRadius="full" boxSize={3} position="absolute" top="-1" right="-1">
+              <Badge
+                colorScheme="red"
+                borderRadius="full"
+                boxSize={3}
+                position="absolute"
+                top="-1"
+                right="-1"
+              >
                 {/* Notification badge */}
               </Badge>
             </Box>
@@ -56,7 +79,9 @@ export default function TopHeader({ mainText, subText }) {
               <Avatar size="md" name={employee.name} src={employee.avatar} />
               <VStack align="left" spacing="1px" ml="2">
                 <Text fontSize="sm">{employee.name || "Loading..."}</Text>
-                <Text fontSize="xs" color="gray.500">{employee.position || "Position"}</Text>
+                <Text fontSize="xs" color="gray.500">
+                  {employee.position || "Position"}
+                </Text>
               </VStack>
             </HStack>
           </MenuButton>

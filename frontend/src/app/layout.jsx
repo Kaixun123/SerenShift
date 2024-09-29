@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Providers } from "./providers";
 import { Fonts } from "./fonts";
+import SideBar from "@/components/Sidebar";
 
 export const metadata = {
   title: "SerenShift",
@@ -11,7 +12,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={Fonts.rubik.variable}>
       <body className={`antialiased`}>
-        <Providers>{children}</Providers>
+        <div className="min-h-screen flex flex-row justify-start">
+          <SideBar />
+          <div className="w-full bg-white border-1 border-dashed">
+            <Providers>{children}</Providers>
+          </div>
+        </div>
       </body>
     </html>
   );

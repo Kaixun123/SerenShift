@@ -1,28 +1,27 @@
-'use client';
-import React, { useState, useEffect } from 'react';
-import { Box, Stack, Flex, Text } from '@chakra-ui/react';
+"use client";
+import React, { useState, useEffect } from "react";
+import { Box, Stack, Flex, Text } from "@chakra-ui/react";
 import TopHeader from "@/components/TopHeader";
-import { Layout } from '@/components/Layout.jsx';
-import { MultiSelect } from '@mantine/core';
-import FullCalendar from '@fullcalendar/react'; // Import FullCalendar
-import dayGridPlugin from '@fullcalendar/daygrid'; // Month view
-import timeGridPlugin from '@fullcalendar/timegrid'; // Week view
-import interactionPlugin from '@fullcalendar/interaction'; // For interactivity
-import listPlugin from '@fullcalendar/list'; // List view plugin
-import "../../../components/Calendar.css"
+import { MultiSelect } from "@mantine/core";
+import FullCalendar from "@fullcalendar/react"; // Import FullCalendar
+import dayGridPlugin from "@fullcalendar/daygrid"; // Month view
+import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
+import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
+import listPlugin from "@fullcalendar/list"; // List view plugin
+import "../../../components/Calendar.css";
 
 const TeamSchedulePage = () => {
   const [loading, setLoading] = useState(false);
   const [colleagues, setColleagues] = useState([]);
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [scheduleData, setScheduleData] = useState(null);
-  const [employee, setEmployee] = useState({ department: '' });
+  const [employee, setEmployee] = useState({ department: "" });
   const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     async function fetchEmployeeData() {
       try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch("/api/auth/me");
         const data = await response.json();
         setEmployee({
           department: `${data.department}`,
@@ -39,21 +38,26 @@ const TeamSchedulePage = () => {
     setScheduleData(null);
 
     try {
-      const colleaguesResponse = await fetch('/api/employee/colleagues');
+      const colleaguesResponse = await fetch("/api/employee/colleagues");
       const colleaguesData = await colleaguesResponse.json();
 
-      const query = colleagueIds.length > 0 ? `?colleague_id=${colleagueIds.join(',')}` : '';
-      const scheduleResponse = await fetch(`/api/schedule/teamschedule${query}`);
+      const query =
+        colleagueIds.length > 0
+          ? `?colleague_id=${colleagueIds.join(",")}`
+          : "";
+      const scheduleResponse = await fetch(
+        `/api/schedule/teamschedule${query}`
+      );
       const scheduleData = await scheduleResponse.json();
 
       if (colleaguesResponse.ok && scheduleResponse.ok) {
         setColleagues(colleaguesData);
         setScheduleData(scheduleData);
       } else {
-        console.error('API error occurred');
+        console.error("API error occurred");
       }
     } catch (error) {
-      console.error('Error calling API:', error);
+      console.error("Error calling API:", error);
     } finally {
       setLoading(false);
     }
@@ -71,58 +75,58 @@ const TeamSchedulePage = () => {
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
-      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
-        colleagues.map((colleague) => {
-          const eventDate = new Date(date);
-          let start, end;
+        Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+          colleagues.map((colleague) => {
+            const eventDate = new Date(date);
+            let start, end;
 
-          if (timePeriod === 'Full Day') {
-            start = new Date(eventDate.setHours(9, 0, 0));
-            end = new Date(eventDate.setHours(18, 0, 0));
-          } else if (timePeriod === 'AM') {
-            start = new Date(eventDate.setHours(9, 0, 0));
-            end = new Date(eventDate.setHours(13, 0, 0));
-          } else if (timePeriod === 'PM') {
-            start = new Date(eventDate.setHours(14, 0, 0));
-            end = new Date(eventDate.setHours(18, 0, 0));
-          }
+            if (timePeriod === "Full Day") {
+              start = new Date(eventDate.setHours(9, 0, 0));
+              end = new Date(eventDate.setHours(18, 0, 0));
+            } else if (timePeriod === "AM") {
+              start = new Date(eventDate.setHours(9, 0, 0));
+              end = new Date(eventDate.setHours(13, 0, 0));
+            } else if (timePeriod === "PM") {
+              start = new Date(eventDate.setHours(14, 0, 0));
+              end = new Date(eventDate.setHours(18, 0, 0));
+            }
 
-          return {
-            title: `${colleague}`,
-            start,
-            end,
-            allDay: false,
-            timePeriod,
-          };
-        })
+            return {
+              title: `${colleague}`,
+              start,
+              end,
+              allDay: false,
+              timePeriod,
+            };
+          })
+        )
       )
-    )
     : [];
 
   const eventContent = (eventInfo) => {
     let ribbonColor;
-    if (eventInfo.event.extendedProps.timePeriod === 'Full Day') {
-      ribbonColor = '#e3826f';
-    } else if (eventInfo.event.extendedProps.timePeriod === 'AM') {
-      ribbonColor = '#efba98';
-    } else if (eventInfo.event.extendedProps.timePeriod === 'PM') {
-      ribbonColor = '#e7d5c7';
+    if (eventInfo.event.extendedProps.timePeriod === "Full Day") {
+      ribbonColor = "#e3826f";
+    } else if (eventInfo.event.extendedProps.timePeriod === "AM") {
+      ribbonColor = "#efba98";
+    } else if (eventInfo.event.extendedProps.timePeriod === "PM") {
+      ribbonColor = "#e7d5c7";
     }
 
     return (
       <div
         style={{
           backgroundColor: ribbonColor,
-          color: '#fff',
-          padding: '3px 8px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          width: '100%', // Ensure the content spans the full width
-          height: '100%', // Ensure the content spans the full height
-          boxSizing: 'border-box', // Include padding in element's total width/height
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
+          color: "#fff",
+          padding: "3px 8px",
+          borderRadius: "4px",
+          fontSize: "12px",
+          width: "100%", // Ensure the content spans the full width
+          height: "100%", // Ensure the content spans the full height
+          boxSizing: "border-box", // Include padding in element's total width/height
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
         title={eventInfo.event.title} // Show full text on hover
       >
@@ -133,34 +137,34 @@ const TeamSchedulePage = () => {
 
   const eventPropGetter = (event) => {
     let backgroundColor;
-    if (event.extendedProps.timePeriod === 'Full Day') {
-      backgroundColor = '#e3826f';
-    } else if (event.extendedProps.timePeriod === 'AM') {
-      backgroundColor = '#efba98';
-    } else if (event.extendedProps.timePeriod === 'PM') {
-      backgroundColor = '#e7d5c7';
+    if (event.extendedProps.timePeriod === "Full Day") {
+      backgroundColor = "#e3826f";
+    } else if (event.extendedProps.timePeriod === "AM") {
+      backgroundColor = "#efba98";
+    } else if (event.extendedProps.timePeriod === "PM") {
+      backgroundColor = "#e7d5c7";
     }
 
     return {
       style: {
         backgroundColor: backgroundColor,
-        color: '#fff',
-        borderRadius: '4px',
-        padding: '3px',
-        height: '100%', // Ensure the event fills the whole box vertically
-        width: '100%', // Ensure the event fills the whole box horizontally
-        border: 'none', // Remove the border
-        boxShadow: 'none', // Remove any shadow or outline
+        color: "#fff",
+        borderRadius: "4px",
+        padding: "3px",
+        height: "100%", // Ensure the event fills the whole box vertically
+        width: "100%", // Ensure the event fills the whole box horizontally
+        border: "none", // Remove the border
+        boxShadow: "none", // Remove any shadow or outline
       },
     };
   };
 
-
-
   // Legend component
   const Legend = () => (
     <Box mb={4}>
-      <Text fontSize="lg" fontWeight="bold">Legend:</Text>
+      <Text fontSize="lg" fontWeight="bold">
+        Legend:
+      </Text>
       <Flex direction="row" align="center">
         <Box w="20px" h="20px" bg="#e3826f" mr={2} />
         <Text mr={4}>Full Day</Text>
@@ -173,7 +177,7 @@ const TeamSchedulePage = () => {
   );
 
   return (
-    <Layout>
+    <main>
       <Flex direction="column" flex="1" height="100vh">
         <Box position="relative" zIndex="2">
           <TopHeader
@@ -192,16 +196,15 @@ const TeamSchedulePage = () => {
                   .map((colleague) => ({
                     value: String(colleague.user_id),
                     label: `${colleague.first_name} ${colleague.last_name}`,
-                  }))
-                }
+                  }))}
                 placeholder="Select Colleagues"
                 value={selectedColleagueIds.map(String)}
                 onChange={handleColleagueSelect}
                 styles={{
                   input: {
-                    width: '304px',
-                    height: '30px',
-                    maxHeight: '30px',
+                    width: "304px",
+                    height: "30px",
+                    maxHeight: "30px",
                   },
                 }}
               />
@@ -225,20 +228,25 @@ const TeamSchedulePage = () => {
   `}</style>
 
             <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              plugins={[
+                dayGridPlugin,
+                timeGridPlugin,
+                interactionPlugin,
+                listPlugin,
+              ]}
               initialView="timeGridWeek" // Start with week view or any other view
               events={events}
               headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,listWeek',
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth,timeGridWeek,listWeek",
               }}
               editable={false}
               selectable={true}
               nowIndicator={true}
               eventPropGetter={eventPropGetter} // Custom logic for events
-              dateClick={(info) => console.log('Date clicked:', info.dateStr)}
-              eventClick={(info) => console.log('Event clicked:', info.event)}
+              dateClick={(info) => console.log("Date clicked:", info.dateStr)}
+              eventClick={(info) => console.log("Event clicked:", info.event)}
               eventContent={eventContent} // Custom content for the events
               dayMaxEventRows={2} // Limit the number of visible events to 3 rows
               height="100%"
@@ -247,11 +255,9 @@ const TeamSchedulePage = () => {
               allDaySlot={false}
             />
           </Box>
-
-
         </Box>
       </Flex>
-    </Layout>
+    </main>
   );
 };
 
