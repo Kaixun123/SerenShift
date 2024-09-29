@@ -22,11 +22,11 @@ const login = (req, res) => {
             );
             res.cookie('jwt', token, {
                 httpOnly: true,
-                secure: true,
+                secure: false,
                 maxAge: 60 * 60 * 1000,
                 sameSite: 'None',
             });
-            return res.status(200).json({ message: 'Login successfully', token });
+            return res.status(200).json({ message: 'Login successfully', token});
         });
     })(req, res);
 

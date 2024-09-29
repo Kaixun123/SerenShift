@@ -6,6 +6,7 @@ import PendingApplicationCard from "@/components/PendingAppCard";
 import WithdrawalModal from "@/components/WithdrawModal";
 import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
+
 // chakra-ui
 import {
   FormControl,
@@ -129,6 +130,16 @@ export default function NewSchedule() {
         console.error('Error checking token validity:', error);
     }
   };
+
+  useEffect(() => {
+    // Check for the token in cookies
+    const token = sessionStorage.getItem('jwt'); // Retrieve the token from cookies
+    console.log(token);
+    if (!token) {
+      // Redirect to the home page if the token is present
+      router.replace('/auth/login');
+    }
+  }, [router]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {

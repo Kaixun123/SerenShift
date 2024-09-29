@@ -54,6 +54,7 @@ const LoginPage = () => {
           status: "success",
           isClosable: true,
         });
+        sessionStorage.setItem('jwt', data.token);
         route.push("/");
       } else {
         console.error("Login failed");
