@@ -8,7 +8,7 @@ import dayGridPlugin from "@fullcalendar/daygrid"; // Month view
 import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
 import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
 import listPlugin from "@fullcalendar/list"; // List view plugin
-import "../../../components/Calendar.css";
+import "@/components/Calendar.css";
 
 const TeamSchedulePage = () => {
   const [loading, setLoading] = useState(false);
@@ -75,32 +75,32 @@ const TeamSchedulePage = () => {
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
-        Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
-          colleagues.map((colleague) => {
-            const eventDate = new Date(date);
-            let start, end;
+      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+        colleagues.map((colleague) => {
+          const eventDate = new Date(date);
+          let start, end;
 
-            if (timePeriod === "Full Day") {
-              start = new Date(eventDate.setHours(9, 0, 0));
-              end = new Date(eventDate.setHours(18, 0, 0));
-            } else if (timePeriod === "AM") {
-              start = new Date(eventDate.setHours(9, 0, 0));
-              end = new Date(eventDate.setHours(13, 0, 0));
-            } else if (timePeriod === "PM") {
-              start = new Date(eventDate.setHours(14, 0, 0));
-              end = new Date(eventDate.setHours(18, 0, 0));
-            }
+          if (timePeriod === "Full Day") {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          } else if (timePeriod === "AM") {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(13, 0, 0));
+          } else if (timePeriod === "PM") {
+            start = new Date(eventDate.setHours(14, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          }
 
-            return {
-              title: `${colleague}`,
-              start,
-              end,
-              allDay: false,
-              timePeriod,
-            };
-          })
-        )
+          return {
+            title: `${colleague}`,
+            start,
+            end,
+            allDay: false,
+            timePeriod,
+          };
+        })
       )
+    )
     : [];
 
   const eventContent = (eventInfo) => {
@@ -185,7 +185,6 @@ const TeamSchedulePage = () => {
             subText={"Viewing your team's schedule"}
           />
         </Box>
-
         <Box flex="1" p={4}>
           <Flex justifyContent="space-between" alignItems="center">
             <Legend />

@@ -86,7 +86,7 @@ export default function TopHeader({ mainText, subText }) {
             </HStack>
           </MenuButton>
           <MenuList>
-            <MenuItem>Profile</MenuItem>
+            <MenuItem as='a' href='/profile'>Profile</MenuItem>
             <MenuItem>Settings</MenuItem>
             <MenuDivider />
             <MenuItem>Logout</MenuItem>

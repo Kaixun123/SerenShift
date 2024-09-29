@@ -3,8 +3,7 @@ import Link from "next/link";
 import { Image, Button, useToast } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useMemo } from "react";
-
-// react icon
+// react icons
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
 import { CiViewList } from "react-icons/ci";
@@ -68,7 +67,6 @@ export default function SideBar() {
       });
     }
   };
-
   return (
     <div className="min-h-screen w-[250px] flex flex-col border-r border-r-gray-secondary ">
       <div className="flex h-[100px] p-5 items-center justify-center border-b border-b-gray-secondary">
@@ -80,15 +78,13 @@ export default function SideBar() {
           objectFit="contain"
         />
       </div>
-
       <div className="flex flex-col">
         {menuItems.map(({ icon: Icon, ...menu }) => {
-          const extraClass =
-            activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
-
+          //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
           return (
             <div
-              className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
+              className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap`}
+              //className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
               key={menu.title}
             >
               <Link href={menu.href} className="flex gap-3 items-center">
@@ -99,7 +95,6 @@ export default function SideBar() {
           );
         })}
       </div>
-
       {/* Logout Button */}
       <div className="mt-auto px-5 py-7">
         <Button
