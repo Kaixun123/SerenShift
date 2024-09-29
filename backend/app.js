@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const helmet = require("helmet");
 const cors = require("cors");
 const app = express();
+const cookieParser = require("cookie-parser");
 
 require("dotenv").config();
 const EXPRESS_PORT = process.env.EXPRESS_PORT;
@@ -21,8 +22,9 @@ app.use(
     secret: process.env.SESSION_SECRET,
     store: new SequelizeStore({
       db: sequelize,
-      checkExpirationInterval: 15 * 60 * 1000,
-      expiration: 1 * 60 * 60 * 1000,
+      table: 'Sessions',
+      checkExpirationInterval: 15 * 60 * 1000, // check every 15 minutes
+      expiration: 1 * 60 * 60 * 1000, // 1 hour expiry
     }),
     resave: false,
     saveUninitialized: false,
@@ -55,6 +57,7 @@ app.use(passport.session());
 
 app.use(express.static("./public"));
 app.use(morgan("tiny"));
+app.use(cookieParser());
 
 // App Routes
 app.use("/api/auth", require("./routes/authHandling"));

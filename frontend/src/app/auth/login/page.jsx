@@ -35,11 +35,14 @@ const LoginPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           emailAddress: email,
           password,
         }),
       });
+
+      const data = await response.json();
 
       if (response.ok) {
         // const data = await response.json();
@@ -51,6 +54,7 @@ const LoginPage = () => {
           status: "success",
           isClosable: true,
         });
+        sessionStorage.setItem('jwt', data.token);
         route.push("/");
       } else {
         console.error("Login failed");

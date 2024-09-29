@@ -2,29 +2,32 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const { Employee } = require('../models');
 
-const login = (req, res) => {
-    console.log('Request Body:', req.body);
-    const { emailAddress, password } = req.body;
-    if (!emailAddress || !password) {
-        return res.status(422).json({ message: 'Email and password are required' });
-    }
+// Constants for session
+const maxCookieDuration = 1 * 60 * 60 * 1000;
+const maxJWTDuration = 60 * 60 * 1000;
+const httpOnlyJWTSecurity = false;
+const secureJWTSecurity = false;
+const sameSiteJWTSecurity = 'None';
 
+const login = (req, res) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) return res.status(500).json({ error: err });
         if (!user) return res.status(401).json({ message: info.message });
         req.logIn(user, (err) => {
             if (err)
                 return res.status(500).json({ error: err });
-            const token = jwt.sign(
+            let issuedToken = jwt.sign(
                 { id: user.id },
                 process.env.JWT_SECRET,
                 { expiresIn: '1h' }
             );
-            res.cookie('jwt', token, {
-                httpOnly: true,
-                secure: false
+            res.cookie('jwt', issuedToken, {
+                httpOnly: httpOnlyJWTSecurity,
+                secure: secureJWTSecurity,
+                maxAge: maxJWTDuration,
+                sameSite: sameSiteJWTSecurity,
             });
-            return res.status(200).json({ message: 'Login successfully' });
+            return res.status(200).json({ message: 'Login successfully', token: issuedToken });
         });
     })(req, res);
 
@@ -36,6 +39,7 @@ const me = async (req, res) => {
     if (!retrievedEmployee)
         req.logout(() => {
             res.clearCookie('jwt');
+            res.clearCookie('connect.sid');
             res.status(404).json({ message: 'Employee not found' });
         });
     else {
@@ -63,6 +67,51 @@ const me = async (req, res) => {
     }
 }
 
+const validateToken = (req, res) => {
+    const token = req.cookies.jwt;  // Access the JWT from cookies
+    if (!token) {
+        return res.status(401).json({ valid: false, message: 'No token provided' });
+    }
+    // Verify the token
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ valid: false, message: 'Invalid or expired token' });
+        }
+        // Token is valid, return success
+        return res.status(200).json({ valid: true, message: 'Token is valid', user: decoded });
+    });
+}
+
+const extendDuration = async (req, res) => {
+    let currentToken = req.cookies.jwt;
+    jwt.verify(currentToken, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ valid: false, message: 'Invalid or expired token' });
+        }
+        req.session.cookie.maxAge = maxCookieDuration;
+        let now = new Date();
+        let newCookieExpiry = new Date(now.getTime() + req.session.cookie.maxAge);
+        req.session.expires = newCookieExpiry.toISOString();
+        req.session.save((err) => {
+            if (err) {
+                return res.status(500).json({ message: 'Failed to extend session' });
+            }
+        });
+        let newToken = jwt.sign(
+            { id: req.user.id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+        res.cookie('jwt', newToken, {
+            httpOnly: httpOnlyJWTSecurity,
+            secure: secureJWTSecurity,
+            maxAge: maxJWTDuration,
+            sameSite: sameSiteJWTSecurity,
+        });
+        return res.status(200).json({ message: 'Token duration extended successfully', token: newToken });
+    });
+}
+
 const logout = (req, res) => {
     req.logout(() => {
         res.clearCookie('jwt');
@@ -74,5 +123,7 @@ const logout = (req, res) => {
 module.exports = {
     login,
     logout,
-    me
+    me,
+    validateToken,
+    extendDuration
 };

@@ -32,6 +32,8 @@
     "@schedule-x/theme-default": "^2.2.1",
     "dayjs": "^1.11.13",
     "framer-motion": "^11.5.4",
+    "js-cookie": "^3.0.5",
+    "jwt-decode": "^4.0.0",
     "moment": "^2.30.1",
     "moment-timezone": "^0.5.45",
     "next": "14.2.12",
@@ -40,6 +42,7 @@
     "react-big-calendar": "^1.14.1",
     "react-dom": "^18",
     "react-icons": "^5.3.0",
+    "SerenShift": "file:",
     "tippy.js": "^6.3.7"
   },
   "devDependencies": {
