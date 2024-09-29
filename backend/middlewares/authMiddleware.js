@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 
 const ensureHR = (req, res, next) => {
+    if (req.user == null) {
+        return res.status(401).end();
+    }
     if (req.user.role === "HR") {
         return next();
     } else {
@@ -9,7 +12,10 @@ const ensureHR = (req, res, next) => {
 }
 
 const ensureManagerAndAbove = (req, res, next) => {
-    if (req.user.role === "Manager" || req.user.role === "HR") {
+    if (req.user == null) {
+        return res.status(401).end();
+    }
+    else if (req.user.role === "Manager" || req.user.role === "HR") {
         return next();
     } else {
         return res.status(403).end();
@@ -17,7 +23,10 @@ const ensureManagerAndAbove = (req, res, next) => {
 }
 
 const ensureManager = (req, res, next) => {
-    if (req.user.role === "Manager") {
+    if (req.user == null) {
+        return res.status(401).end();
+    }
+    else if (req.user.role === "Manager") {
         return next();
     } else {
         return res.status(403).end();
