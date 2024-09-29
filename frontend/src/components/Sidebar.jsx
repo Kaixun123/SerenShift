@@ -1,34 +1,43 @@
 "use client";
 import Link from "next/link";
-import {
-  CalendarMonthRounded,
-  PeopleAltRounded,
-  ArticleRounded,
-} from "@mui/icons-material";
 import { Image, Button, useToast } from "@chakra-ui/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useMemo } from "react";
+// react icons
+import { IoCalendarOutline } from "react-icons/io5";
+import { BsPeople } from "react-icons/bs";
+import { CiViewList } from "react-icons/ci";
 
 export default function SideBar() {
-  const route = useRouter();
+  const router = useRouter();
+  const pathname = usePathname();
   const toast = useToast();
 
   const menuItems = [
     {
+      id: 1,
       href: "/schedule/own",
-      icon: CalendarMonthRounded,
+      icon: IoCalendarOutline,
       title: "Own Calendar",
     },
     {
+      id: 2,
       href: "/schedule/team",
-      icon: PeopleAltRounded,
+      icon: BsPeople,
       title: "Team Calendar",
     },
     {
-      href: "/new/schedule",
-      icon: ArticleRounded,
-      title: "New Schedule",
+      id: 3,
+      href: "/application/create",
+      icon: CiViewList,
+      title: "New Application",
     },
   ];
+
+  const activeMenu = useMemo(
+    () => menuItems.find((menu) => menu.href === pathname),
+    [pathname]
+  );
 
   const handleLogout = async () => {
     console.log("Logout clicked");
@@ -46,7 +55,7 @@ export default function SideBar() {
         status: "success",
         isClosable: true,
       });
-      route.push("/auth/login");
+      router.push("/auth/login");
     } else {
       console.error("Login failed");
       // Handle login failure here (e.g., show an error message)
@@ -58,7 +67,6 @@ export default function SideBar() {
       });
     }
   };
-
   return (
     <div className="min-h-screen w-[250px] flex flex-col border-r border-r-gray-secondary ">
       <div className="flex h-[100px] p-5 items-center justify-center border-b border-b-gray-secondary">
@@ -70,22 +78,27 @@ export default function SideBar() {
           objectFit="contain"
         />
       </div>
-
-      <div className="flex flex-col p-5 gap-5 flex-grow-0 flex-shrink-0">
-        {menuItems.map(({ href, icon: Icon, title }) => (
-          <div className="flex gap-3" key={title}>
-            <Icon />
-            <Link href={href}>{title}</Link>
-          </div>
-        ))}
+      <div className="flex flex-col">
+        {menuItems.map(({ icon: Icon, ...menu }) => {
+          //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
+          return (
+            <div
+              className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap`}
+              //className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
+              key={menu.title}
+            >
+              <Link href={menu.href} className="flex gap-3 items-center">
+                <Icon className="w-5 h-5" />
+                {menu.title}
+              </Link>
+            </div>
+          );
+        })}
       </div>
-
       {/* Logout Button */}
       <div className="mt-auto px-5 py-7">
         <Button
-          colorScheme="red"
-          variant="outline"
-          width="full"
+          className="w-full p-1 text-red-secondary border border-red-secondary rounded-md"
           onClick={handleLogout}
         >
           Logout

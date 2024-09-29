@@ -72,6 +72,8 @@ const PendingApplicationCard = ({
             display="flex"
             justifyContent="space-between" // Space between date and time
             alignItems="center"
+            flexWrap="wrap"
+            gap={"2"}
           >
             <Flex alignItems="center">
               <Box className="flex items-center justify-center bg-white rounded-[50%] p-2">
@@ -91,10 +93,9 @@ const PendingApplicationCard = ({
                   style={{ color: "#F29268" }}
                 />
               </Box>
-              <Text fontSize="sm" ml={4}>
+              <Text fontSize="sm" ml={2}>
                 {formatTime(start_date)}
-              </Text>{" "}
-              {/* Increased margin for spacing */}
+              </Text>
             </Flex>
           </Box>
 
