@@ -10,9 +10,13 @@ const PendingApplicationCard = ({
   requestor_remarks,
   onWithdraw,
 }) => {
-  // Format the date to display only the date part (e.g., YYYY-MM-DD)
+  // Format the date to display as DD-MM-YYYY
   const formatDate = (datetime) => {
-    return new Date(datetime).toLocaleDateString(); // Format as date
+    const date = new Date(datetime);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   // Format the time to display only the time part (e.g., HH:MM AM/PM)
