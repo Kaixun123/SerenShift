@@ -9,6 +9,7 @@ import {
   ModalFooter,
   Button,
   Text,
+  useToast,
 } from "@chakra-ui/react";
 
 const WithdrawalModal = ({
@@ -17,9 +18,10 @@ const WithdrawalModal = ({
   applicationType,
   startDate,
   endDate,
-  time, // New prop for time
   onConfirm,
 }) => {
+
+  const toast = useToast();
   // Format the date to display as DD-MM-YYYY
   const formatDate = (datetime) => {
     const date = new Date(datetime);
@@ -38,6 +40,16 @@ const WithdrawalModal = ({
     }); // Format as time
   };
 
+  const handleConfirm = () => {
+    onConfirm();
+    toast({
+      title: "Pending Application Successfully Withdrawn",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
@@ -51,7 +63,7 @@ const WithdrawalModal = ({
           <Text>Time: {formatTime(startDate)}</Text> {/* New time field */}
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mr={3} onClick={onConfirm}>
+          <Button colorScheme="red" mr={3} onClick={handleConfirm}>
             Yes, Withdraw
           </Button>
           <Button variant="ghost" onClick={onClose}>
