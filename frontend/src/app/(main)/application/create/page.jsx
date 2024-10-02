@@ -36,6 +36,9 @@ import { PiWarningCircle } from "react-icons/pi";
 import { DatePicker, DatesProvider } from "@mantine/dates";
 import { Pagination } from "@mantine/core";
 
+//react-dropzone (file uploads)
+import { useDropzone } from 'react-dropzone'
+
 export default function NewApplicationPage() {
   // For Submit Modal
   const {

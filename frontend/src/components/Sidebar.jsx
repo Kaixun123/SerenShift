@@ -54,6 +54,8 @@ export default function SideBar() {
         description: "Thank you for using our service",
         status: "success",
         isClosable: true,
+        position: 'top-right',
+        
       });
       router.push("/auth/login");
     } else {
@@ -64,6 +66,7 @@ export default function SideBar() {
         description: "An error has occured. Please try again later",
         status: "error",
         isClosable: true,
+        position: 'top-right',
       });
     }
   };

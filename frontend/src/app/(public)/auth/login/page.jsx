@@ -53,6 +53,7 @@ const LoginPage = () => {
           description: "Redirecting..",
           status: "success",
           isClosable: true,
+          position: 'top-right',
         });
         sessionStorage.setItem('jwt', data.token);
         route.push("/");
@@ -64,6 +65,7 @@ const LoginPage = () => {
           description: "You have enter the wrong email/password.",
           status: "error",
           isClosable: true,
+          position: 'top-right',
         });
         setEmail("");
         setPassword("");
@@ -74,6 +76,7 @@ const LoginPage = () => {
         description: "you have entered a invalid email address.",
         status: "error",
         isClosable: true,
+        position: 'top-right',
       });
       setEmail("");
       setPassword("");
