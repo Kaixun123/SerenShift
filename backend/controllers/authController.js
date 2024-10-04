@@ -5,7 +5,7 @@ const { Employee } = require('../models');
 // Constants for session
 const maxCookieDuration = 1 * 60 * 60 * 1000;
 const maxJWTDuration = 60 * 60 * 1000;
-const httpOnlyJWTSecurity = false;
+const httpOnlyJWTSecurity = true;
 const secureJWTSecurity = false;
 const sameSiteJWTSecurity = 'None';
 
@@ -25,7 +25,7 @@ const login = (req, res) => {
                 httpOnly: httpOnlyJWTSecurity,
                 secure: secureJWTSecurity,
                 maxAge: maxJWTDuration,
-                sameSite: sameSiteJWTSecurity,
+                expires: new Date(Date.now() + maxJWTDuration),
             });
             return res.status(200).json({ message: 'Login successfully', token: issuedToken });
         });
@@ -106,13 +106,14 @@ const extendDuration = async (req, res) => {
             httpOnly: httpOnlyJWTSecurity,
             secure: secureJWTSecurity,
             maxAge: maxJWTDuration,
-            sameSite: sameSiteJWTSecurity,
+            expires: new Date(Date.now() + maxJWTDuration),
         });
         return res.status(200).json({ message: 'Token duration extended successfully', token: newToken });
     });
 }
 
 const logout = (req, res) => {
+    req.session.destroy();
     req.logout(() => {
         res.clearCookie('jwt');
         res.clearCookie('connect.sid');

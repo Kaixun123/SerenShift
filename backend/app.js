@@ -33,6 +33,7 @@ app.use(
       secure: false,
       httpOnly: true,
       path: "/",
+      expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour expiry
     },
   })
 );
