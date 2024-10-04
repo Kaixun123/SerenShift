@@ -15,14 +15,17 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import { useRouter } from "next/navigation";
 
 export default function TopHeader({ mainText, subText }) {
   const [employee, setEmployee] = useState({ name: "", position: "" });
-
+  const router = useRouter();
   useEffect(() => {
     async function fetchEmployeeData() {
       try {
         const response = await fetch("/api/auth/me");
+        if (!response.ok) 
+          router.push("/auth/login");
         const data = await response.json();
         setEmployee({
           name: `${data.first_name} ${data.last_name}`, // Assuming first_name and last_name from API

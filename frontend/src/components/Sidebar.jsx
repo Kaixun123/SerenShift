@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
-import { 
-  Image, 
-  Button, 
+import {
+  Image,
+  Button,
   useToast,
   Modal,
   ModalOverlay,
@@ -62,6 +62,7 @@ export default function SideBar() {
   // Function to check token validity by calling the backend
   const checkTokenValidity = async () => {
     try {
+      
       const response = await fetch("/api/auth/validateToken", {
         method: "GET",
         credentials: "include", // Include cookies in the request
@@ -96,7 +97,7 @@ export default function SideBar() {
         status: "success",
         isClosable: true,
         position: 'top-right',
-        
+
       });
       router.push("/auth/login");
     } else {
@@ -114,31 +115,27 @@ export default function SideBar() {
 
   useEffect(() => {
     // Check for the token in cookies
-    const token = sessionStorage.getItem("jwt"); // Retrieve the token from cookies
+    let token = sessionStorage.getItem("jwt"); // Retrieve the token from cookies
     if (!token) {
       // Redirect to the home page if the token is present
       router.replace("/auth/login");
+    } else {
+      checkTokenValidity(); // Check the token validity
+      let intervalId = setInterval(() => {
+        checkTokenValidity();
+      }, 500000);
     }
-  }, [router]);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      checkTokenValidity();
-    }, 500000); // Poll every 5 minutes
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(intervalId);
   }, [router]);
 
   return (
     <div className="min-h-screen w-[250px] flex flex-col border-r border-r-gray-secondary ">
       {/* Token Expiry Modal */}
       <Modal
-          isOpen={isTokenExpiryModalOpen}
-          onClose={onTokenExpiryModalClose}
-          isCentered
-          size={"lg"}
-        >
+        isOpen={isTokenExpiryModalOpen}
+        onClose={onTokenExpiryModalClose}
+        isCentered
+        size={"lg"}
+      >
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Session expired</ModalHeader>
@@ -148,7 +145,7 @@ export default function SideBar() {
           </ModalBody>
         </ModalContent>
       </Modal>
-      
+
       <div className="flex h-[100px] p-5 items-center justify-center border-b border-b-gray-secondary">
         <Image
           src="/serenShiftLogo.jpg"
