@@ -8,6 +8,9 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import tippy from 'tippy.js'; // Import Tippy.js
 import 'tippy.js/dist/tippy.css'; // Import Tippy.js styles
+import { Box, Stack, Flex, Text } from "@chakra-ui/react";
+import RefreshButton from "@/components/RefreshButton";
+
 
 const Calendar = () => {
   const [events, setEvents] = useState([]);
@@ -75,10 +78,16 @@ const Calendar = () => {
     });
   }
 
+  const handleRefresh = () => {
+    setEvents([]);
+  };
+
   return (
     <div>
-      <strong>Legend:</strong>
-    <Legend/>
+      <Flex justifyContent="space-between" alignItems="center" padding="16px">
+      <Legend />
+      <RefreshButton onClick={handleRefresh} />
+      </Flex>
     <FullCalendar
       plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
       initialView="dayGridMonth"
