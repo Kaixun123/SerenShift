@@ -18,7 +18,8 @@ import { useMemo, useEffect, useState } from "react";
 // react icons
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
-import { CiViewList } from "react-icons/ci";
+import { MdOutlinePendingActions } from "react-icons/md";
+import { GrChapterAdd } from "react-icons/gr";
 
 export default function SideBar() {
   const router = useRouter();
@@ -48,16 +49,22 @@ export default function SideBar() {
     },
     {
       id: 3,
+      href: "/application/pending",
+      icon: MdOutlinePendingActions,
+      title: "Pending Application",
+    },
+    {
+      id: 4,
       href: "/application/create",
-      icon: CiViewList,
+      icon: GrChapterAdd,
       title: "New Application",
     },
   ];
 
-  const activeMenu = useMemo(
-    () => menuItems.find((menu) => menu.href === pathname),
-    [pathname]
-  );
+  // const activeMenu = useMemo(
+  //   () => menuItems.find((menu) => menu.href === pathname),
+  //   [pathname]
+  // );
 
   // Function to check token validity by calling the backend
   const checkTokenValidity = async () => {
@@ -175,7 +182,9 @@ export default function SideBar() {
       {/* Logout Button */}
       <div className="mt-auto px-5 py-7">
         <Button
-          className="w-full p-1 text-red-secondary border border-red-secondary rounded-md"
+          colorScheme="red"
+          variant="outline"
+          width="full"
           onClick={handleLogout}
         >
           Logout
