@@ -129,7 +129,6 @@ export default function PendingApplicationPage() {
         subText={"See your pending application here!"}
       />
 
-      {/* Right Section: Pending Application List */}
       <div className="flex p-[30px]">
         <div className="w-1/2">
           <div className="flex justify-between">

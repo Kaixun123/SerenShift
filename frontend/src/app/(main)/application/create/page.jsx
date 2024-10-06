@@ -2,7 +2,6 @@
 // import components
 import TopHeader from "@/components/TopHeader";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 // chakra-ui
 import {
@@ -12,12 +11,6 @@ import {
   Select,
   Button,
   Textarea,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  useDisclosure,
   useToast,
 } from "@chakra-ui/react";
 
@@ -25,7 +18,7 @@ import {
 import { DatePicker, DatesProvider } from "@mantine/dates";
 
 //react-dropzone (file uploads)
-import { useDropzone } from 'react-dropzone'
+import { useDropzone } from "react-dropzone";
 
 export default function NewApplicationPage() {
   const toast = useToast();
@@ -42,19 +35,6 @@ export default function NewApplicationPage() {
   const [type, setType] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
-  const [pendingApplications, setPendingApplications] = useState([]);
-  const [appToWithdraw, setAppToWithdraw] = useState(null);
-
-  // For Refresh button
-  const [isRefresh, setRefresh] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  // For Withdrawal Modal
-  const {
-    isOpen: isModalWithdrawOpen,
-    onOpen: onModalWithdrawOpen,
-    onClose: onModalWithdrawClose,
-  } = useDisclosure();
 
   const handleCalendarChange = (selectedDates) => {
     setCalendarValue(selectedDates);
@@ -86,14 +66,6 @@ export default function NewApplicationPage() {
     });
   };
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefresh(true);
-      setRefreshing(false);
-    }, 200);
-    setRefresh(false);
-  };
   useEffect(() => {
     async function fetchEmployeeData() {
       try {
@@ -203,7 +175,6 @@ export default function NewApplicationPage() {
       />
 
       <div className="flex p-[30px] gap-[60px] justify-between ">
-        {/* Left Section: Create New Application */}
         <div className="flex flex-col w-1/2 gap-[20px]">
           <div className="flex h-[350px] justify-center">
             <DatesProvider settings={{ consistentWeeks: true }}>
@@ -310,10 +281,10 @@ export default function NewApplicationPage() {
                 spinnerPlacement="end"
                 isDisabled={
                   formattedDate.startDate != "" &&
-                    formattedDate.endDate != "" &&
-                    type != "" &&
-                    timeSlot != "" &&
-                    reason != ""
+                  formattedDate.endDate != "" &&
+                  type != "" &&
+                  timeSlot != "" &&
+                  reason != ""
                     ? false
                     : true
                 }
