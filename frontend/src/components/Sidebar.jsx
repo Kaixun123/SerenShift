@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
-import { GrChapterAdd } from "react-icons/gr";
+import { GrChapterAdd, GrUserManager } from "react-icons/gr";
 
 export default function SideBar() {
   const router = useRouter();
@@ -39,6 +39,12 @@ export default function SideBar() {
       href: "/application/create",
       icon: GrChapterAdd,
       title: "New Application",
+    },
+    {
+      id: 5,
+      href: "/schedule/subordinate",
+      icon: GrUserManager,
+      title: "See Subordinate Schedule",
     },
   ];
 
