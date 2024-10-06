@@ -75,6 +75,12 @@ export default function SideBar() {
       title: "Manage Application",
 
     },
+    {
+      id: 6,
+      href: "/schedule/subordinate",
+      icon: GrUserManager,
+      title: "See Subordinate Schedule",
+    },
   ];
 
   // const activeMenu = useMemo(
