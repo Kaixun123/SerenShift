@@ -1,9 +1,6 @@
 "use client";
 // import components
 import TopHeader from "@/components/TopHeader";
-import PendingApplicationCard from "@/components/PendingAppCard";
-import WithdrawalModal from "@/components/WithdrawModal";
-import RefreshButton from "@/components/RefreshButton";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -11,46 +8,28 @@ import { useRouter } from "next/navigation";
 import {
   FormControl,
   FormLabel,
-  Box,
-  VStack,
   Input,
   Select,
   Button,
-  Text,
   Textarea,
   Modal,
   ModalOverlay,
   ModalContent,
-  ModalFooter,
   ModalHeader,
   ModalBody,
-  ModalCloseButton,
   useDisclosure,
+  useToast,
 } from "@chakra-ui/react";
-
-// react icon
-import { IoCheckmarkCircleOutline } from "react-icons/io5";
-import { PiWarningCircle } from "react-icons/pi";
 
 // mantine
 import { DatePicker, DatesProvider } from "@mantine/dates";
-import { Pagination } from "@mantine/core";
 
 export default function NewApplicationPage() {
-  // For Submit Modal
-  const {
-    isOpen: isModalSubmitOpen,
-    onOpen: onModalSubmitOpen,
-    onClose: onModalSubmitClose,
-  } = useDisclosure();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [employeeInfo, setEmployeeInfo] = useState({
     id: 0,
     reporting_manager: "",
-  });
-  const [responseMessage, setResponseMessage] = useState({
-    status: 0,
-    message: "",
   });
   const [calendarValue, setCalendarValue] = useState([]);
   const [formattedDate, setFormattedDate] = useState({
@@ -62,20 +41,6 @@ export default function NewApplicationPage() {
   const [reason, setReason] = useState("");
   const [isValidToken, setIsValidToken] = useState(true); // Track token validity
   const router = useRouter();
-
-  const [pendingApplications, setPendingApplications] = useState([]);
-  const [appToWithdraw, setAppToWithdraw] = useState(null);
-
-  // For Refresh button
-  const [isRefresh, setRefresh] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  // For Withdrawal Modal
-  const {
-    isOpen: isModalWithdrawOpen,
-    onOpen: onModalWithdrawOpen,
-    onClose: onModalWithdrawClose,
-  } = useDisclosure();
 
   // For Token Expiry Modal
   const {
@@ -112,15 +77,6 @@ export default function NewApplicationPage() {
       startDate: "",
       endDate: "",
     });
-  };
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefresh(true);
-      setRefreshing(false);
-    }, 200);
-    setRefresh(false);
   };
 
   // Function to check token validity by calling the backend
@@ -163,7 +119,7 @@ export default function NewApplicationPage() {
   }, [router]);
 
   useEffect(() => {
-    async function fetchEmployeeAndPendingAppData() {
+    async function fetchEmployeeData() {
       try {
         const response = await fetch("/api/auth/me");
         const data = await response.json();
@@ -173,31 +129,13 @@ export default function NewApplicationPage() {
           id: data.id,
           reporting_manager: managerName,
         });
-
-        // Retrieve Pending Application List
-        const applicationStatus = "Pending";
-        const applicationResponse = await fetch(
-          `/api/application/retrieveApplication?id=${data.id}&status=${applicationStatus}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const pendingApplication = await applicationResponse.json();
-        setPendingApplications(pendingApplication);
       } catch (error) {
-        console.error(
-          "Error fetching employee or pending application data:",
-          error
-        );
+        console.error("Error fetching employee data:", error);
       }
     }
 
-    fetchEmployeeAndPendingAppData();
-  }, [isRefresh]);
+    fetchEmployeeData();
+  }, []);
 
   const createNewApplication = async (e) => {
     e.preventDefault();
@@ -248,98 +186,43 @@ export default function NewApplicationPage() {
 
         if (response.status === 201) {
           const result = await response.json();
-          setResponseMessage({
-            status: response.status,
-            message: result.message,
+          toast({
+            title: result.message,
+            position: "top-right",
+            status: "success",
+            duration: 5000,
+            isClosable: true,
           });
         } else {
           const errorMessage = await response.json();
-          setResponseMessage({
-            status: response.status,
-            message: errorMessage.message,
+          toast({
+            title: errorMessage.message,
+            position: "top-right",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
           });
         }
 
-        onModalSubmitOpen(true);
-        if (!isModalSubmitOpen) {
-          setCalendarValue([]);
-          setFormattedDate({
-            startDate: "",
-            endDate: "",
-          });
-          setType("");
-          setTimeSlot("");
-          setReason("");
-          setLoading(false);
-        }
+        setCalendarValue([]);
+        setFormattedDate({
+          startDate: "",
+          endDate: "",
+        });
+        setType("");
+        setTimeSlot("");
+        setReason("");
+        setLoading(false);
       }
     } catch (error) {
       console.error("Error creating new application:", error);
     }
   };
 
-  // Handle withdrawal function
-  const handleWithdraw = async (applicationId) => {
-    try {
-      const response = await fetch("/api/withdraw/withdrawPending", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ applicationId }),
-      });
-      if (response.ok) {
-        // Update the pending applications state
-        setPendingApplications((prev) =>
-          prev.filter((app) => app.application_id !== applicationId)
-        );
-        onModalWithdrawClose();
-      } else {
-        console.error("Failed to withdraw application");
-      }
-    } catch (error) {
-      console.error("Error withdrawing application:", error);
-    }
-  };
-
-  function handlePagination(array, size) {
-    if (!array.length) {
-      return [];
-    }
-    const head = array.slice(0, size);
-    const tail = array.slice(size);
-    return [head, ...handlePagination(tail, size)];
-  }
-
-  // Pagination state
-  const [activePage, setPage] = useState(1);
-
-  // Number of applications per page
-  const applicationsPerPage = 4;
-  const paginatedApplications = handlePagination(
-    pendingApplications,
-    applicationsPerPage
-  );
-
-  // Items for the current page
-  const items = paginatedApplications[activePage - 1]?.map((application) => (
-    <PendingApplicationCard
-      key={application.application_id}
-      start_date={application.start_date}
-      end_date={application.end_date}
-      application_type={application.application_type}
-      requestor_remarks={application.requestor_remarks}
-      onWithdraw={() => {
-        setAppToWithdraw(application);
-        onModalWithdrawOpen();
-      }}
-    />
-  ));
-
   return (
     <main>
       <TopHeader
-        mainText={"New Schedule"}
+        mainText={"New Application"}
         subText={"Plan your schedule timely and wisely!"}
       />
 
@@ -480,84 +363,6 @@ export default function NewApplicationPage() {
               </Button>
             </FormControl>
           </form>
-        </div>
-
-        <Modal
-          onClose={onModalSubmitClose}
-          isOpen={isModalSubmitOpen}
-          isCentered
-        >
-          <ModalOverlay />
-          <ModalContent p={5}>
-            <ModalCloseButton />
-            <div className="flex flex-col justify-center pt-6 gap-3">
-              <div className="flex justify-center">
-                {responseMessage.status === 201 ? (
-                  <IoCheckmarkCircleOutline
-                    className="w-12 h-12"
-                    style={{ color: "#3EAC3E" }}
-                  />
-                ) : (
-                  <PiWarningCircle
-                    className="w-12 h-12"
-                    style={{ color: "#D13838" }}
-                  />
-                )}
-              </div>
-
-              <ModalBody className="text-center">
-                {responseMessage.message}
-              </ModalBody>
-              <ModalFooter>
-                <Button
-                  className="flex w-full"
-                  onClick={onModalSubmitClose}
-                  colorScheme={responseMessage.status === 201 ? "green" : "red"}
-                >
-                  {responseMessage.status === 201 ? "OK" : "Close"}
-                </Button>
-              </ModalFooter>
-            </div>
-          </ModalContent>
-        </Modal>
-
-        {/* Right Section: Pending Application List */}
-        <div className="w-1/2">
-          <div className="flex justify-between">
-            <h1 className="text-2xl font-bold">Pending Applications</h1>
-            <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
-            {/* <RefreshButton
-              isRefresh={() => setRefresh(true)}
-              // isLoading={refreshing}
-            /> */}
-          </div>
-          <Box py={5} h={"100%"}>
-            <VStack spacing={5} h={"100%"}>
-              {pendingApplications.length > 0 ? (
-                <>
-                  {items}
-                  <Pagination
-                    total={paginatedApplications.length}
-                    value={activePage}
-                    onChange={setPage}
-                    className="flex mt-5 justify-center"
-                  />
-                </>
-              ) : (
-                <Text>No pending applications found</Text>
-              )}
-            </VStack>
-          </Box>
-          {appToWithdraw && (
-            <WithdrawalModal
-              isOpen={isModalWithdrawOpen}
-              onClose={onModalWithdrawClose}
-              applicationType={appToWithdraw.application_type}
-              startDate={appToWithdraw.start_date}
-              endDate={appToWithdraw.end_date}
-              onConfirm={() => handleWithdraw(appToWithdraw.application_id)} // Pass handleWithdraw function to WithdrawalModal
-            />
-          )}
         </div>
       </div>
     </main>
