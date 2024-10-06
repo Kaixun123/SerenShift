@@ -36,6 +36,9 @@ import { PiWarningCircle } from "react-icons/pi";
 import { DatePicker, DatesProvider } from "@mantine/dates";
 import { Pagination } from "@mantine/core";
 
+//react-dropzone (file uploads)
+import { useDropzone } from 'react-dropzone'
+
 export default function NewApplicationPage() {
   // For Submit Modal
   const {
@@ -60,8 +63,6 @@ export default function NewApplicationPage() {
   const [type, setType] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
-  const [isValidToken, setIsValidToken] = useState(true); // Track token validity
-  const router = useRouter();
 
   const [pendingApplications, setPendingApplications] = useState([]);
   const [appToWithdraw, setAppToWithdraw] = useState(null);
@@ -75,13 +76,6 @@ export default function NewApplicationPage() {
     isOpen: isModalWithdrawOpen,
     onOpen: onModalWithdrawOpen,
     onClose: onModalWithdrawClose,
-  } = useDisclosure();
-
-  // For Token Expiry Modal
-  const {
-    isOpen: isTokenExpiryModalOpen,
-    onOpen: onTokenExpiryModalOpen,
-    onClose: onTokenExpiryModalClose,
   } = useDisclosure();
 
   const handleCalendarChange = (selectedDates) => {
@@ -122,45 +116,6 @@ export default function NewApplicationPage() {
     }, 200);
     setRefresh(false);
   };
-
-  // Function to check token validity by calling the backend
-  const checkTokenValidity = async () => {
-    try {
-      const response = await fetch("/api/auth/validateToken", {
-        method: "GET",
-        credentials: "include", // Include cookies in the request
-      });
-
-      const data = await response.json();
-      if (!data.valid) {
-        setIsValidToken(false); // Mark token as invalid
-        onTokenExpiryModalOpen(); // Open the modal
-        setTimeout(() => {
-          router.push("/auth/login"); // Redirect to home after showing popup
-        }, 3000); // Redirect after 3 seconds
-      }
-    } catch (error) {
-      console.error("Error checking token validity:", error);
-    }
-  };
-
-  useEffect(() => {
-    // Check for the token in cookies
-    const token = sessionStorage.getItem("jwt"); // Retrieve the token from cookies
-    if (!token) {
-      // Redirect to the home page if the token is present
-      router.replace("/auth/login");
-    }
-  }, [router]);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      checkTokenValidity();
-    }, 500000); // Poll every 5 minutes
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [router]);
 
   useEffect(() => {
     async function fetchEmployeeAndPendingAppData() {
@@ -344,23 +299,6 @@ export default function NewApplicationPage() {
       />
 
       <div className="flex p-[30px] gap-[60px] justify-between ">
-        {/* Token Expiry Modal */}
-        <Modal
-          isOpen={isTokenExpiryModalOpen}
-          onClose={onTokenExpiryModalClose}
-          isCentered
-          size={"lg"}
-        >
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Session expired</ModalHeader>
-            <ModalBody>
-              Your session has expired. You will be redirected to the login
-              page.
-            </ModalBody>
-          </ModalContent>
-        </Modal>
-
         {/* Left Section: Create New Application */}
         <div className="flex flex-col w-1/2 gap-[20px]">
           <div className="flex h-[350px] justify-center">
@@ -468,10 +406,10 @@ export default function NewApplicationPage() {
                 spinnerPlacement="end"
                 isDisabled={
                   formattedDate.startDate != "" &&
-                  formattedDate.endDate != "" &&
-                  type != "" &&
-                  timeSlot != "" &&
-                  reason != ""
+                    formattedDate.endDate != "" &&
+                    type != "" &&
+                    timeSlot != "" &&
+                    reason != ""
                     ? false
                     : true
                 }
