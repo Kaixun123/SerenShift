@@ -8,6 +8,7 @@ import dayGridPlugin from "@fullcalendar/daygrid"; // Month view
 import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
 import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
 import listPlugin from "@fullcalendar/list"; // List view plugin
+import RefreshButton from "@/components/RefreshButton";
 import "@/components/Calendar.css";
 
 const TeamSchedulePage = () => {
@@ -33,7 +34,7 @@ const TeamSchedulePage = () => {
     fetchEmployeeData();
   }, []);
 
-  const handleApiCalls = async (colleagueIds) => {
+  const handleApiCalls = async (colleagueIds = []) => {
     setLoading(true);
     setScheduleData(null);
 
@@ -72,45 +73,51 @@ const TeamSchedulePage = () => {
     handleApiCalls(selectedIds);
   };
 
+  const handleRefresh = () => {
+    // Reset the colleague selection and fetch data again
+    setSelectedColleagueIds([]);
+    handleApiCalls([]);
+  };
+
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
-      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
-        colleagues.map((colleague) => {
-          const eventDate = new Date(date);
-          let start, end;
+        Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+          colleagues.map((colleague) => {
+            const eventDate = new Date(date);
+            let start, end;
 
-          if (timePeriod === "Full Day") {
-            start = new Date(eventDate.setHours(9, 0, 0));
-            end = new Date(eventDate.setHours(18, 0, 0));
-          } else if (timePeriod === "AM") {
-            start = new Date(eventDate.setHours(9, 0, 0));
-            end = new Date(eventDate.setHours(13, 0, 0));
-          } else if (timePeriod === "PM") {
-            start = new Date(eventDate.setHours(14, 0, 0));
-            end = new Date(eventDate.setHours(18, 0, 0));
-          }
+            if (timePeriod === "Full Day") {
+              start = new Date(eventDate.setHours(9, 0, 0));
+              end = new Date(eventDate.setHours(18, 0, 0));
+            } else if (timePeriod === "AM") {
+              start = new Date(eventDate.setHours(9, 0, 0));
+              end = new Date(eventDate.setHours(13, 0, 0));
+            } else if (timePeriod === "PM") {
+              start = new Date(eventDate.setHours(14, 0, 0));
+              end = new Date(eventDate.setHours(18, 0, 0));
+            }
 
-          return {
-            title: `${colleague}`,
-            start,
-            end,
-            allDay: false,
-            timePeriod,
-          };
-        })
+            return {
+              title: `${colleague}`,
+              start,
+              end,
+              allDay: false,
+              timePeriod,
+            };
+          })
+        )
       )
-    )
     : [];
 
   const eventContent = (eventInfo) => {
     let ribbonColor;
     if (eventInfo.event.extendedProps.timePeriod === "Full Day") {
-      ribbonColor = "#e3826f";
+      ribbonColor = "#4CAF50"; // Green
     } else if (eventInfo.event.extendedProps.timePeriod === "AM") {
-      ribbonColor = "#efba98";
+      ribbonColor = "#F4C542"; // Yellow
     } else if (eventInfo.event.extendedProps.timePeriod === "PM") {
-      ribbonColor = "#e7d5c7";
+      ribbonColor = "#4DA1FF"; // Blue
     }
 
     return (
@@ -121,14 +128,14 @@ const TeamSchedulePage = () => {
           padding: "3px 8px",
           borderRadius: "4px",
           fontSize: "12px",
-          width: "100%", // Ensure the content spans the full width
-          height: "100%", // Ensure the content spans the full height
-          boxSizing: "border-box", // Include padding in element's total width/height
+          width: "100%",
+          height: "100%",
+          boxSizing: "border-box",
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
         }}
-        title={eventInfo.event.title} // Show full text on hover
+        title={eventInfo.event.title}
       >
         {eventInfo.event.title}
       </div>
@@ -138,11 +145,11 @@ const TeamSchedulePage = () => {
   const eventPropGetter = (event) => {
     let backgroundColor;
     if (event.extendedProps.timePeriod === "Full Day") {
-      backgroundColor = "#e3826f";
+      backgroundColor = "#4CAF50"; // Green
     } else if (event.extendedProps.timePeriod === "AM") {
-      backgroundColor = "#efba98";
+      backgroundColor = "#F4C542"; // Yellow
     } else if (event.extendedProps.timePeriod === "PM") {
-      backgroundColor = "#e7d5c7";
+      backgroundColor = "#4DA1FF"; // Blue
     }
 
     return {
@@ -151,13 +158,85 @@ const TeamSchedulePage = () => {
         color: "#fff",
         borderRadius: "4px",
         padding: "3px",
-        height: "100%", // Ensure the event fills the whole box vertically
-        width: "100%", // Ensure the event fills the whole box horizontally
-        border: "none", // Remove the border
-        boxShadow: "none", // Remove any shadow or outline
+        height: "100%",
+        width: "100%",
+        border: "none",
+        boxShadow: "none",
       },
     };
   };
+
+  // Custom tooltip creation
+  const eventDidMount = (info) => {
+    const timePeriod = info.event.extendedProps.timePeriod;
+    const startTime = info.event.start
+      ? info.event.start.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A";
+    const endTime = info.event.end
+      ? info.event.end.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A";
+    const title = info.event.title || "No Title";
+
+    const tooltipContent = `${title} (${timePeriod})<br>Time: ${startTime} to ${endTime}`;
+
+    const tooltipDiv = document.createElement("div");
+    tooltipDiv.className = "custom-tooltip";
+    tooltipDiv.innerHTML = tooltipContent;
+
+    document.body.appendChild(tooltipDiv);
+
+    info.el.onmouseenter = function () {
+      tooltipDiv.style.display = "block";
+      const rect = info.el.getBoundingClientRect();
+      tooltipDiv.style.left = `${rect.left + window.scrollX}px`;
+      tooltipDiv.style.top = `${rect.top + window.scrollY - tooltipDiv.offsetHeight - 10}px`;
+    };
+
+    info.el.onmouseleave = function () {
+      tooltipDiv.style.display = "none";
+    };
+  };
+
+  // Custom tooltip styles
+  const customTooltipStyles = `
+    .custom-tooltip {
+      position: absolute;
+      background-color: #333;
+      color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      white-space: nowrap;
+      display: none;
+    }
+
+    .custom-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
+    }
+  `;
+
+  // Inject custom tooltip styles
+  useEffect(() => {
+    const styleElement = document.createElement("style");
+    styleElement.innerHTML = customTooltipStyles;
+    document.head.appendChild(styleElement);
+  }, []);
 
   // Legend component
   const Legend = () => (
@@ -166,11 +245,11 @@ const TeamSchedulePage = () => {
         Legend:
       </Text>
       <Flex direction="row" align="center">
-        <Box w="20px" h="20px" bg="#e3826f" mr={2} />
+        <Box w="20px" h="20px" bg="#4CAF50" mr={2} /> {/* Green for Full Day */}
         <Text mr={4}>Full Day</Text>
-        <Box w="20px" h="20px" bg="#efba98" mr={2} />
+        <Box w="20px" h="20px" bg="#F4C542" mr={2} /> {/* Yellow for AM */}
         <Text mr={4}>AM</Text>
-        <Box w="20px" h="20px" bg="#e7d5c7" mr={2} />
+        <Box w="20px" h="20px" bg="#4DA1FF" mr={2} /> {/* Blue for PM */}
         <Text>PM</Text>
       </Flex>
     </Box>
@@ -188,7 +267,7 @@ const TeamSchedulePage = () => {
         <Box flex="1" p={4}>
           <Flex justifyContent="space-between" alignItems="center">
             <Legend />
-            <Stack direction="row">
+            <Stack direction="row" alignItems="center">
               <MultiSelect
                 data={colleagues
                   .sort((a, b) => a.first_name.localeCompare(b.first_name))
@@ -204,9 +283,11 @@ const TeamSchedulePage = () => {
                     width: "304px",
                     height: "30px",
                     maxHeight: "30px",
+                    overflowY: "auto",
                   },
                 }}
               />
+              <RefreshButton onClick={handleRefresh} />
             </Stack>
           </Flex>
 
@@ -233,7 +314,7 @@ const TeamSchedulePage = () => {
                 interactionPlugin,
                 listPlugin,
               ]}
-              initialView="timeGridWeek" // Start with week view or any other view
+              initialView="dayGridMonth"
               events={events}
               headerToolbar={{
                 left: "prev,next today",
@@ -243,14 +324,15 @@ const TeamSchedulePage = () => {
               editable={false}
               selectable={true}
               nowIndicator={true}
-              eventPropGetter={eventPropGetter} // Custom logic for events
+              eventPropGetter={eventPropGetter}
               dateClick={(info) => console.log("Date clicked:", info.dateStr)}
               eventClick={(info) => console.log("Event clicked:", info.event)}
-              eventContent={eventContent} // Custom content for the events
-              dayMaxEventRows={2} // Limit the number of visible events to 3 rows
+              eventContent={eventContent}
+              eventDidMount={eventDidMount} // Attach tooltip creation to event mount
+              dayMaxEventRows={2}
               height="100%"
-              slotMinTime="09:00:00" // Start time at 9 AM
-              slotMaxTime="18:00:00" // End time at 6 PM
+              slotMinTime="09:00:00"
+              slotMaxTime="18:00:00"
               allDaySlot={false}
             />
           </Box>
