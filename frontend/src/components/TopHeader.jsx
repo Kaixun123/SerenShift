@@ -14,7 +14,7 @@ import {
   HStack,
   VStack,
 } from "@chakra-ui/react";
-import NotificationsIcon from "@mui/icons-material/Notifications";
+import { IoNotificationsOutline } from "react-icons/io5"; // Import from react-icons
 
 export default function TopHeader({ mainText, subText }) {
   const [employee, setEmployee] = useState({ name: "", position: "" });
@@ -46,7 +46,7 @@ export default function TopHeader({ mainText, subText }) {
         <Menu>
           <MenuButton
             as={IconButton}
-            icon={<NotificationsIcon style={{ fontSize: 30 }} />}
+            icon={<IoNotificationsOutline size={30} />} // Chakra compatible Icon
             variant="ghost"
             aria-label="Notifications"
           >

@@ -8,6 +8,7 @@ import dayGridPlugin from "@fullcalendar/daygrid"; // Month view
 import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
 import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
 import listPlugin from "@fullcalendar/list"; // List view plugin
+import RefreshButton from "@/components/RefreshButton";
 import "@/components/Calendar.css";
 
 const TeamSchedulePage = () => {
@@ -33,7 +34,7 @@ const TeamSchedulePage = () => {
     fetchEmployeeData();
   }, []);
 
-  const handleApiCalls = async (colleagueIds) => {
+  const handleApiCalls = async (colleagueIds = []) => {
     setLoading(true);
     setScheduleData(null);
 
@@ -70,6 +71,12 @@ const TeamSchedulePage = () => {
   const handleColleagueSelect = (selectedIds) => {
     setSelectedColleagueIds(selectedIds);
     handleApiCalls(selectedIds);
+  };
+
+  const handleRefresh = () => {
+    // Reset the colleague selection and fetch data again
+    setSelectedColleagueIds([]);
+    handleApiCalls([]);
   };
 
   // Convert scheduleData into a format suitable for FullCalendar
@@ -162,27 +169,37 @@ const TeamSchedulePage = () => {
   // Custom tooltip creation
   const eventDidMount = (info) => {
     const timePeriod = info.event.extendedProps.timePeriod;
-    const startTime = info.event.start ? info.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A";
-    const endTime = info.event.end ? info.event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A";
+    const startTime = info.event.start
+      ? info.event.start.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A";
+    const endTime = info.event.end
+      ? info.event.end.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A";
     const title = info.event.title || "No Title";
 
     const tooltipContent = `${title} (${timePeriod})<br>Time: ${startTime} to ${endTime}`;
 
-    const tooltipDiv = document.createElement('div');
-    tooltipDiv.className = 'custom-tooltip';
+    const tooltipDiv = document.createElement("div");
+    tooltipDiv.className = "custom-tooltip";
     tooltipDiv.innerHTML = tooltipContent;
 
     document.body.appendChild(tooltipDiv);
 
     info.el.onmouseenter = function () {
-      tooltipDiv.style.display = 'block';
+      tooltipDiv.style.display = "block";
       const rect = info.el.getBoundingClientRect();
       tooltipDiv.style.left = `${rect.left + window.scrollX}px`;
       tooltipDiv.style.top = `${rect.top + window.scrollY - tooltipDiv.offsetHeight - 10}px`;
     };
 
     info.el.onmouseleave = function () {
-      tooltipDiv.style.display = 'none';
+      tooltipDiv.style.display = "none";
     };
   };
 
@@ -216,7 +233,7 @@ const TeamSchedulePage = () => {
 
   // Inject custom tooltip styles
   useEffect(() => {
-    const styleElement = document.createElement('style');
+    const styleElement = document.createElement("style");
     styleElement.innerHTML = customTooltipStyles;
     document.head.appendChild(styleElement);
   }, []);
@@ -250,7 +267,7 @@ const TeamSchedulePage = () => {
         <Box flex="1" p={4}>
           <Flex justifyContent="space-between" alignItems="center">
             <Legend />
-            <Stack direction="row">
+            <Stack direction="row" alignItems="center">
               <MultiSelect
                 data={colleagues
                   .sort((a, b) => a.first_name.localeCompare(b.first_name))
@@ -266,9 +283,11 @@ const TeamSchedulePage = () => {
                     width: "304px",
                     height: "30px",
                     maxHeight: "30px",
+                    overflowY: "auto",
                   },
                 }}
               />
+              <RefreshButton onClick={handleRefresh} />
             </Stack>
           </Flex>
 
