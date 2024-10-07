@@ -126,7 +126,7 @@ html, body {
 .fc-list-event {
   background-color: transparent !important;
   /* Make the background transparent */
-  border: none !important;
+  /* border: none !important; */
   padding: 5px !important;
 }
 
@@ -138,7 +138,12 @@ html, body {
 
 /* Remove the dot from the list view */
 .fc-list-event-dot {
-  display: none !important;
+  display: inline-block !important;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor; /* Use event's color */
+  margin-right: 5px;
 }
 
 .fc-list-event-title,
