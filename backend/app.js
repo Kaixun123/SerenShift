@@ -67,6 +67,7 @@ app.use("/api/employee", require("./routes/employeeHandling"));
 app.use("/api/schedule", require("./routes/scheduleHandling"));
 app.use("/api/application", require("./routes/applicationHandling"))
 app.use("/api/withdraw", require("./routes/withdrawHandling"));
+app.use("/api/manager", require("./routes/managerHandling"));
 
 //Error Handling
 app.use((req, res, next) => {
