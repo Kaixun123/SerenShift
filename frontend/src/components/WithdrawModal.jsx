@@ -9,6 +9,7 @@ import {
   ModalFooter,
   Button,
   Text,
+  useToast,
 } from "@chakra-ui/react";
 
 const WithdrawalModal = ({
@@ -19,9 +20,35 @@ const WithdrawalModal = ({
   endDate,
   onConfirm,
 }) => {
-  // Format the date to display only the date part (e.g., YYYY-MM-DD)
+
+  const toast = useToast();
+  // Format the date to display as DD-MM-YYYY
   const formatDate = (datetime) => {
-    return new Date(datetime).toLocaleDateString();
+    const date = new Date(datetime);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Format the time to display only the time part (e.g., HH:MM AM/PM)
+  const formatTime = (datetime) => {
+    return new Date(datetime).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    }); // Format as time
+  };
+
+  const handleConfirm = () => {
+    onConfirm();
+    toast({
+      title: "Pending Application Successfully Withdrawn",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+      position: 'top-right',
+    });
   };
 
   return (
@@ -34,9 +61,10 @@ const WithdrawalModal = ({
           <Text>Type: {applicationType}</Text>
           <Text>Start Date: {formatDate(startDate)}</Text>
           <Text>End Date: {formatDate(endDate)}</Text>
+          <Text>Time: {formatTime(startDate)}</Text> {/* New time field */}
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="red" mr={3} onClick={onConfirm}>
+          <Button colorScheme="red" mr={3} onClick={handleConfirm}>
             Yes, Withdraw
           </Button>
           <Button variant="ghost" onClick={onClose}>

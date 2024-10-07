@@ -14,15 +14,18 @@ import {
   HStack,
   VStack,
 } from "@chakra-ui/react";
-import NotificationsIcon from "@mui/icons-material/Notifications";
+import { IoNotificationsOutline } from "react-icons/io5"; // Import from react-icons
+import { useRouter } from "next/navigation";
 
 export default function TopHeader({ mainText, subText }) {
   const [employee, setEmployee] = useState({ name: "", position: "" });
-
+  const router = useRouter();
   useEffect(() => {
     async function fetchEmployeeData() {
       try {
         const response = await fetch("/api/auth/me");
+        if (!response.ok) 
+          router.push("/auth/login");
         const data = await response.json();
         setEmployee({
           name: `${data.first_name} ${data.last_name}`, // Assuming first_name and last_name from API
@@ -46,7 +49,7 @@ export default function TopHeader({ mainText, subText }) {
         <Menu>
           <MenuButton
             as={IconButton}
-            icon={<NotificationsIcon style={{ fontSize: 30 }} />}
+            icon={<IoNotificationsOutline size={30} />} // Chakra compatible Icon
             variant="ghost"
             aria-label="Notifications"
           >
