@@ -1,6 +1,7 @@
 const Application = require('./Application');
 const Blacklist = require('./Blacklist');
 const Employee = require('./Employee');
+const File = require('./File');
 const Schedule = require('./Schedule');
 const Session = require('./Session');
 
@@ -130,10 +131,31 @@ Blacklist.belongsTo(Employee, {
     as: 'updater',
 });
 
+Employee.hasMany(File, {
+    foreignKey: 'created_by',
+    as: 'files',
+});
+
+File.belongsTo(Employee, {
+    foreignKey: 'created_by',
+    as: 'creator',
+});
+
+Employee.hasMany(File, {
+    foreignKey: 'last_update_by',
+    as: 'files_updated',
+});
+
+File.belongsTo(Employee, {
+    foreignKey: 'last_update_by',
+    as: 'updater',
+});
+
 module.exports = {
     Application,
     Blacklist,
     Employee,
+    File,
     Schedule,
     Session,
 };

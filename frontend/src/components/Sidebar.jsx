@@ -3,10 +3,12 @@ import Link from "next/link";
 import { Image, Button, useToast } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useMemo } from "react";
+
 // react icons
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
-import { CiViewList } from "react-icons/ci";
+import { MdOutlinePendingActions } from "react-icons/md";
+import { GrChapterAdd, GrUserManager } from "react-icons/gr";
 
 export default function SideBar() {
   const router = useRouter();
@@ -28,16 +30,28 @@ export default function SideBar() {
     },
     {
       id: 3,
+      href: "/application/pending",
+      icon: MdOutlinePendingActions,
+      title: "Pending Application",
+    },
+    {
+      id: 4,
       href: "/application/create",
-      icon: CiViewList,
+      icon: GrChapterAdd,
       title: "New Application",
+    },
+    {
+      id: 5,
+      href: "/schedule/subordinate",
+      icon: GrUserManager,
+      title: "See Subordinate Schedule",
     },
   ];
 
-  const activeMenu = useMemo(
-    () => menuItems.find((menu) => menu.href === pathname),
-    [pathname]
-  );
+  // const activeMenu = useMemo(
+  //   () => menuItems.find((menu) => menu.href === pathname),
+  //   [pathname]
+  // );
 
   const handleLogout = async () => {
     console.log("Logout clicked");
@@ -98,7 +112,9 @@ export default function SideBar() {
       {/* Logout Button */}
       <div className="mt-auto px-5 py-7">
         <Button
-          className="w-full p-1 text-red-secondary border border-red-secondary rounded-md"
+          colorScheme="red"
+          variant="outline"
+          width="full"
           onClick={handleLogout}
         >
           Logout
