@@ -12,6 +12,7 @@ export default function OwnSchedulePage() {
         <Box position="relative" zIndex="2">
           <TopHeader
             mainText={`My Schedule`}
+            subText={`Approved Arrangements at a Glance`}
           />
         </Box>
         <Box height="calc(68vh)" padding="16px">
