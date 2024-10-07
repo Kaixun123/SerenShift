@@ -67,7 +67,7 @@ const Calendar = () => {
 
   return (
     <div>
-      <Flex justifyContent="space-between" alignItems="center" padding="16px">
+      <Flex justifyContent="space-between" alignItems="center">
       <Legend />
       <RefreshButton onClick={handleRefresh} />
       </Flex>
@@ -81,6 +81,7 @@ const Calendar = () => {
         center: 'title',
         right: 'dayGridMonth,timeGridWeek,listMonth'
       }}  
+      height="calc(100vh - 250px)"
     />
     </div>
   );

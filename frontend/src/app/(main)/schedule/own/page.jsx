@@ -14,7 +14,7 @@ export default function OwnSchedulePage() {
             mainText={`My Schedule`}
           />
         </Box>
-        <Box height="calc(50vh)" padding="16px">
+        <Box height="calc(68vh)" padding="16px">
           <Calendar />
         </Box>
       </Flex>
