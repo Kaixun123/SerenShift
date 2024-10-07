@@ -29,7 +29,7 @@ const Calendar = () => {
 
     fetchSchedule();
   }, []);
-
+  
   const eventsWithColors = events.map(event => {
     if (event.extendedProps.type === 'AM') {
       return { ...event, color: '#e4b91c' }; // Set color for AM events
@@ -44,16 +44,21 @@ const Calendar = () => {
   });
 
   const handleEventDidMount = (eventInfo) => {
-    // Create a Tippy.js instance for each event element
-    const options = {
-      hour: '2-digit',
-      minute: '2-digit',
-    }
+    const startTime = eventInfo.event.allDay ? '09:00' : eventInfo.event.start.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  
+    const endTime = eventInfo.event.allDay ? '18:00' : (eventInfo.event.end 
+      ? eventInfo.event.end.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }) : "N/A");
+        
     const instance = tippy(eventInfo.el, {
       content: `
         <strong>${eventInfo.event.title}</strong><br>
-        Time: ${eventInfo.event.start.toLocaleString(options).split(', ')[1].slice(0,5)}
-        to ${eventInfo.event.end ? eventInfo.event.end.toLocaleString(options).split(', ')[1].slice(0,5) : 'N/A'}<br>
+        Time: ${startTime} to ${endTime}<br>
       `,
       allowHTML: true,
       interactive: true,
