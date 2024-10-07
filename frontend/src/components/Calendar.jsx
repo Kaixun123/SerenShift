@@ -54,7 +54,7 @@ const Calendar = () => {
           hour: "2-digit",
           minute: "2-digit",
         }) : "N/A");
-        
+
     const instance = tippy(eventInfo.el, {
       content: `
         <strong>${eventInfo.event.title}</strong><br>
@@ -87,6 +87,8 @@ const Calendar = () => {
         right: 'dayGridMonth,timeGridWeek,listMonth'
       }}  
       height="calc(100vh - 250px)"
+      slotMinTime="09:00:00"
+      slotMaxTime="18:00:00"
     />
     </div>
   );
