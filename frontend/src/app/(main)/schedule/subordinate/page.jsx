@@ -12,7 +12,7 @@ import "@/components/Calendar.css";
 
 const SubordinateSchedulePage = () => {
   const [loading, setLoading] = useState(false);
-  const [colleagues, setColleagues] = useState([]);
+  const [colleagues, setColleagues] = useState([]); // Holds subordinate data
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [scheduleData, setScheduleData] = useState(null);
   const [employee, setEmployee] = useState({ department: "" });
@@ -37,6 +37,9 @@ const SubordinateSchedulePage = () => {
     setScheduleData(null);
 
     try {
+      const colleaguesResponse = await fetch("/api/employee/subordinates");
+      const colleaguesData = await colleaguesResponse.json();
+
       const query =
         colleagueIds.length > 0
           ? `?colleague_id=${colleagueIds.join(",")}`
@@ -46,7 +49,8 @@ const SubordinateSchedulePage = () => {
       );
       const scheduleData = await scheduleResponse.json();
 
-      if (scheduleResponse.ok) {
+      if (colleaguesResponse.ok && scheduleResponse.ok) {
+        setColleagues(colleaguesData);
         setScheduleData(scheduleData);
       } else {
         console.error("API error occurred");
@@ -64,7 +68,7 @@ const SubordinateSchedulePage = () => {
 
   const handleColleagueSelect = (selectedIds) => {
     setSelectedColleagueIds(selectedIds);
-    handleApiCalls(selectedIds);
+    handleApiCalls(selectedIds); // Update schedules based on selected colleague IDs
   };
 
   // Convert scheduleData into a format suitable for FullCalendar
@@ -191,7 +195,7 @@ const SubordinateSchedulePage = () => {
                     value: String(colleague.user_id),
                     label: `${colleague.first_name} ${colleague.last_name}`,
                   }))}
-                placeholder="Select Colleagues"
+                placeholder="Select Subordinates" 
                 value={selectedColleagueIds.map(String)}
                 onChange={handleColleagueSelect}
                 styles={{
@@ -224,8 +228,6 @@ const SubordinateSchedulePage = () => {
               selectable={true}
               nowIndicator={true}
               eventPropGetter={eventPropGetter}
-              dateClick={(info) => console.log("Date clicked:", info.dateStr)}
-              eventClick={(info) => console.log("Event clicked:", info.event)}
               eventContent={eventContent}
               dayMaxEventRows={2}
               height="100%"
