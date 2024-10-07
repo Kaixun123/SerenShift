@@ -63,7 +63,7 @@ export default function SideBar() {
       id: 5,
       href: "/schedule/subordinate",
       icon: GrUserManager,
-      title: "See Subordinate Schedule",
+      title: "Subordinate Calendar",
     },
   ];
 

@@ -8,6 +8,7 @@ import dayGridPlugin from "@fullcalendar/daygrid"; // Month view
 import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
 import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
 import listPlugin from "@fullcalendar/list"; // List view plugin
+import RefreshButton from "@/components/RefreshButton";
 import "@/components/Calendar.css";
 
 const SubordinateSchedulePage = () => {
@@ -71,6 +72,13 @@ const SubordinateSchedulePage = () => {
     handleApiCalls(selectedIds); // Update schedules based on selected colleague IDs
   };
 
+  const handleRefresh = () => {
+    // Reset the colleague selection and fetch data again
+    setSelectedColleagueIds([]);
+    handleApiCalls([]);
+  };
+
+
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
@@ -102,15 +110,15 @@ const SubordinateSchedulePage = () => {
       )
     : [];
 
-  const eventContent = (eventInfo) => {
-    let ribbonColor;
-    if (eventInfo.event.extendedProps.timePeriod === "Full Day") {
-      ribbonColor = "#e3826f";
-    } else if (eventInfo.event.extendedProps.timePeriod === "AM") {
-      ribbonColor = "#efba98";
-    } else if (eventInfo.event.extendedProps.timePeriod === "PM") {
-      ribbonColor = "#e7d5c7";
-    }
+    const eventContent = (eventInfo) => {
+      let ribbonColor;
+      if (eventInfo.event.extendedProps.timePeriod === "Full Day") {
+        ribbonColor = "#4CAF50"; // Green
+      } else if (eventInfo.event.extendedProps.timePeriod === "AM") {
+        ribbonColor = "#F4C542"; // Yellow
+      } else if (eventInfo.event.extendedProps.timePeriod === "PM") {
+        ribbonColor = "#4DA1FF"; // Blue
+      }
 
     return (
       <div
@@ -137,11 +145,11 @@ const SubordinateSchedulePage = () => {
   const eventPropGetter = (event) => {
     let backgroundColor;
     if (event.extendedProps.timePeriod === "Full Day") {
-      backgroundColor = "#e3826f";
+      backgroundColor = "#4CAF50"; // Green
     } else if (event.extendedProps.timePeriod === "AM") {
-      backgroundColor = "#efba98";
+      backgroundColor = "#F4C542"; // Yellow
     } else if (event.extendedProps.timePeriod === "PM") {
-      backgroundColor = "#e7d5c7";
+      backgroundColor = "#4DA1FF"; // Blue
     }
 
     return {
@@ -158,6 +166,78 @@ const SubordinateSchedulePage = () => {
     };
   };
 
+  // Custom tooltip creation
+  const eventDidMount = (info) => {
+    const timePeriod = info.event.extendedProps.timePeriod;
+    const startTime = info.event.start
+      ? info.event.start.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A";
+    const endTime = info.event.end
+      ? info.event.end.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A";
+    const title = info.event.title || "No Title";
+
+    const tooltipContent = `${title} (${timePeriod})<br>Time: ${startTime} to ${endTime}`;
+
+    const tooltipDiv = document.createElement("div");
+    tooltipDiv.className = "custom-tooltip";
+    tooltipDiv.innerHTML = tooltipContent;
+
+    document.body.appendChild(tooltipDiv);
+
+    info.el.onmouseenter = function () {
+      tooltipDiv.style.display = "block";
+      const rect = info.el.getBoundingClientRect();
+      tooltipDiv.style.left = `${rect.left + window.scrollX}px`;
+      tooltipDiv.style.top = `${rect.top + window.scrollY - tooltipDiv.offsetHeight - 10}px`;
+    };
+
+    info.el.onmouseleave = function () {
+      tooltipDiv.style.display = "none";
+    };
+  };
+
+  // Custom tooltip styles
+  const customTooltipStyles = `
+    .custom-tooltip {
+      position: absolute;
+      background-color: #333;
+      color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      white-space: nowrap;
+      display: none;
+    }
+
+    .custom-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
+    }
+  `;
+
+  // Inject custom tooltip styles
+  useEffect(() => {
+    const styleElement = document.createElement("style");
+    styleElement.innerHTML = customTooltipStyles;
+    document.head.appendChild(styleElement);
+  }, []);
+
   // Legend component
   const Legend = () => (
     <Box mb={4}>
@@ -165,11 +245,11 @@ const SubordinateSchedulePage = () => {
         Legend:
       </Text>
       <Flex direction="row" align="center">
-        <Box w="20px" h="20px" bg="#e3826f" mr={2} />
+        <Box w="20px" h="20px" bg="#4CAF50" mr={2} />
         <Text mr={4}>Full Day</Text>
-        <Box w="20px" h="20px" bg="#efba98" mr={2} />
+        <Box w="20px" h="20px" bg="#F4C542" mr={2} />
         <Text mr={4}>AM</Text>
-        <Box w="20px" h="20px" bg="#e7d5c7" mr={2} />
+        <Box w="20px" h="20px" bg="#4DA1FF" mr={2} />
         <Text>PM</Text>
       </Flex>
     </Box>
@@ -206,6 +286,7 @@ const SubordinateSchedulePage = () => {
                   },
                 }}
               />
+              <RefreshButton onClick={handleRefresh} />
             </Stack>
           </Flex>
 
@@ -229,6 +310,7 @@ const SubordinateSchedulePage = () => {
               nowIndicator={true}
               eventPropGetter={eventPropGetter}
               eventContent={eventContent}
+              eventDidMount={eventDidMount}
               dayMaxEventRows={2}
               height="100%"
               slotMinTime="09:00:00"
