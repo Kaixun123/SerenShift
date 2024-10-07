@@ -8,9 +8,9 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import tippy from 'tippy.js'; // Import Tippy.js
 import 'tippy.js/dist/tippy.css'; // Import Tippy.js styles
-import { Box, Stack, Flex, Text } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import RefreshButton from "@/components/RefreshButton";
-
+import Legend from '@/components/Legend';
 
 const Calendar = () => {
   const [events, setEvents] = useState([]);
@@ -29,23 +29,6 @@ const Calendar = () => {
 
     fetchSchedule();
   }, []);
-
-  const Legend = () => (
-    <div className="legend horizontal-legend">
-        <div className="legend-item">
-            <span className="legend-color am-color"></span>
-            <span>AM</span>
-        </div>
-        <div className="legend-item">
-            <span className="legend-color pm-color"></span>
-            <span>PM</span>
-        </div>
-        <div className="legend-item">
-            <span className="legend-color full-day-color"></span>
-            <span>Full Day</span>
-        </div>
-    </div>
-);
 
   const eventsWithColors = events.map(event => {
     if (event.extendedProps.type === 'AM') {
