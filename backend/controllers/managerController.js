@@ -4,8 +4,8 @@ const { fetchSubordinates } = require('../services/common/employeeHelper');
 const retrievePendingApplication = async (req, res, next) => {
     try {
 
-        let { id } = req.query;
-        let subordinates = await fetchSubordinates(id);
+        const userId = req.user.id;
+        let subordinates = await fetchSubordinates(userId);
 
         let response = await Promise.all(
             subordinates.map(async sub => {
