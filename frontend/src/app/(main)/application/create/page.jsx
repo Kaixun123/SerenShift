@@ -2,10 +2,13 @@
 // import components
 import TopHeader from "@/components/TopHeader";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import FileUploader from "@/components/FileUpload";
 
 // chakra-ui
 import {
   FormControl,
+  Text,
   FormLabel,
   Input,
   Select,
@@ -16,9 +19,6 @@ import {
 
 // mantine
 import { DatePicker, DatesProvider } from "@mantine/dates";
-
-//react-dropzone (file uploads)
-import { useDropzone } from "react-dropzone";
 
 export default function NewApplicationPage() {
   const toast = useToast();
@@ -174,8 +174,10 @@ export default function NewApplicationPage() {
         subText={"Plan your schedule timely and wisely!"}
       />
 
-      <div className="flex p-[30px] gap-[60px] justify-between ">
-        <div className="flex flex-col w-1/2 gap-[20px]">
+      <div className="flex p-[40px] gap-[60px] justify-between ">
+
+        {/* Section: Calender */}
+        <div className="flex flex-col w-1/2 gap-[5px]"> 
           <div className="flex h-[350px] justify-center">
             <DatesProvider settings={{ consistentWeeks: true }}>
               <DatePicker
@@ -203,7 +205,11 @@ export default function NewApplicationPage() {
               </Button>
             </div>
           </div>
+        </div>
 
+        {/* Section: Form */}
+        <div className="flex flex-col w-1/2 mt-2 gap-[20px]">
+          <Text as='b' mb={3} fontSize={"2xl"}>Enter your Application Details</Text>
           <form noValidate>
             <FormControl isRequired className="flex flex-col gap-5">
               <div className="flex w-full flex-wrap lg:flex-nowrap">
@@ -272,6 +278,9 @@ export default function NewApplicationPage() {
                   size="sm"
                 />
               </div>
+              <div>
+                <FileUploader/>
+              </div>
               <Button
                 colorScheme="green"
                 variant="solid"
@@ -294,6 +303,8 @@ export default function NewApplicationPage() {
             </FormControl>
           </form>
         </div>
+
+        
       </div>
     </main>
   );
