@@ -1,4 +1,4 @@
-const { Application, Employee } = require('../models');
+const { Application, Employee, Schedule } = require('../models');
 
 const withdrawController = {
     withdrawPendingApplications: async (req, res) => {
@@ -51,7 +51,58 @@ const withdrawController = {
         } catch (error) {
             res.status(500).json({ message: 'An error occurred', error });
         }
+    },
+    
+    withdrawApprovedApplication: async (req, res) => {
+        try {
+            const { schedule_id } = req.body; 
+            const managerId = req.user.id; 
+    
+            // Find the schedule by schedule_id
+            const schedule = await Schedule.findOne({
+                where: { 
+                    schedule_id: schedule_id 
+                }
+            });
+            
+            if (!schedule) {
+                return res.status(404).json({ message: 'Schedule not found' });
+            }
+    
+            // Find the corresponding application by matching created_by, start_date, and end_date
+            const application = await Application.findOne({
+                where: {
+                    created_by: schedule.created_by,
+                    start_date: schedule.start_date,
+                    end_date: schedule.end_date,
+                    status: 'Approved'
+                }
+            });
+    
+            if (!application) {
+                return res.status(404).json({ message: 'Application not found or not authorized' });
+            }
+    
+            // Update the application status to 'Withdrawn'
+            application.status = 'Withdrawn';
+            application.last_update_by = managerId;
+            application.last_update_timestamp = new Date();
+            await application.save();
+    
+            // Delete the corresponding schedule
+            await schedule.destroy(); 
+    
+            // Send response with updated application
+            res.status(200).json({
+                message: 'Application updated to withdrawn and schedule deleted successfully',
+            });
+        } catch (error) {
+            console.error('Error withdrawing application:', error);
+            res.status(500).json({ message: 'An error occurred', error });
+        }
     }
+    
 };
 
 module.exports = withdrawController;
+
