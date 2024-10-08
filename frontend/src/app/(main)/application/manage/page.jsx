@@ -68,6 +68,15 @@ export default function ManageApplicationsPage() {
   // Get the selected applications details based on IDs
   const selectedApplications = pendingApplications.filter(app => selectedApplicationIds.includes(app.application_id));
 
+  // Handler for the "Select All" checkbox
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedApplicationIds(pendingApplications.map(app => app.application_id));
+    } else {
+      setSelectedApplicationIds([]);
+    }
+  };
+
   return (
     <main>
       <TopHeader
@@ -80,10 +89,23 @@ export default function ManageApplicationsPage() {
           <>
             {/* Box with border around the checklist */}
             <Box border="1px" borderColor="gray.300" borderRadius="md" p={4} mb={5}>
+              {/* Flex container for Select All checkbox and application checkboxes */}
+              <Flex alignItems="center" mb={4}>
+                {/* Checkbox for selecting all applications */}
+                <Checkbox 
+                  isChecked={selectedApplicationIds.length === pendingApplications.length} 
+                  onChange={handleSelectAll}
+                  mr={2} // Add margin to the right for spacing
+                  colorScheme="blue"
+                >
+                  Select All
+                </Checkbox>
+              </Flex>
+
               {/* Checkbox List for selecting applications */}
-              <VStack spacing={4}>
+              <VStack spacing={4} align="start">
                 {pendingApplications.map((application) => (
-                  <Checkbox
+                  <Checkbox 
                     key={application.application_id}
                     isChecked={selectedApplicationIds.includes(application.application_id)}
                     onChange={(e) => {
@@ -93,6 +115,7 @@ export default function ManageApplicationsPage() {
                         setSelectedApplicationIds(selectedApplicationIds.filter(id => id !== application.application_id));
                       }
                     }}
+                    
                   >
                     Application #{application.application_id} - {application.application_type}
                   </Checkbox>
