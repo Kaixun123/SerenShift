@@ -6,6 +6,6 @@ const { ensureLoggedIn } = require("../middlewares/authMiddleware");
 
 // Update the route to handle a PUT request
 router.put("/withdrawPending", ensureLoggedIn, (req, res) => withdrawController.withdrawPendingApplications(req, res));
-
+router.put("/withdrawApproved", ensureLoggedIn, (req, res) => withdrawController.withdrawApprovedApplication(req, res));
 
 module.exports = router;
