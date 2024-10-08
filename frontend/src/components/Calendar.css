@@ -1,13 +1,10 @@
-body {
+html, body {
   overflow: hidden;
+  height: 100%
 }
 
 .fc {
   color: black;
-  /* Targets FullCalendar's text */
-  height: calc(100vh - 100px);
-  /* Adjust to fit within the sidebar height (adjust 100px based on your sidebar height) */
-  overflow: hidden;
 }
 
 .fc-event {
@@ -15,27 +12,9 @@ body {
   font-weight: bold;
 }
 
-.calendar-fullscreen {
-  font-family: Arial, Helvetica, sans-serif;
-  width: 100%;
-  /* Full width of the remaining space */
-  height: 1000px;
-  /* Full height of the viewport */
-  padding: 20px;
-  overflow: hidden;
-  color: black;
-  flex-grow: 1;
-  /* Allow calendar to take up remaining space */
-  display: flex;
-  flex-direction: column;
-  /* Ensure it can expand */
-}
-
 .calendar {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  border: 1px solid #ddd;
+  flex-grow: 1;
+  height: 100%;
 }
 
 .header {
@@ -147,7 +126,7 @@ body {
 .fc-list-event {
   background-color: transparent !important;
   /* Make the background transparent */
-  border: none !important;
+  /* border: none !important; */
   padding: 5px !important;
 }
 
@@ -159,7 +138,12 @@ body {
 
 /* Remove the dot from the list view */
 .fc-list-event-dot {
-  display: none !important;
+  display: inline-block !important;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor; /* Use event's color */
+  margin-right: 5px;
 }
 
 .fc-list-event-title,
@@ -199,4 +183,3 @@ body {
 .fc-view-list .fc-list-event-time {
     color: #ffffff !important; /* Set text color */
 }
-
