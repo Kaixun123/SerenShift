@@ -10,6 +10,23 @@ const applicationStatusValidationRules = () => {
         check("status").isString().isIn(['Pending', 'Approved', 'Rejected', 'Withdrawn'])
     ];
 };
+
+// Application ID Validation Rules
+const applicationIDValidationRules = () => {
+    return [
+        check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }),
+    ]
+};
+
+const approveApplicationsValidationRules = () => {
+    return [
+        check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }),
+        check("approvedDates").isArray().notEmpty(),
+        check("approverRemarks").isString(),
+    ]
+}
+
+
 // Validation Middleware
 const vaildateParameters = (req, res, next) => {
     const errors = validationResult(req);
@@ -24,5 +41,6 @@ const vaildateParameters = (req, res, next) => {
 
 router.get("/retrieveApplication", applicationStatusValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveApplication(req, res));
 router.post("/createNewApplication", ensureLoggedIn, (req, res) => applicationController.createNewApplication(req, res))
+router.post("/approveApplications", approveApplicationsValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approveApplications(req, res));
 
 module.exports = router;
