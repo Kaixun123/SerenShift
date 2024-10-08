@@ -9,6 +9,7 @@ import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
 import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
 import listPlugin from "@fullcalendar/list"; // List view plugin
 import RefreshButton from "@/components/RefreshButton";
+import Legend from "@/components/Legend";
 import "@/components/Calendar.css";
 
 const TeamSchedulePage = () => {
@@ -237,23 +238,6 @@ const TeamSchedulePage = () => {
     styleElement.innerHTML = customTooltipStyles;
     document.head.appendChild(styleElement);
   }, []);
-
-  // Legend component
-  const Legend = () => (
-    <Box mb={4}>
-      <Text fontSize="lg" fontWeight="bold">
-        Legend:
-      </Text>
-      <Flex direction="row" align="center">
-        <Box w="20px" h="20px" bg="#4CAF50" mr={2} /> {/* Green for Full Day */}
-        <Text mr={4}>Full Day</Text>
-        <Box w="20px" h="20px" bg="#F4C542" mr={2} /> {/* Yellow for AM */}
-        <Text mr={4}>AM</Text>
-        <Box w="20px" h="20px" bg="#4DA1FF" mr={2} /> {/* Blue for PM */}
-        <Text>PM</Text>
-      </Flex>
-    </Box>
-  );
 
   return (
     <main>
