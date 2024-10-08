@@ -114,11 +114,13 @@ export default function PendingApplicationPage() {
       start_date={application.start_date}
       end_date={application.end_date}
       application_type={application.application_type}
+      status={application.status}
       requestor_remarks={application.requestor_remarks}
       onWithdraw={() => {
         setAppToWithdraw(application);
         onModalWithdrawOpen();
       }}
+      canManage={false}
     />
   ));
 
