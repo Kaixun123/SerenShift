@@ -12,7 +12,10 @@ import { Box, VStack, Text, Flex } from "@chakra-ui/react";
 import { MultiSelect, Pagination, Checkbox } from "@mantine/core";
 
 export default function ManageApplicationPage() {
-  const [subInfo, setSubInfo] = useState([]);
+  const [userId, setUserInfo] = useState(0);
+  const [subApplication, setSubApplication] = useState([]);
+  const [subList, setSubList] = useState([]);
+  const [selectedSubIds, setSelectedSubIds] = useState([]);
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -22,38 +25,57 @@ export default function ManageApplicationPage() {
     setRefreshing(true);
     setTimeout(() => {
       setRefresh(true);
+      setSelectedSubIds([]);
       setRefreshing(false);
     }, 200);
     setRefresh(false);
   };
 
   useEffect(() => {
-    async function fetchPendingAppData() {
+    async function fetchUserData() {
       try {
         const response = await fetch("/api/auth/me");
         const data = await response.json();
-
-        // Retrieve Pending Application List
-        const applicationResponse = await fetch(
-          `/api/manager/retrievePendingApplication?id=${data.id}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const subPendingApplication = await applicationResponse.json();
-
-        setSubInfo(subPendingApplication);
+        setUserInfo(data.id);
       } catch (error) {
-        console.error("Error fetching pending application data:", error);
+        console.error("Error fetching user data:", error);
       }
     }
-
-    fetchPendingAppData();
+    fetchUserData();
+    fetchSubordinateApplication([]);
   }, [isRefresh]);
+
+  const fetchSubordinateApplication = async (subordinateIds = []) => {
+    try {
+      // Retrieve Pending Application List
+      const applicationResponse = await fetch(
+        `/api/manager/retrievePendingApplication?id=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const subPendingApplication = await applicationResponse.json();
+      setSubList(subPendingApplication);
+
+      if (subordinateIds.length != 0) {
+        let formattedList = [];
+        subPendingApplication.map((sub) => {
+          if (subordinateIds.includes(sub.user_id.toString())) {
+            formattedList.push(sub);
+          }
+        });
+        setSubApplication(formattedList);
+      } else {
+        setSubApplication(subPendingApplication);
+      }
+    } catch (error) {
+      console.error("Error fetching subordinate application data:", error);
+    }
+  };
 
   function handlePagination(array, size) {
     if (!array.length) {
@@ -70,15 +92,17 @@ export default function ManageApplicationPage() {
   // Number of applications per page
   const applicationsPerPage = 2;
   const paginatedApplications = handlePagination(
-    subInfo.flatMap((sub) =>
-      sub.pendingApplications.map((application) => ({
-        ...application,
-        first_name: sub.first_name,
-        last_name: sub.last_name,
-        department: sub.department,
-        position: sub.position,
-      }))
-    ),
+    subApplication
+      .sort((a, b) => a.first_name.localeCompare(b.first_name))
+      .flatMap((sub) =>
+        sub.pendingApplications.map((application) => ({
+          ...application,
+          first_name: sub.first_name,
+          last_name: sub.last_name,
+          department: sub.department,
+          position: sub.position,
+        }))
+      ),
     applicationsPerPage
   );
 
@@ -98,6 +122,12 @@ export default function ManageApplicationPage() {
       canManage={true}
     />
   ));
+
+  const handleSubordinateSelect = (selectedIds) => {
+    setPage(1);
+    setSelectedSubIds(selectedIds);
+    fetchSubordinateApplication(selectedIds);
+  };
 
   return (
     <main>
@@ -134,19 +164,32 @@ export default function ManageApplicationPage() {
               />
               <Flex gap={"5px"} flexWrap={"wrap"} justifyContent={"flex-end"}>
                 <MultiSelect
-                  placeholder="Select Subordinate"
-                  data={subInfo
+                  placeholder={
+                    selectedSubIds.length === 0 ? "Select Subordinate" : ""
+                  }
+                  data={subList
                     .sort((a, b) => a.first_name.localeCompare(b.first_name))
                     .map((sub) => ({
                       value: String(sub.user_id),
                       label: `${sub.first_name} ${sub.last_name}`,
                     }))}
+                  value={selectedSubIds.map(String)}
+                  onChange={handleSubordinateSelect}
+                  clearable
                   styles={{
+                    pillsList: {
+                      display: "flex",
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: "5px",
+                    },
                     input: {
-                      width: "220px",
+                      width: "270px",
                       height: "30px",
                       maxHeight: "30px",
                       overflowY: "auto",
+                      flexDirection: "row",
+                      flexWrap: "wrap",
                     },
                   }}
                 />
@@ -156,7 +199,7 @@ export default function ManageApplicationPage() {
 
           <Box py={5} h={"100%"}>
             <VStack spacing={5} h={"100%"}>
-              {subInfo.length > 0 ? (
+              {subApplication.length > 0 ? (
                 <>
                   {items}
                   <Pagination

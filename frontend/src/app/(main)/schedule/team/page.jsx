@@ -196,7 +196,9 @@ const TeamSchedulePage = () => {
       tooltipDiv.style.display = "block";
       const rect = info.el.getBoundingClientRect();
       tooltipDiv.style.left = `${rect.left + window.scrollX}px`;
-      tooltipDiv.style.top = `${rect.top + window.scrollY - tooltipDiv.offsetHeight - 10}px`;
+      tooltipDiv.style.top = `${
+        rect.top + window.scrollY - tooltipDiv.offsetHeight - 10
+      }px`;
     };
 
     info.el.onmouseleave = function () {
@@ -259,7 +261,9 @@ const TeamSchedulePage = () => {
                     value: String(colleague.user_id),
                     label: `${colleague.first_name} ${colleague.last_name}`,
                   }))}
-                placeholder="Select Colleagues"
+                placeholder={
+                  selectedColleagueIds.length === 0 ? "Select Colleagues" : ""
+                }
                 value={selectedColleagueIds.map(String)}
                 onChange={handleColleagueSelect}
                 styles={{
