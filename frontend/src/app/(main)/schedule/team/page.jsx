@@ -289,6 +289,10 @@ const TeamSchedulePage = () => {
     .fc-view-list .fc-list-event-time {
       color: #000 !important;
     }
+      
+    .fc-list-event-dot {
+    display: none !important;
+}
   `}</style>
 
             <FullCalendar

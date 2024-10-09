@@ -82,43 +82,43 @@ const SubordinateSchedulePage = () => {
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
-        Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
-          colleagues.map((colleague) => {
-            const eventDate = new Date(date);
-            let start, end;
+      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+        colleagues.map((colleague) => {
+          const eventDate = new Date(date);
+          let start, end;
 
-            if (timePeriod === "Full Day") {
-              start = new Date(eventDate.setHours(9, 0, 0));
-              end = new Date(eventDate.setHours(18, 0, 0));
-            } else if (timePeriod === "AM") {
-              start = new Date(eventDate.setHours(9, 0, 0));
-              end = new Date(eventDate.setHours(13, 0, 0));
-            } else if (timePeriod === "PM") {
-              start = new Date(eventDate.setHours(14, 0, 0));
-              end = new Date(eventDate.setHours(18, 0, 0));
-            }
+          if (timePeriod === "Full Day") {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          } else if (timePeriod === "AM") {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(13, 0, 0));
+          } else if (timePeriod === "PM") {
+            start = new Date(eventDate.setHours(14, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          }
 
-            return {
-              title: `${colleague}`,
-              start,
-              end,
-              allDay: false,
-              timePeriod,
-            };
-          })
-        )
+          return {
+            title: `${colleague}`,
+            start,
+            end,
+            allDay: false,
+            timePeriod,
+          };
+        })
       )
+    )
     : [];
 
-    const eventContent = (eventInfo) => {
-      let ribbonColor;
-      if (eventInfo.event.extendedProps.timePeriod === "Full Day") {
-        ribbonColor = "#4CAF50"; // Green
-      } else if (eventInfo.event.extendedProps.timePeriod === "AM") {
-        ribbonColor = "#F4C542"; // Yellow
-      } else if (eventInfo.event.extendedProps.timePeriod === "PM") {
-        ribbonColor = "#4DA1FF"; // Blue
-      }
+  const eventContent = (eventInfo) => {
+    let ribbonColor;
+    if (eventInfo.event.extendedProps.timePeriod === "Full Day") {
+      ribbonColor = "#4CAF50"; // Green
+    } else if (eventInfo.event.extendedProps.timePeriod === "AM") {
+      ribbonColor = "#F4C542"; // Yellow
+    } else if (eventInfo.event.extendedProps.timePeriod === "PM") {
+      ribbonColor = "#4DA1FF"; // Blue
+    }
 
     return (
       <div
@@ -171,15 +171,15 @@ const SubordinateSchedulePage = () => {
     const timePeriod = info.event.extendedProps.timePeriod;
     const startTime = info.event.start
       ? info.event.start.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+      })
       : "N/A";
     const endTime = info.event.end
       ? info.event.end.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+      })
       : "N/A";
     const title = info.event.title || "No Title";
 
@@ -275,7 +275,7 @@ const SubordinateSchedulePage = () => {
                     value: String(colleague.user_id),
                     label: `${colleague.first_name} ${colleague.last_name}`,
                   }))}
-                placeholder="Select Subordinates" 
+                placeholder="Select Subordinates"
                 value={selectedColleagueIds.map(String)}
                 onChange={handleColleagueSelect}
                 styles={{
@@ -283,6 +283,7 @@ const SubordinateSchedulePage = () => {
                     width: "304px",
                     height: "30px",
                     maxHeight: "30px",
+                    overflowY: "auto",
                   },
                 }}
               />
@@ -291,6 +292,24 @@ const SubordinateSchedulePage = () => {
           </Flex>
 
           <Box height="calc(68vh)">
+            <style>{`
+              /* Remove background color for events in the list view */
+              .fc-view-list .fc-list-event {
+                background-color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+              
+              /* Ensure event title and time retain appropriate colors in the list view */
+              .fc-view-list .fc-list-event-title,
+              .fc-view-list .fc-list-event-time {
+                color: #000 !important;
+              }
+                
+              .fc-list-event-dot {
+              display: none !important;
+              }
+          `}</style>
             <FullCalendar
               plugins={[
                 dayGridPlugin,
