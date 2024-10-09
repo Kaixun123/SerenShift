@@ -20,7 +20,7 @@ import { useMemo, useEffect, useState } from "react";
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
-import { GrChapterAdd } from "react-icons/gr";
+import { GrChapterAdd, GrUserManager } from "react-icons/gr";
 import { CgList } from "react-icons/cg";
 
 export default function SideBar() {
@@ -66,6 +66,12 @@ export default function SideBar() {
       href: "/application/manage",
       icon: CgList,
       title: "Manage Application",
+    },
+    {
+      id: 6,
+      href: "/schedule/subordinate",
+      icon: GrUserManager,
+      title: "Subordinate Calendar",
     },
   ];
 
