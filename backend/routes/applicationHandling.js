@@ -45,5 +45,6 @@ router.post("/createNewApplication", ensureLoggedIn, (req, res) => applicationCo
 router.put("/approveApplications", approveApplicationsValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approveApplications(req, res));
 router.put("/approveApplication", ensureManagerAndAbove, (req, res) => applicationController.approveApplication(req, res));
 router.put("/rejectApplication", ensureManagerAndAbove, (req, res) => applicationController.rejectApplication(req, res));
+router.put("/withdrawPending", ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplications(req, res));
 
 module.exports = router;

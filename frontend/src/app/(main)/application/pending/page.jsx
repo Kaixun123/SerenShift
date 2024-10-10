@@ -67,7 +67,7 @@ export default function PendingApplicationPage() {
   // Handle withdrawal function
   const handleWithdraw = async (applicationId) => {
     try {
-      const response = await fetch("/api/withdraw/withdrawPending", {
+      const response = await fetch("/api/application/withdrawPending", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
