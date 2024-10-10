@@ -23,7 +23,6 @@ import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager } from "react-icons/gr";
 import { CgList } from "react-icons/cg";
-import { CgList } from "react-icons/cg";
 
 export default function SideBar() {
   const router = useRouter();
