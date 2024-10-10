@@ -40,7 +40,7 @@ export default function SideBar() {
       id: 1,
       href: "/schedule/own",
       icon: IoCalendarOutline,
-      title: "Own Calendar",
+      title: "My Calendar",
     },
     {
       id: 2,

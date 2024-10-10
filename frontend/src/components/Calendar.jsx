@@ -8,6 +8,9 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import tippy from 'tippy.js'; // Import Tippy.js
 import 'tippy.js/dist/tippy.css'; // Import Tippy.js styles
+import { Flex } from "@chakra-ui/react";
+import RefreshButton from "@/components/RefreshButton";
+import Legend from '@/components/Legend';
 
 const Calendar = () => {
   const [events, setEvents] = useState([]);
@@ -26,24 +29,7 @@ const Calendar = () => {
 
     fetchSchedule();
   }, []);
-
-  const Legend = () => (
-    <div className="legend horizontal-legend">
-        <div className="legend-item">
-            <span className="legend-color am-color"></span>
-            <span>AM</span>
-        </div>
-        <div className="legend-item">
-            <span className="legend-color pm-color"></span>
-            <span>PM</span>
-        </div>
-        <div className="legend-item">
-            <span className="legend-color full-day-color"></span>
-            <span>Full Day</span>
-        </div>
-    </div>
-);
-
+  
   const eventsWithColors = events.map(event => {
     if (event.extendedProps.type === 'AM') {
       return { ...event, color: '#e4b91c' }; // Set color for AM events
@@ -58,16 +44,21 @@ const Calendar = () => {
   });
 
   const handleEventDidMount = (eventInfo) => {
-    // Create a Tippy.js instance for each event element
-    const options = {
-      hour: '2-digit',
-      minute: '2-digit',
-    }
+    const startTime = eventInfo.event.allDay ? '09:00' : eventInfo.event.start.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  
+    const endTime = eventInfo.event.allDay ? '18:00' : (eventInfo.event.end 
+      ? eventInfo.event.end.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }) : "N/A");
+
     const instance = tippy(eventInfo.el, {
       content: `
         <strong>${eventInfo.event.title}</strong><br>
-        Time: ${eventInfo.event.start.toLocaleString(options).split(', ')[1].slice(0,5)}
-        to ${eventInfo.event.end ? eventInfo.event.end.toLocaleString(options).split(', ')[1].slice(0,5) : 'N/A'}<br>
+        Time: ${startTime} to ${endTime}<br>
       `,
       allowHTML: true,
       interactive: true,
@@ -75,10 +66,16 @@ const Calendar = () => {
     });
   }
 
+  const handleRefresh = () => {
+    setEvents([]);
+  };
+
   return (
     <div>
-      <strong>Legend:</strong>
-    <Legend/>
+      <Flex justifyContent="space-between" alignItems="center">
+      <Legend />
+      <RefreshButton onClick={handleRefresh} />
+      </Flex>
     <FullCalendar
       plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
       initialView="dayGridMonth"
@@ -89,6 +86,9 @@ const Calendar = () => {
         center: 'title',
         right: 'dayGridMonth,timeGridWeek,listMonth'
       }}  
+      height="calc(100vh - 250px)"
+      slotMinTime="09:00:00"
+      slotMaxTime="18:00:00"
     />
     </div>
   );

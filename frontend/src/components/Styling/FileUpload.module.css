@@ -1,0 +1,104 @@
+/* FileUpload.module.css */
+.thumbsContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.thumb {
+  display: inline-flex;
+  border-radius: 2px;
+  border: 2px solid #b6b2b2; /* Debugging border */
+  margin-bottom: 8px;
+  margin-right: 8px;
+  width: 150px;
+  height: 150px;
+  padding: 4px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.thumbInner {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.img {
+  display: block;
+  width: auto;
+  height: 100%;
+}
+
+.baseStyle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  border-width: 2px;
+  border-radius: 2px;
+  border-color: #c4bfbf;
+  border-style: dashed;
+  color: #797676;
+  outline: none;
+  transition: border .24s ease-in-out;
+}
+
+.activeStyle{
+  border-color: #2196f3;
+}
+
+.acceptStyle{
+  border-color: #00e676;
+}
+
+.rejectStyle{
+  border-color: #ff1744;
+}
+
+/* Folder preview styling */
+.folderPreview {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 10px;
+}
+
+.fileName {
+  margin-top: 8px;
+  font-size: 14px;
+  text-align: center;
+  word-wrap: break-word; /* Ensure long words break and wrap */
+  overflow-wrap: break-word; /* Ensure text wraps within the container */
+  max-width: 100%;
+}
+
+/* Styling for the "X" remove button */
+.removeButton {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: rgb(179, 176, 176);
+  color: white;
+  border: none;
+  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.removeButton:hover {
+  background-color: #cc0000;
+}
+
