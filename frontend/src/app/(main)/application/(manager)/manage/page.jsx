@@ -55,7 +55,7 @@ export default function ManageApplicationPage() {
     try {
       // Retrieve Pending Application List
       const applicationResponse = await fetch(
-        `/api/manager/retrievePendingApplication?id=${userId}`,
+        `/api/application/retrievePendingApplication?id=${userId}`,
         {
           method: "GET",
           headers: {
@@ -236,7 +236,7 @@ export default function ManageApplicationPage() {
             </VStack>
           </Box>
         </div>
-        
+
         {/* Application Review Card on the right side */}
         <Box w="1/2" ml={5}>
           <ApplicationReviewCard />

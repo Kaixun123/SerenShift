@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { check, validationResult } = require("express-validator");
-const { ensureLoggedIn, ensureManager, ensureManagerAndAbove, ensureHR } = require("../middlewares/authMiddleware");
+const { ensureLoggedIn, ensureManagerAndAbove } = require("../middlewares/authMiddleware");
 const applicationController = require("../controllers/applicationController");
 
 // Retrieve Applications Validation Rules
@@ -40,7 +40,10 @@ const vaildateParameters = (req, res, next) => {
 };
 
 router.get("/retrieveApplication", applicationStatusValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveApplication(req, res));
+router.get("/retrievePendingApplication", ensureManagerAndAbove, (req, res) => applicationController.retrievePendingApplication(req, res));
 router.post("/createNewApplication", ensureLoggedIn, (req, res) => applicationController.createNewApplication(req, res))
-router.post("/approveApplications", approveApplicationsValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approveApplications(req, res));
+router.put("/approveApplications", approveApplicationsValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approveApplications(req, res));
+router.put("/approveApplication", ensureManagerAndAbove, (req, res) => applicationController.approveApplication(req, res));
+router.put("/rejectApplication", ensureManagerAndAbove, (req, res) => applicationController.rejectApplication(req, res));
 
 module.exports = router;
