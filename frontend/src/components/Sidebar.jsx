@@ -20,7 +20,6 @@ import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd } from "react-icons/gr";
-import { CgFileDocument } from "react-icons/cg";
 
 export default function SideBar() {
   const router = useRouter();
@@ -59,12 +58,6 @@ export default function SideBar() {
       href: "/application/create",
       icon: GrChapterAdd,
       title: "New Application",
-    },
-    {
-      id: 5,
-      href: "/application/manage",
-      icon: CgFileDocument,
-      title: "Manage Applications",
     },
   ];
 
