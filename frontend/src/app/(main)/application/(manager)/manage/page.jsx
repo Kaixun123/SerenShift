@@ -3,6 +3,10 @@
 import TopHeader from "@/components/TopHeader";
 import PendingApplicationCard from "@/components/PendingAppCard";
 import RefreshButton from "@/components/RefreshButton";
+import ApplicationReviewCard from "@/components/AppReviewCard"; // Ensure import is correct
+import RequestorRemarks from "@/components/RemarksCard"; // Ensure import is correct
+import ApproveApplicationButton from "@/components/ApproveButton"; // Ensure import is correct
+import RejectApplicationButton from "@/components/RejectButton"; // Ensure import is correct
 import { useEffect, useState } from "react";
 
 // chakra-ui
@@ -16,6 +20,7 @@ export default function ManageApplicationPage() {
   const [subApplication, setSubApplication] = useState([]);
   const [subList, setSubList] = useState([]);
   const [selectedSubIds, setSelectedSubIds] = useState([]);
+  const [selectedApplications, setSelectedApplications] = useState([]); // Track selected applications
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -26,6 +31,7 @@ export default function ManageApplicationPage() {
     setTimeout(() => {
       setRefresh(true);
       setSelectedSubIds([]);
+      setSelectedApplications([]);
       setRefreshing(false);
     }, 200);
     setRefresh(false);
@@ -61,13 +67,11 @@ export default function ManageApplicationPage() {
       const subPendingApplication = await applicationResponse.json();
       setSubList(subPendingApplication);
 
-      if (subordinateIds.length != 0) {
-        let formattedList = [];
-        subPendingApplication.map((sub) => {
-          if (subordinateIds.includes(sub.user_id.toString())) {
-            formattedList.push(sub);
-          }
-        });
+      // Filter applications based on selected subordinate IDs
+      if (subordinateIds.length !== 0) {
+        const formattedList = subPendingApplication.filter((sub) =>
+          subordinateIds.includes(sub.user_id.toString())
+        );
         setSubApplication(formattedList);
       } else {
         setSubApplication(subPendingApplication);
@@ -108,25 +112,48 @@ export default function ManageApplicationPage() {
 
   // Items for the current page
   const items = paginatedApplications[activePage - 1]?.map((application) => (
-    <PendingApplicationCard
-      key={application.application_id}
-      start_date={application.start_date}
-      end_date={application.end_date}
-      application_type={application.application_type}
-      status={application.status}
-      requestor_remarks={application.requestor_remarks}
-      first_name={application.first_name}
-      last_name={application.last_name}
-      department={application.department}
-      position={application.position}
-      canManage={true}
-    />
+    <Flex key={application.application_id} alignItems="center">
+      <Checkbox
+        className="mr-2"
+        checked={selectedApplications.includes(application.application_id)}
+        onChange={() => {
+          setSelectedApplications((prev) =>
+            prev.includes(application.application_id)
+              ? prev.filter((id) => id !== application.application_id)
+              : [...prev, application.application_id]
+          );
+        }}
+      />
+      <PendingApplicationCard
+        start_date={application.start_date}
+        end_date={application.end_date}
+        application_type={application.application_type}
+        status={application.status}
+        requestor_remarks={application.requestor_remarks}
+        first_name={application.first_name}
+        last_name={application.last_name}
+        department={application.department}
+        position={application.position}
+        canManage={true}
+      />
+    </Flex>
   ));
 
   const handleSubordinateSelect = (selectedIds) => {
     setPage(1);
     setSelectedSubIds(selectedIds);
+    setSelectedApplications([]); // Reset selected applications when changing subordinates
     fetchSubordinateApplication(selectedIds);
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      const allApplicationIds = paginatedApplications
+        .flatMap((apps) => apps.map((app) => app.application_id));
+      setSelectedApplications(allApplicationIds);
+    } else {
+      setSelectedApplications([]);
+    }
   };
 
   return (
@@ -153,14 +180,8 @@ export default function ManageApplicationPage() {
             >
               <Checkbox
                 className="flex"
-                //   checked={allChecked}
-                //   indeterminate={indeterminate}
                 label="Select All"
-                //   onChange={() =>
-                //     handlers.setState((current) =>
-                //       current.map((value) => ({ ...value, checked: !allChecked }))
-                //     )
-                //   }
+                onChange={(e) => handleSelectAll(e.currentTarget.checked)}
               />
               <Flex gap={"5px"} flexWrap={"wrap"} justifyContent={"flex-end"}>
                 <MultiSelect
@@ -215,6 +236,16 @@ export default function ManageApplicationPage() {
             </VStack>
           </Box>
         </div>
+        
+        {/* Application Review Card on the right side */}
+        <Box w="1/2" ml={5}>
+          <ApplicationReviewCard />
+          <RequestorRemarks />
+          <Flex mt={4} justifyContent="flex-end" gap={4}>
+            <ApproveApplicationButton />
+            <RejectApplicationButton />
+          </Flex>
+        </Box>
       </div>
     </main>
   );
