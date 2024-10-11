@@ -42,9 +42,9 @@ const vaildateParameters = (req, res, next) => {
 router.get("/retrieveApplication", applicationStatusValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveApplication(req, res));
 router.get("/retrievePendingApplication", ensureManagerAndAbove, (req, res) => applicationController.retrievePendingApplication(req, res));
 router.post("/createNewApplication", ensureLoggedIn, (req, res) => applicationController.createNewApplication(req, res))
-router.put("/approveApplications", approveApplicationsValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approveApplications(req, res));
-router.put("/approveApplication", ensureManagerAndAbove, (req, res) => applicationController.approveApplication(req, res));
-router.put("/rejectApplication", ensureManagerAndAbove, (req, res) => applicationController.rejectApplication(req, res));
-router.put("/withdrawPending", ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplications(req, res));
+router.put("/approveApplication", ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
+router.put("/rejectApplication", ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
+router.put("/withdrawPending", ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
+router.put("/withdrawApproved", ensureManagerAndAbove, (req, res) => applicationController.withdrawApprovedApplication(req, res));
 
 module.exports = router;
