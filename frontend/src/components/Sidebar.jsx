@@ -19,13 +19,14 @@ import { useMemo, useEffect, useState } from "react";
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
-import { GrChapterAdd, GrUserManager } from "react-icons/gr";
+import { GrChapterAdd, GrUserManager, GrDocumentMissing } from "react-icons/gr";
 
 export default function SideBar() {
   const router = useRouter();
   const pathname = usePathname();
   const toast = useToast();
   const [isValidToken, setIsValidToken] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   // For Token Expiry Modal
   const {
@@ -33,6 +34,33 @@ export default function SideBar() {
     onOpen: onTokenExpiryModalOpen,
     onClose: onTokenExpiryModalClose,
   } = useDisclosure();
+
+  useEffect(() => {
+    async function fetchUserDetails() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+  
+        const data = await response.json();
+        console.log("DEBUG:", data);
+  
+        if (data && data.role) {
+          setUserRole(data.role);
+          console.log("User Role:", data.role);
+        } else {
+          console.log("No role found in response");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user details:", error);
+      }
+    }
+    fetchUserDetails();
+  }, []);
+  
+  
+  
 
   const menuItems = [
     {
@@ -66,6 +94,22 @@ export default function SideBar() {
       title: "Subordinate Calendar",
     },
   ];
+
+  const renderManagerItems = () => {
+    if (userRole !== "Manager") return null;
+  
+    return (
+      <>
+        <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
+          <Link href="/manager/withdraw" className="flex gap-3 items-center">
+            <GrDocumentMissing className="w-5 h-5" />
+            Withdraw Applications
+          </Link>
+        </div>
+        {/* Add more manager-only elements here */}
+      </>
+    );
+  };
 
   // const activeMenu = useMemo(
   //   () => menuItems.find((menu) => menu.href === pathname),
@@ -184,6 +228,9 @@ export default function SideBar() {
             </div>
           );
         })}
+
+      {/* Conditionally render Manager sidebar tabs */}
+      {renderManagerItems()}
       </div>
       {/* Logout Button */}
       <div className="mt-auto px-5 py-7">
