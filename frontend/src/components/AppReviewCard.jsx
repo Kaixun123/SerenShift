@@ -1,4 +1,4 @@
-import { Box, Text, Flex, Select, Input, Link } from "@chakra-ui/react";
+import { Box, Text, Flex, Input, Link } from "@chakra-ui/react";
 
 const ApplicationReviewCard = ({
   startDate = "",
@@ -13,12 +13,23 @@ const ApplicationReviewCard = ({
   // Construct the applicant's full name
   const applicantName = `${first_name} ${last_name}`;
 
-  // Function to format the date to dd/mm/yyyy
-  const formatDate = (dateString) => {
+  // Function to format the date and time to dd/mm/yyyy hh:mm AM/PM
+  const formatDateTime = (dateString) => {
     if (!dateString) return "N/A"; // Handle empty date
-    const options = { day: "2-digit", month: "2-digit", year: "numeric" };
-    return new Date(dateString).toLocaleDateString("en-GB", options); // en-GB formats it as dd/mm/yyyy
+    const options = {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true, // Optional: Set to false for 24-hour format
+    };
+    return new Date(dateString).toLocaleString("en-GB", options); // en-GB formats it as dd/mm/yyyy
   };
+
+  // Date check
+  const currentDate = new Date();
+  const isPastDate = new Date(startDate) < currentDate || new Date(endDate) < currentDate;
 
   // Check if the application details are provided
   if (!first_name && !last_name) {
@@ -64,7 +75,7 @@ const ApplicationReviewCard = ({
           <Text fontWeight="bold">Applicant Position</Text>
           <Input
             isReadOnly
-            value={position} // Display position as the applicant's team
+            value={position}
             bg="gray.100"
             border="none"
             size="sm"
@@ -88,8 +99,8 @@ const ApplicationReviewCard = ({
           <Text fontWeight="bold">Start Date/Time</Text>
           <Input
             isReadOnly
-            value={formatDate(startDate) || "23/09/2024 01:00PM"}
-            bg="gray.100"
+            value={formatDateTime(startDate) || "23/09/2024 01:00 PM"}
+            bg={isPastDate ? "red.100" : "gray.100"} // Change background color to red if past date
             border="none"
             size="sm"
             width="70%"
@@ -100,8 +111,8 @@ const ApplicationReviewCard = ({
           <Text fontWeight="bold">End Date/Time</Text>
           <Input
             isReadOnly
-            value={formatDate(endDate) || "23/09/2024 06:00PM"}
-            bg="gray.100"
+            value={formatDateTime(endDate) || "23/09/2024 06:00 PM"}
+            bg={isPastDate ? "red.100" : "gray.100"} // Change background color to red if past date
             border="none"
             size="sm"
             width="70%"

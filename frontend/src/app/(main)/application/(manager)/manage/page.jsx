@@ -4,7 +4,7 @@ import TopHeader from "@/components/TopHeader";
 import PendingApplicationCard from "@/components/PendingAppCard";
 import RefreshButton from "@/components/RefreshButton";
 import ApplicationReviewCard from "@/components/AppReviewCard";
-import RequestorRemarks from "@/components/RemarksCard";
+import ApproverRemarks from "@/components/RemarksCard";
 import ApproveApplicationButton from "@/components/ApproveButton";
 import RejectApplicationButton from "@/components/RejectButton";
 import { useEffect, useState } from "react";
@@ -171,6 +171,12 @@ export default function ManageApplicationPage() {
     setRemarks((prev) => ({ ...prev, [applicationId]: value })); // Update remarks for specific application
   };
 
+  const currentDate = new Date();
+  const isDateInvalid = selectedApplicationDetails && 
+  (new Date(selectedApplicationDetails.start_date) < currentDate || 
+  new Date(selectedApplicationDetails.end_date) < currentDate);
+
+
   return (
     <main>
       <TopHeader
@@ -288,13 +294,13 @@ export default function ManageApplicationPage() {
               message="No WFH selected" // Custom prop to indicate no selection
             />
           )}
-          <RequestorRemarks
+          <ApproverRemarks
             value={remarks[selectedApplicationDetails?.application_id] || ""} // Safely access remarks
             onChange={(value) => handleRemarksChange(selectedApplicationDetails?.application_id, value)}
           />
           <Flex mt={4} justifyContent="flex-end" gap={4}>
-            <ApproveApplicationButton isDisabled={!selectedApplicationDetails}/>
-            <RejectApplicationButton isDisabled={!selectedApplicationDetails}/>
+            <ApproveApplicationButton isDisabled={!selectedApplicationDetails || isDateInvalid}/>
+            <RejectApplicationButton isDisabled={!selectedApplicationDetails || isDateInvalid}/>
           </Flex>
         </Box>
       </div>
