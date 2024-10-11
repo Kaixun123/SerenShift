@@ -4,11 +4,15 @@ const ApplicationReviewCard = ({
   startDate = "",
   endDate = "",
   applicationType = "",
-  applicantName = "",
-  applicantTeam = "",
-  reason = "",
+  first_name = "",
+  last_name = "",
+  position = "",
+  requestor_remarks = "",
   supportingDocs = "",
 }) => {
+  // Construct the applicant's full name
+  const applicantName = `${first_name} ${last_name}`;
+
   // Function to format the date to dd/mm/yyyy
   const formatDate = (dateString) => {
     if (!dateString) return "N/A"; // Handle empty date
@@ -42,7 +46,7 @@ const ApplicationReviewCard = ({
           <Text fontWeight="bold">Applicant's Team</Text>
           <Input
             isReadOnly
-            value={applicantTeam}
+            value={position} // Display position as the applicant's team
             bg="gray.100"
             border="none"
             size="sm"
@@ -83,10 +87,10 @@ const ApplicationReviewCard = ({
         </Flex>
 
         <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">Reason</Text>
+          <Text fontWeight="bold">Requestor Remarks</Text>
           <Input
             isReadOnly
-            value={reason}
+            value={requestor_remarks}
             bg="gray.100"
             border="none"
             size="sm"

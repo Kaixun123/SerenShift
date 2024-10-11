@@ -1,18 +1,18 @@
 "use client";
-// import components
+// Import components
 import TopHeader from "@/components/TopHeader";
 import PendingApplicationCard from "@/components/PendingAppCard";
 import RefreshButton from "@/components/RefreshButton";
-import ApplicationReviewCard from "@/components/AppReviewCard"; // Ensure import is correct
-import RequestorRemarks from "@/components/RemarksCard"; // Ensure import is correct
-import ApproveApplicationButton from "@/components/ApproveButton"; // Ensure import is correct
-import RejectApplicationButton from "@/components/RejectButton"; // Ensure import is correct
+import ApplicationReviewCard from "@/components/AppReviewCard";
+import RequestorRemarks from "@/components/RemarksCard";
+import ApproveApplicationButton from "@/components/ApproveButton";
+import RejectApplicationButton from "@/components/RejectButton";
 import { useEffect, useState } from "react";
 
-// chakra-ui
+// Chakra UI
 import { Box, VStack, Text, Flex } from "@chakra-ui/react";
 
-// mantine
+// Mantine
 import { MultiSelect, Pagination, Checkbox } from "@mantine/core";
 
 export default function ManageApplicationPage() {
@@ -21,6 +21,8 @@ export default function ManageApplicationPage() {
   const [subList, setSubList] = useState([]);
   const [selectedSubIds, setSelectedSubIds] = useState([]);
   const [selectedApplications, setSelectedApplications] = useState([]); // Track selected applications
+  const [currentApplicationIndex, setCurrentApplicationIndex] = useState(0); // For paginating through selected applications
+  const [remarks, setRemarks] = useState({}); // State for remarks per application
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -53,7 +55,6 @@ export default function ManageApplicationPage() {
 
   const fetchSubordinateApplication = async (subordinateIds = []) => {
     try {
-      // Retrieve Pending Application List
       const applicationResponse = await fetch(
         `/api/application/retrievePendingApplication?id=${userId}`,
         {
@@ -67,7 +68,6 @@ export default function ManageApplicationPage() {
       const subPendingApplication = await applicationResponse.json();
       setSubList(subPendingApplication);
 
-      // Filter applications based on selected subordinate IDs
       if (subordinateIds.length !== 0) {
         const formattedList = subPendingApplication.filter((sub) =>
           subordinateIds.includes(sub.user_id.toString())
@@ -92,8 +92,6 @@ export default function ManageApplicationPage() {
 
   // Pagination state
   const [activePage, setPage] = useState(1);
-
-  // Number of applications per page
   const applicationsPerPage = 2;
   const paginatedApplications = handlePagination(
     subApplication
@@ -110,18 +108,18 @@ export default function ManageApplicationPage() {
     applicationsPerPage
   );
 
-  // Items for the current page
   const items = paginatedApplications[activePage - 1]?.map((application) => (
     <Flex key={application.application_id} alignItems="center">
       <Checkbox
         className="mr-2"
         checked={selectedApplications.includes(application.application_id)}
         onChange={() => {
-          setSelectedApplications((prev) =>
-            prev.includes(application.application_id)
-              ? prev.filter((id) => id !== application.application_id)
-              : [...prev, application.application_id]
-          );
+          const newSelectedApplications = selectedApplications.includes(application.application_id)
+            ? selectedApplications.filter((id) => id !== application.application_id)
+            : [...selectedApplications, application.application_id];
+          
+          setSelectedApplications(newSelectedApplications);
+          setCurrentApplicationIndex(0); // Reset index when selection changes
         }}
       />
       <PendingApplicationCard
@@ -142,7 +140,8 @@ export default function ManageApplicationPage() {
   const handleSubordinateSelect = (selectedIds) => {
     setPage(1);
     setSelectedSubIds(selectedIds);
-    setSelectedApplications([]); // Reset selected applications when changing subordinates
+    setSelectedApplications([]);
+    setRemarks({}); // Reset remarks when new subordinates are selected
     fetchSubordinateApplication(selectedIds);
   };
 
@@ -153,7 +152,20 @@ export default function ManageApplicationPage() {
       setSelectedApplications(allApplicationIds);
     } else {
       setSelectedApplications([]);
+      setRemarks({}); // Reset remarks when all applications are deselected
     }
+  };
+
+  // Handle pagination within selected applications
+  const selectedApplicationDetails = selectedApplications.length > 0 
+    ? subApplication
+        .flatMap((sub) => sub.pendingApplications)
+        .find((app) => app.application_id === selectedApplications[currentApplicationIndex])
+    : null;
+
+  // Handle remarks change
+  const handleRemarksChange = (applicationId, value) => {
+    setRemarks((prev) => ({ ...prev, [applicationId]: value })); // Update remarks for specific application
   };
 
   return (
@@ -239,8 +251,31 @@ export default function ManageApplicationPage() {
 
         {/* Application Review Card on the right side */}
         <Box w="1/2" ml={5}>
-          <ApplicationReviewCard />
-          <RequestorRemarks />
+          {selectedApplicationDetails && (
+            <>
+              <ApplicationReviewCard
+                startDate={selectedApplicationDetails.start_date}
+                endDate={selectedApplicationDetails.end_date}
+                applicationType={selectedApplicationDetails.application_type}
+                first_name={selectedApplicationDetails.first_name}
+                last_name={selectedApplicationDetails.last_name}
+                position={selectedApplicationDetails.position}
+                requestor_remarks={selectedApplicationDetails.requestor_remarks}
+              />
+              {selectedApplications.length > 1 && (
+                <Pagination
+                  total={selectedApplications.length}
+                  value={currentApplicationIndex + 1}
+                  onChange={(page) => setCurrentApplicationIndex(page - 1)}
+                  className="flex mt-5 justify-center"
+                />
+              )}
+            </>
+          )}
+          <RequestorRemarks
+            value={remarks[selectedApplications[currentApplicationIndex]] || ""}
+            onChange={(value) => handleRemarksChange(selectedApplications[currentApplicationIndex], value)}
+          />
           <Flex mt={4} justifyContent="flex-end" gap={4}>
             <ApproveApplicationButton />
             <RejectApplicationButton />
