@@ -13,6 +13,7 @@ import {
   Badge,
   HStack,
   VStack,
+  useToast
 } from "@chakra-ui/react";
 import { IoNotificationsOutline } from "react-icons/io5"; // Import from react-icons
 import { useRouter } from "next/navigation";
@@ -20,6 +21,40 @@ import { useRouter } from "next/navigation";
 export default function TopHeader({ mainText, subText }) {
   const [employee, setEmployee] = useState({ name: "", position: "" });
   const router = useRouter();
+  const toast = useToast();
+
+  // const handleLogout = async () => {
+  //   console.log("Logout clicked");
+  //   let response = await fetch("/api/auth/logout", {
+  //     method: "GET",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     credentials: "include",
+  //   });
+  //   if (response.ok) {
+  //     toast({
+  //       title: "Logout Success",
+  //       description: "Thank you for using our service",
+  //       status: "success",
+  //       isClosable: true,
+  //       position: 'top-right',
+
+  //     });
+  //     router.push("/auth/login");
+  //   } else {
+  //     console.error("Login failed");
+  //     // Handle login failure here (e.g., show an error message)
+  //     toast({
+  //       title: "Logout Failed",
+  //       description: "An error has occured. Please try again later",
+  //       status: "error",
+  //       isClosable: true,
+  //       position: 'top-right',
+  //     });
+  //   }
+  // };
+
   useEffect(() => {
     async function fetchEmployeeData() {
       try {

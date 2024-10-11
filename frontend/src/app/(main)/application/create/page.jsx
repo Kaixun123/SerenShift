@@ -35,6 +35,7 @@ export default function NewApplicationPage() {
   const [type, setType] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
+  const [files, setFiles] = useState([]);
 
   const handleCalendarChange = (selectedDates) => {
     setCalendarValue(selectedDates);
@@ -64,6 +65,10 @@ export default function NewApplicationPage() {
       startDate: "",
       endDate: "",
     });
+  };
+
+  const handleFilesChange = (files) => {
+    setFiles(files);
   };
 
   useEffect(() => {
@@ -118,18 +123,19 @@ export default function NewApplicationPage() {
           formattedEndDateTime += " 18:00:00";
         }
 
+        const formData = new FormData();
+        formData.append('id', employeeInfo.id);
+        formData.append('application_type', type);
+        formData.append('start_date', formattedStartDateTime);
+        formData.append('end_date', formattedEndDateTime);
+        formData.append('requestor_remarks', reason);
+        files.forEach(file => {
+          formData.append('files', file);
+        });
+
         const response = await fetch("/api/application/createNewApplication", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: employeeInfo.id,
-            application_type: type,
-            start_date: formattedStartDateTime,
-            end_date: formattedEndDateTime,
-            requestor_remarks: reason,
-          }),
+          body: formData,
         });
 
         if (response.status === 201) {
@@ -161,6 +167,7 @@ export default function NewApplicationPage() {
         setTimeSlot("");
         setReason("");
         setLoading(false);
+        setFiles([])
       }
     } catch (error) {
       console.error("Error creating new application:", error);
@@ -205,6 +212,26 @@ export default function NewApplicationPage() {
               </Button>
             </div>
           </div>
+          <div className="flex w-full flex-wrap gap-5 lg:flex-nowrap lg:gap-4 mt-4">
+            <div className="w-full lg:w-1/2">
+              <FormLabel>Start Date</FormLabel>
+              <Input
+                placeholder="Start Date"
+                name="startDate"
+                value={formattedDate.startDate}
+                readOnly
+              />
+            </div>
+            <div className="w-full lg:w-1/2">
+              <FormLabel>End Date</FormLabel>
+              <Input
+                placeholder="End Date"
+                name="endDate"
+                value={formattedDate.endDate}
+                readOnly
+              />
+            </div>
+          </div>
         </div>
 
         {/* Section: Form */}
@@ -225,7 +252,7 @@ export default function NewApplicationPage() {
                 </Select>
               </div>
 
-              <div className="flex w-full flex-wrap gap-5 lg:flex-nowrap lg:gap-4">
+              {/* <div className="flex w-full flex-wrap gap-5 lg:flex-nowrap lg:gap-4">
                 <div className="w-full lg:w-1/2">
                   <FormLabel>Start Date</FormLabel>
                   <Input
@@ -244,7 +271,7 @@ export default function NewApplicationPage() {
                     readOnly
                   />
                 </div>
-              </div>
+              </div> */}
               <div className="flex w-full flex-wrap lg:flex-nowrap">
                 <FormLabel className="w-full">Timeslot</FormLabel>
                 <Select
@@ -279,7 +306,7 @@ export default function NewApplicationPage() {
                 />
               </div>
               <div>
-                <FileUploader/>
+                <FileUploader onFilesChange={handleFilesChange} />
               </div>
               <Button
                 colorScheme="green"

@@ -6,10 +6,11 @@ import Image from 'next/image';
 import styles from './Styling/FileUpload.module.css'
 import { useToast } from '@chakra-ui/react';
 
-const FileUploader = () => {
+const FileUploader = ({ onFilesChange }) => {
     const [files, setFiles] = useState([]);
     const toast = useToast();
     const maxFileLength = 30;
+    const maxSize = 2.2 * 1024 * 1024; // 2.2 MB in bytes
 
     function nameLengthValidator(file) {
       if (file.name.length > maxFileLength) {
@@ -42,11 +43,31 @@ const FileUploader = () => {
       },
       maxFiles: 3,
       multiple: true,
+      maxSize: maxSize,
       validator: nameLengthValidator,
-      onDrop: acceptedFiles => {
-        setFiles(acceptedFiles.map(file => Object.assign(file, {
+      onDrop: (acceptedFiles, fileRejections) => {
+        const updatedFiles = acceptedFiles.map(file => Object.assign(file, {
           preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-        })));
+        }));
+        setFiles(updatedFiles);
+        if (typeof onFilesChange === 'function') {
+          onFilesChange(updatedFiles); // Pass the files to the parent component if the callback is provided
+        }
+
+        // Handle file rejections
+        fileRejections.forEach(({ file, errors }) => {
+          errors.forEach((error) => {
+            if (error.code === 'file-too-large') {
+              toast({
+                title: "File Too Large",
+                description: `The file ${file.name} exceeds the size limit of ${(maxSize / (1024 * 1024)).toFixed(1)} MB.`,
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+              });
+            }
+          });
+        });
       }
     });
 
@@ -57,11 +78,15 @@ const FileUploader = () => {
       ${isDragReject ? styles.rejectStyle : ''}
     `;
 
-    // Function to remove a file from the list
-    const removeFile = (fileName) => {
-      setFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
-    };
-      
+  // Function to remove a file from the list
+  const removeFile = (fileName) => {
+    const updatedFiles = files.filter(file => file.name !== fileName);
+    setFiles(updatedFiles);
+    if (onFilesChange) {
+      onFilesChange(updatedFiles); // Pass the updated files to the parent component if the callback is provided
+    } // Pass the updated files to the parent component
+  };
+
     const thumbs = files.map(file => (
       <div className={styles.thumb} key={file.name}>
         <div className={styles.thumbInner}>

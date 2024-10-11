@@ -1,6 +1,7 @@
 const { Application, Employee, Schedule } = require('../models');
 const { splitScheduleByDate } = require('../services/common/scheduleHelper')
 const moment = require('moment'); // Ensure moment.js is installed
+const { uploadFile } = require('../services/uploads/s3');
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplication = async (req, res, next) => {
@@ -85,12 +86,26 @@ const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationT
     }
 }
 
+// Helper Function to upload files to S3
+const uploadFilesToS3 = async (files, userId) => {
+    if (!files || files.length === 0) return;
+
+    const uploadPromises = files.map(file => uploadFile(file, 'application', userId, false, { id: userId }));
+    await Promise.all(uploadPromises);
+};
+
 // POST function - to create new application
 const createNewApplication = async (req, res, next) => {
     try {
-
         let { id, application_type, start_date, end_date, requestor_remarks } = req.body
+        const files = req.files;
         let employeeInfo = await Employee.findByPk(id);
+        console.log(files);
+
+        if (!employeeInfo) {
+            return res.status(404).json({ message: "Employee not found." });
+        }
+
         let reportingManager = employeeInfo.reporting_manager
 
         // check if the employee has a reporting manager
@@ -117,8 +132,8 @@ const createNewApplication = async (req, res, next) => {
             return res.status(404).json({ message: `Invalid application period. New application cannot overlap with the existing or approved application.` });
         }
 
-        // if no duplicate, create a new application
-        let newApplication = await Application.create({
+        // Create a new application
+        const newApplication = await Application.create({
             start_date: start_date,
             end_date: end_date,
             application_type: application_type,
@@ -126,7 +141,14 @@ const createNewApplication = async (req, res, next) => {
             last_update_by: id,
             status: "Pending",
             requestor_remarks: requestor_remarks,
-        })
+        });
+
+        // Upload files using the application ID
+        if (files && files.length > 0) {
+            await uploadFilesToS3(files, employeeInfo.id);
+        }
+        // Log the results for debugging
+        console.log("New Application:", newApplication);
 
         return res.status(201).json({ message: "New application successfully created.", result: newApplication })
     } catch (error) {

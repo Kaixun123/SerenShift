@@ -23,6 +23,16 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
     } else if (!user) {
         throw new Error('User must be provided');
     }
+
+    // Log the file object for debugging
+    console.log('File object:', file);
+
+    // Validate the file object
+    if (!file.originalname || !file.buffer || !file.mimetype) {
+        throw new Error('Invalid file object. The file must have originalname, buffer, and mimetype properties.');
+    }
+    
+
     const fileName = file.originalname.split('.').shift();
     const fileExtension = file.originalname.split('.').pop();
     let foundFile = await File.findOne({
@@ -38,7 +48,7 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
     }
     try {
         const command = new PutObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME,
+            Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
             Key: `${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
             Body: file.buffer,
             ContentType: file.mimetype,
@@ -60,7 +70,8 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
                 last_update_by: user.id,
             });
         }
-        let updatedFile = await File.findOne({
+
+        return foundFile || await File.findOne({
             where: {
                 file_name: fileName,
                 file_extension: fileExtension,
@@ -68,7 +79,7 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
                 related_entity_id: relatedEntityID,
             },
         });
-        return updatedFile;
+
     } catch (error) {
         throw new Error(`Error uploading file to S3: ${error}`);
     }
@@ -107,7 +118,7 @@ const deleteFile = async (fileID) => {
     }
     try {
         const command = new DeleteObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME,
+            Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
             Key: foundFile.s3_key,
         });
         await s3.send(command);
@@ -134,7 +145,7 @@ const deleteAllFiles = async (relatedEntityType, relatedEntityID) => {
     try {
         for (let file of foundFiles) {
             const command = new DeleteObjectCommand({
-                Bucket: process.env.S3_BUCKET_NAME,
+                Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
                 Key: file.s3_key,
             });
             await s3.send(command);
@@ -149,7 +160,7 @@ const deleteAllFiles = async (relatedEntityType, relatedEntityID) => {
 // Generate a pre-signed URL for downloading/viewing a file
 const generatePresignedUrl = async (s3Key, expiresIn = 600) => {
     const params = {
-        Bucket: process.env.S3_BUCKET_NAME,
+        Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
         Key: s3Key,
     };
 
@@ -163,7 +174,7 @@ const generatePresignedUrl = async (s3Key, expiresIn = 600) => {
 // Check if a file exists in S3 by fetching its metadata
 const checkFileExists = async (s3Key) => {
     const params = {
-        Bucket: process.env.S3_BUCKET_NAME,
+        Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
         Key: s3Key,
     };
 
