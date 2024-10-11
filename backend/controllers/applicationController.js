@@ -292,7 +292,7 @@ const rejectApplication = async (req, res) => {
         }
 
         // Check if the application status is 'Pending'
-        if (currentSubordinate.status !== 'Pending') {
+        if (currentSubordinate.status !== 'Pending' && currentSubordinate.status !== 'Approved') {
             return res.status(404).json({ message: 'Application status is not pending' });
         }
 
@@ -339,7 +339,7 @@ const withdrawPendingApplications = async (req, res) => {
             const application = await Application.findOne({ 
                 where: { 
                     application_id: applicationId,
-                    status: 'Pending',
+                    status: 'Pending' || "Approved",
                     created_by: staffId
                 } 
             });
