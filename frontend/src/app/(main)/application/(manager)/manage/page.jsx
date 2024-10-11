@@ -176,6 +176,8 @@ export default function ManageApplicationPage() {
   (new Date(selectedApplicationDetails.start_date) < currentDate || 
   new Date(selectedApplicationDetails.end_date) < currentDate);
 
+  const isRemarksDisabled = !selectedApplicationDetails || isDateInvalid;
+
 
   return (
     <main>
@@ -295,8 +297,9 @@ export default function ManageApplicationPage() {
             />
           )}
           <ApproverRemarks
-            value={remarks[selectedApplicationDetails?.application_id] || ""} // Safely access remarks
-            onChange={(value) => handleRemarksChange(selectedApplicationDetails?.application_id, value)}
+            remarks={remarks[selectedApplicationDetails?.application_id] || ""} // Access remarks
+            onChange={(value) => handleRemarksChange(selectedApplicationDetails.application_id, value)} 
+            isDisabled={isRemarksDisabled}
           />
           <Flex mt={4} justifyContent="flex-end" gap={4}>
             <ApproveApplicationButton isDisabled={!selectedApplicationDetails || isDateInvalid}/>
