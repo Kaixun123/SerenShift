@@ -7,10 +7,11 @@ import ApplicationReviewCard from "@/components/AppReviewCard";
 import ApproverRemarks from "@/components/RemarksCard";
 import ApproveApplicationButton from "@/components/ApproveButton";
 import RejectApplicationButton from "@/components/RejectButton";
+import ConfirmationModal from "@/components/ConfirmationModal"; // Import ConfirmationModal
 import { useEffect, useState } from "react";
 
 // Chakra UI
-import { Box, VStack, Text, Flex } from "@chakra-ui/react";
+import { Box, VStack, Text, Flex, useDisclosure } from "@chakra-ui/react";
 
 // Mantine
 import { MultiSelect, Pagination, Checkbox } from "@mantine/core";
@@ -27,6 +28,10 @@ export default function ManageApplicationPage() {
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Modal state
+  const { isOpen, onOpen, onClose } = useDisclosure(); // useDisclosure hook from Chakra UI
+  const [currentAction, setCurrentAction] = useState(null); // Track current action (approve/reject)
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -173,11 +178,36 @@ export default function ManageApplicationPage() {
 
   const currentDate = new Date();
   const isDateInvalid = selectedApplicationDetails && 
-  (new Date(selectedApplicationDetails.start_date) < currentDate || 
-  new Date(selectedApplicationDetails.end_date) < currentDate);
+    (new Date(selectedApplicationDetails.start_date) < currentDate || 
+     new Date(selectedApplicationDetails.end_date) < currentDate);
 
   const isRemarksDisabled = !selectedApplicationDetails || isDateInvalid;
 
+  // Function to handle approve action
+  const handleApproveClick = () => {
+    setCurrentAction("approve");
+    onOpen(); // Open modal
+  };
+
+  // Function to handle reject action
+  const handleRejectClick = () => {
+    setCurrentAction("reject");
+    onOpen(); // Open modal
+  };
+
+  // Function to handle confirmation of the action
+  const handleConfirm = () => {
+    if (currentAction === "approve") {
+      // Hard-coded approve action
+      console.log("Approving application:", selectedApplicationDetails.application_id);
+      // TODO: Replace with your approve API call
+    } else if (currentAction === "reject") {
+      // Hard-coded reject action
+      console.log("Rejecting application:", selectedApplicationDetails.application_id);
+      // TODO: Replace with your reject API call
+    }
+    onClose(); // Close the modal after the action
+  };
 
   return (
     <main>
@@ -302,11 +332,26 @@ export default function ManageApplicationPage() {
             isDisabled={isRemarksDisabled}
           />
           <Flex mt={4} justifyContent="flex-end" gap={4}>
-            <ApproveApplicationButton isDisabled={!selectedApplicationDetails || isDateInvalid}/>
-            <RejectApplicationButton isDisabled={!selectedApplicationDetails || isDateInvalid}/>
+            <ApproveApplicationButton 
+              isDisabled={!selectedApplicationDetails || isDateInvalid}
+              onClick={handleApproveClick} // Attach onClick handler
+            />
+            <RejectApplicationButton 
+              isDisabled={!selectedApplicationDetails || isDateInvalid}
+              onClick={handleRejectClick} // Attach onClick handler
+            />
           </Flex>
         </Box>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={handleConfirm}
+        action={currentAction}
+        selectedApplication={selectedApplicationDetails}
+      />
     </main>
   );
 }
