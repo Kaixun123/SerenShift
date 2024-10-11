@@ -112,14 +112,20 @@ export default function ManageApplicationPage() {
     <Flex key={application.application_id} alignItems="center">
       <Checkbox
         className="mr-2"
-        checked={selectedApplications.includes(application.application_id)}
+        checked={selectedApplications.some((app) => app.application_id === application.application_id)} // Check by application_id
         onChange={() => {
-          const newSelectedApplications = selectedApplications.includes(application.application_id)
-            ? selectedApplications.filter((id) => id !== application.application_id)
-            : [...selectedApplications, application.application_id];
-          
+          const isSelected = selectedApplications.some((app) => app.application_id === application.application_id);
+          const newSelectedApplications = isSelected
+            ? selectedApplications.filter((app) => app.application_id !== application.application_id)
+            : [...selectedApplications, application]; // Store the full application object when selected
+
           setSelectedApplications(newSelectedApplications);
-          setCurrentApplicationIndex(0); // Reset index when selection changes
+          // If the application was deselected, reset the currentApplicationIndex, else update it
+          if (isSelected) {
+            setCurrentApplicationIndex(0);
+          } else {
+            setCurrentApplicationIndex(newSelectedApplications.length - 1); // Set to the newly added application's index
+          }
         }}
       />
       <PendingApplicationCard
@@ -140,16 +146,15 @@ export default function ManageApplicationPage() {
   const handleSubordinateSelect = (selectedIds) => {
     setPage(1);
     setSelectedSubIds(selectedIds);
-    setSelectedApplications([]);
+    setSelectedApplications([]); // Reset selected applications when subordinates change
     setRemarks({}); // Reset remarks when new subordinates are selected
     fetchSubordinateApplication(selectedIds);
   };
 
   const handleSelectAll = (checked) => {
     if (checked) {
-      const allApplicationIds = paginatedApplications
-        .flatMap((apps) => apps.map((app) => app.application_id));
-      setSelectedApplications(allApplicationIds);
+      const allApplications = paginatedApplications.flatMap((apps) => apps);
+      setSelectedApplications(allApplications); // Store the full application objects
     } else {
       setSelectedApplications([]);
       setRemarks({}); // Reset remarks when all applications are deselected
@@ -158,9 +163,7 @@ export default function ManageApplicationPage() {
 
   // Handle pagination within selected applications
   const selectedApplicationDetails = selectedApplications.length > 0 
-    ? subApplication
-        .flatMap((sub) => sub.pendingApplications)
-        .find((app) => app.application_id === selectedApplications[currentApplicationIndex])
+    ? selectedApplications[currentApplicationIndex]
     : null;
 
   // Handle remarks change
@@ -251,7 +254,7 @@ export default function ManageApplicationPage() {
 
         {/* Application Review Card on the right side */}
         <Box w="1/2" ml={5}>
-          {selectedApplicationDetails && (
+          {selectedApplicationDetails ? (
             <>
               <ApplicationReviewCard
                 startDate={selectedApplicationDetails.start_date}
@@ -261,6 +264,7 @@ export default function ManageApplicationPage() {
                 last_name={selectedApplicationDetails.last_name}
                 position={selectedApplicationDetails.position}
                 requestor_remarks={selectedApplicationDetails.requestor_remarks}
+                supportingDocs={selectedApplicationDetails.supportingDocs}
               />
               {selectedApplications.length > 1 && (
                 <Pagination
@@ -271,14 +275,26 @@ export default function ManageApplicationPage() {
                 />
               )}
             </>
+          ) : (
+            <ApplicationReviewCard
+              startDate=""
+              endDate=""
+              applicationType=""
+              first_name=""
+              last_name=""
+              position=""
+              requestor_remarks=""
+              supportingDocs=""
+              message="No WFH selected" // Custom prop to indicate no selection
+            />
           )}
           <RequestorRemarks
-            value={remarks[selectedApplications[currentApplicationIndex]] || ""}
-            onChange={(value) => handleRemarksChange(selectedApplications[currentApplicationIndex], value)}
+            value={remarks[selectedApplicationDetails?.application_id] || ""} // Safely access remarks
+            onChange={(value) => handleRemarksChange(selectedApplicationDetails?.application_id, value)}
           />
           <Flex mt={4} justifyContent="flex-end" gap={4}>
-            <ApproveApplicationButton />
-            <RejectApplicationButton />
+            <ApproveApplicationButton isDisabled={!selectedApplicationDetails}/>
+            <RejectApplicationButton isDisabled={!selectedApplicationDetails}/>
           </Flex>
         </Box>
       </div>

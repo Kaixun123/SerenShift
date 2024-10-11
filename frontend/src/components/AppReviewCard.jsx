@@ -20,6 +20,24 @@ const ApplicationReviewCard = ({
     return new Date(dateString).toLocaleDateString("en-GB", options); // en-GB formats it as dd/mm/yyyy
   };
 
+  // Check if the application details are provided
+  if (!first_name && !last_name) {
+    return (
+      <Box
+        p={4}
+        border="1px solid #E2E8F0"
+        borderRadius="md"
+        boxShadow="sm"
+        maxW="400px"
+        bg="white"
+      >
+        <Text textAlign="center" fontWeight="bold" color="gray.500">
+          No WFH applications to review
+        </Text>
+      </Box>
+    );
+  }
+
   return (
     <Box
       p={4}
@@ -43,7 +61,7 @@ const ApplicationReviewCard = ({
         </Flex>
 
         <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">Applicant's Team</Text>
+          <Text fontWeight="bold">Applicant Position</Text>
           <Input
             isReadOnly
             value={position} // Display position as the applicant's team
@@ -56,10 +74,14 @@ const ApplicationReviewCard = ({
 
         <Flex align="center" justify="space-between">
           <Text fontWeight="bold">Type of Arrangement</Text>
-          <Select value={applicationType} size="sm" width="70%" bg="gray.100">
-            <option value="Ad-hoc">Ad-hoc</option>
-            <option value="Planned">Regular</option>
-          </Select>
+          <Input
+            isReadOnly
+            value={applicationType}
+            bg="gray.100"
+            border="none"
+            size="sm"
+            width="70%"
+          />
         </Flex>
 
         <Flex align="center" justify="space-between">
