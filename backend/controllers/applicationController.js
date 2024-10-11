@@ -5,7 +5,7 @@ const { scheduleHasNotPassedCurrentDay } = require('../services/common/scheduleH
 const { Op } = require('sequelize');
 
 // GET function - to retrieve application data based on userId and status
-const retrieveApplication = async (req, res, next) => {
+const retrieveApplications = async (req, res, next) => {
     try {
         let { id, status } = req.query;
         let ownApplication = await Application.findAll({
@@ -46,7 +46,7 @@ const retrieveApplication = async (req, res, next) => {
 }
 
 // GET Function - retrieve pending applications - inherited from managerController.js
-const retrievePendingApplication = async (req, res, next) => {
+const retrievePendingApplications = async (req, res, next) => {
     try {
         const userId = req.user.id;
         let subordinates = await fetchSubordinates(userId);
@@ -502,8 +502,8 @@ const withdrawApprovedApplication = async (req, res) => {
 };
 
 module.exports = {
-    retrieveApplication,
-    retrievePendingApplication,
+    retrieveApplications,
+    retrievePendingApplications,
     createNewApplication,
     approvePendingApplication,
     rejectPendingApplication,
