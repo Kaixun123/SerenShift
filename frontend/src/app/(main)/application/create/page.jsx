@@ -2,7 +2,6 @@
 // import components
 import TopHeader from "@/components/TopHeader";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import FileUploader from "@/components/FileUpload";
 
 // chakra-ui
@@ -39,16 +38,16 @@ export default function NewApplicationPage() {
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
   const [files, setFiles] = useState([]);
-  const [clearFiles, setClearFiles] = useState(false); 
+  const [clearFiles, setClearFiles] = useState(false);
   const [recurrenceRule, setRecurrenceRule] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [recurrenceError, setRecurrenceError] = useState(""); // error handling
 
   // Tooltip messages based on application type
   const startDateTooltipMessage =
-  type === "Regular"
-    ? "This is the starting date of the single instance of the regular event."
-    : "This is the date when the one-time event starts.";
+    type === "Regular"
+      ? "This is the starting date of the single instance of the regular event."
+      : "This is the date when the one-time event starts.";
 
   const endDateTooltipMessage =
     type === "Regular"
@@ -93,7 +92,7 @@ export default function NewApplicationPage() {
   const handleRecurrenceEndDateChange = (e) => {
     const selectedRecurrenceEndDate = new Date(e.target.value);
     const eventEndDate = new Date(formattedDate.endDate);
-    
+
     if (selectedRecurrenceEndDate <= eventEndDate) {
       setRecurrenceError("Recurrence end date must be after the event end date.");
     } else {
@@ -125,67 +124,89 @@ export default function NewApplicationPage() {
     e.preventDefault();
     setLoading(true);
 
-      // Validate required fields
-  if (!formattedDate.startDate) {
-    toast({
-      title: "Start Date is required.",
-      status: "error",
-      duration: 5000,
-      isClosable: true,
-      position: "top-right",
-    });
-    setLoading(false);
-    return;
-  }
+    // Validate required fields
+    if (!formattedDate.startDate) {
+      toast({
+        title: "Start Date is required.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
 
-  if (!formattedDate.endDate) {
-    toast({
-      title: "End Date is required.",
-      status: "error",
-      duration: 5000,
-      isClosable: true,
-      position: "top-right",
-    });
-    setLoading(false);
-    return;
-  }
+    if (!formattedDate.endDate) {
+      toast({
+        title: "End Date is required.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
 
-  if (!type) {
-    toast({
-      title: "Please select a type of arrangement.",
-      status: "error",
-      duration: 5000,
-      isClosable: true,
-      position: "top-right",
-    });
-    setLoading(false);
-    return;
-  }
+    if (!type) {
+      toast({
+        title: "Please select a type of arrangement.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
 
-  if (!timeSlot) {
-    toast({
-      title: "Please select a timeslot.",
-      status: "error",
-      duration: 5000,
-      isClosable: true,
-      position: "top-right",
-    });
-    setLoading(false);
-    return;
-  }
+    if (!timeSlot) {
+      toast({
+        title: "Please select a timeslot.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
 
-  if (!reason) {
-    toast({
-      title: "Please provide a reason for your application.",
-      status: "error",
-      duration: 5000,
-      isClosable: true,
-      position: "top-right",
-    });
-    setLoading(false);
-    return;
-  }
+    if (!reason) {
+      toast({
+        title: "Please provide a reason for your application.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
+    if (type == "Regular" && !recurrenceRule) {
+      toast({
+        title: "Please provide a reccurence rule for your regular application.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
 
+    if (type == "Regular" && !recurrenceEndDate) {
+      toast({
+        title: "Please provide a reccurence end date for your regular application.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
     try {
       if (
         employeeInfo.length != 0 &&
@@ -227,7 +248,7 @@ export default function NewApplicationPage() {
         });
 
         //append only for regular applications 
-        if (type == "Regular"){
+        if (type == "Regular") {
           formData.append("recurrence_rule", recurrenceRule);
           formData.append("recurrence_end_date", recurrenceEndDate);
         }
@@ -284,9 +305,9 @@ export default function NewApplicationPage() {
         subText={"Plan your schedule timely and wisely!"}
       />
 
-      <div className="flex p-[40px] gap-[60px] justify-between ">  
+      <div className="flex p-[40px] gap-[60px] justify-between ">
         {/* Section: Calender */}
-        <div className="flex flex-col w-1/2 gap-[5px]"> 
+        <div className="flex flex-col w-1/2 gap-[5px]">
           <div className="flex h-[350px] justify-center">
             <DatesProvider settings={{ consistentWeeks: true }}>
               <DatePicker
@@ -316,7 +337,7 @@ export default function NewApplicationPage() {
           </div>
           <div className="flex w-full flex-wrap gap-5 lg:flex-nowrap lg:gap-4 mt-5">
             <div className="w-full lg:w-1/2">
-              <FormLabel> 
+              <FormLabel>
                 <Box display="inline-flex" alignItems="center" gap={2}>
                   {type === "Regular" ? "Event Start" : "Start Date"}{" "}
                   <Tooltip label={startDateTooltipMessage} fontSize="md">
@@ -334,8 +355,8 @@ export default function NewApplicationPage() {
               />
             </div>
             <div className="w-full lg:w-1/2">
-              <FormLabel> 
-                <Box display="inline-flex" alignItems="center" gap={2}> 
+              <FormLabel>
+                <Box display="inline-flex" alignItems="center" gap={2}>
                   {type === "Regular" ? "Event End" : "Start End"}{" "}
                   <Tooltip label={endDateTooltipMessage} fontSize="md">
                     <span>
@@ -387,7 +408,7 @@ export default function NewApplicationPage() {
                   </div>
 
                   <div isinvalid={recurrenceError ? "true" : undefined}>
-                    <FormLabel className="w-full"  isrequired={"true"} sx={{ ".chakra-form__required-indicator": { display: "none" } }}>
+                    <FormLabel className="w-full" isrequired={"true"} sx={{ ".chakra-form__required-indicator": { display: "none" } }}>
                       <Box display="inline-flex" alignItems="center">
                         Recurrence End Date{" "}
                         {/* Add the required asterisk */}
@@ -468,15 +489,15 @@ export default function NewApplicationPage() {
                 spinnerPlacement="end"
                 isDisabled={
                   formattedDate.startDate != "" &&
-                  formattedDate.endDate != "" &&
-                  type != "" &&
-                  timeSlot != "" &&
-                  reason != ""
+                    formattedDate.endDate != "" &&
+                    type != "" &&
+                    timeSlot != "" &&
+                    reason != ""
                     ? false
                     : true &&
-                  !recurrenceError // ensure no errors
-                    ? false
-                    : true
+                      !recurrenceError // ensure no errors
+                      ? false
+                      : true
                 }
               >
                 Submit

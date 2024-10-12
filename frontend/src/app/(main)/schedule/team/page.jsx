@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Box, Stack, Flex, Text } from "@chakra-ui/react";
+import { Box, Stack, Flex } from "@chakra-ui/react";
 import TopHeader from "@/components/TopHeader";
 import { MultiSelect } from "@mantine/core";
 import FullCalendar from "@fullcalendar/react"; // Import FullCalendar
@@ -18,7 +18,6 @@ const TeamSchedulePage = () => {
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [scheduleData, setScheduleData] = useState(null);
   const [employee, setEmployee] = useState({ department: "" });
-  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     async function fetchEmployeeData() {
@@ -83,32 +82,32 @@ const TeamSchedulePage = () => {
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
-        Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
-          colleagues.map((colleague) => {
-            const eventDate = new Date(date);
-            let start, end;
+      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+        colleagues.map((colleague) => {
+          const eventDate = new Date(date);
+          let start, end;
 
-            if (timePeriod === "Full Day") {
-              start = new Date(eventDate.setHours(9, 0, 0));
-              end = new Date(eventDate.setHours(18, 0, 0));
-            } else if (timePeriod === "AM") {
-              start = new Date(eventDate.setHours(9, 0, 0));
-              end = new Date(eventDate.setHours(13, 0, 0));
-            } else if (timePeriod === "PM") {
-              start = new Date(eventDate.setHours(14, 0, 0));
-              end = new Date(eventDate.setHours(18, 0, 0));
-            }
+          if (timePeriod === "Full Day") {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          } else if (timePeriod === "AM") {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(13, 0, 0));
+          } else if (timePeriod === "PM") {
+            start = new Date(eventDate.setHours(14, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          }
 
-            return {
-              title: `${colleague}`,
-              start,
-              end,
-              allDay: false,
-              timePeriod,
-            };
-          })
-        )
+          return {
+            title: `${colleague}`,
+            start,
+            end,
+            allDay: false,
+            timePeriod,
+          };
+        })
       )
+    )
     : [];
 
   const eventContent = (eventInfo) => {
@@ -172,15 +171,15 @@ const TeamSchedulePage = () => {
     const timePeriod = info.event.extendedProps.timePeriod;
     const startTime = info.event.start
       ? info.event.start.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+      })
       : "N/A";
     const endTime = info.event.end
       ? info.event.end.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+      })
       : "N/A";
     const title = info.event.title || "No Title";
 
@@ -196,9 +195,8 @@ const TeamSchedulePage = () => {
       tooltipDiv.style.display = "block";
       const rect = info.el.getBoundingClientRect();
       tooltipDiv.style.left = `${rect.left + window.scrollX}px`;
-      tooltipDiv.style.top = `${
-        rect.top + window.scrollY - tooltipDiv.offsetHeight - 10
-      }px`;
+      tooltipDiv.style.top = `${rect.top + window.scrollY - tooltipDiv.offsetHeight - 10
+        }px`;
     };
 
     info.el.onmouseleave = function () {

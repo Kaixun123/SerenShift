@@ -6,7 +6,7 @@ class Application extends Model { }
 Application.init(
   {
     application_id: {
-      type: DataTypes.INTEGER(6),
+      type: DataTypes.INTEGER(),
       allowNull: false,
       primaryKey: true,
       autoIncrement: true,
@@ -38,10 +38,6 @@ Application.init(
     },
     verify_timestamp: {
       type: DataTypes.DATE,
-      allowNull: true,
-    },
-    linked_application: {
-      type: DataTypes.INTEGER(6),
       allowNull: true,
     },
     status: {

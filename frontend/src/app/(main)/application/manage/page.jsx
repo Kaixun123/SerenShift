@@ -1,17 +1,21 @@
 "use client";
 // Import components
 import TopHeader from "@/components/TopHeader";
-import PendingApplicationCard from "@/components/PendingAppCard";
+import PendingApplicationCard from "@/components/PendingApplicationCard";
 import RefreshButton from "@/components/RefreshButton";
-import ApplicationReviewCard from "@/components/AppReviewCard";
+import ApplicationReviewCard from "@/components/ReviewApplicationCard";
 import ApproverRemarks from "@/components/RemarksCard";
 import ApproveApplicationButton from "@/components/ApproveButton";
 import RejectApplicationButton from "@/components/RejectButton";
-import ConfirmationModal from "@/components/ConfirmationModal"; // Import ConfirmationModal
+import ConfirmationModal from "@/components/ConfirmationModal";
+import ApproveMultiple from '@/components/ApproveMultipleButton';
+import RejectMultiple from '@/components/RejectMultipleButton';
+import MultipleRemarks from '@/components/RemarksMultiple';
+import ConfirmationMultipleModal from "@/components/ConfirmationMultipleModal";
 import { useEffect, useState } from "react";
 
 // Chakra UI
-import { Box, VStack, Text, Flex, useDisclosure } from "@chakra-ui/react";
+import { Box, VStack, Text, Flex, useDisclosure, useToast } from "@chakra-ui/react";
 
 // Mantine
 import { MultiSelect, Pagination, Checkbox } from "@mantine/core";
@@ -24,6 +28,7 @@ export default function ManageApplicationPage() {
   const [selectedApplications, setSelectedApplications] = useState([]); // Track selected applications
   const [currentApplicationIndex, setCurrentApplicationIndex] = useState(0); // For paginating through selected applications
   const [remarks, setRemarks] = useState({}); // State for remarks per application
+  const [remarksMultiple, setRemarksMultiple] = useState(""); // State for multiple remarks
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -32,6 +37,8 @@ export default function ManageApplicationPage() {
   // Modal state
   const { isOpen, onOpen, onClose } = useDisclosure(); // useDisclosure hook from Chakra UI
   const [currentAction, setCurrentAction] = useState(null); // Track current action (approve/reject)
+  const [isMultipleOpen, setMultipleOpen] = useState(false); // State for multiple confirmation modal
+  const [currentMultipleAction, setMultipleCurrentAction] = useState(null);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -39,7 +46,7 @@ export default function ManageApplicationPage() {
       setRefresh(true);
       setSelectedSubIds([]);
       setSelectedApplications([]);
-      setPage(1)
+      setPage(1);
       setRefreshing(false);
     }, 200);
     setRefresh(false);
@@ -68,6 +75,7 @@ export default function ManageApplicationPage() {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: 'include',
         }
       );
 
@@ -129,8 +137,8 @@ export default function ManageApplicationPage() {
           );
           const newSelectedApplications = isSelected
             ? selectedApplications.filter(
-                (app) => app.application_id !== application.application_id
-              )
+              (app) => app.application_id !== application.application_id
+            )
             : [...selectedApplications, application]; // Store the full application object when selected
 
           setSelectedApplications(newSelectedApplications);
@@ -207,23 +215,123 @@ export default function ManageApplicationPage() {
   };
 
   // Function to handle confirmation of the action
-  const handleConfirm = () => {
-    if (currentAction === "approve") {
-      // Hard-coded approve action
-      console.log(
-        "Approving application:",
-        selectedApplicationDetails.application_id
-      );
-      // TODO: Replace with your approve API call
-    } else if (currentAction === "reject") {
-      // Hard-coded reject action
-      console.log(
-        "Rejecting application:",
-        selectedApplicationDetails.application_id
-      );
-      // TODO: Replace with your reject API call
+  const handleConfirm = async () => {
+    const applicationId = selectedApplicationDetails.application_id; // Get the application ID
+
+    try {
+      if (currentAction === "approve") {
+        // Approve action
+        const response = await fetch(`/api/application/approveApplication`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            "application_id": applicationId, // Include the application ID
+            "approverRemarks": remarks[applicationId] || "", // Include remarks if any
+          }),
+        });
+
+        if (response.ok) {
+          console.log("Application approved:", applicationId);
+          // Optionally, update the UI to reflect the approval
+        } else {
+          const errorData = await response.json();
+          console.error("Error approving application:", errorData.message);
+          // Optionally, show an error message to the user
+        }
+      } else if (currentAction === "reject") {
+        // Reject action
+        const response = await fetch(`/api/application/rejectApplication`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            "application_id": applicationId, // Include the application ID
+            "approverRemarks": remarks[applicationId] || "", // Include remarks if any
+          }),
+        });
+
+        if (response.ok) {
+          console.log("Application rejected:", applicationId);
+          // Optionally, update the UI to reflect the rejection
+        } else {
+          const errorData = await response.json();
+          console.error("Error rejecting application:", errorData.message);
+          // Optionally, show an error message to the user
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleConfirm:", error);
+    } finally {
+      onClose(); // Close the modal after the action
+      handleRefresh(); // Refresh the application list
     }
-    onClose(); // Close the modal after the action
+  };
+
+  // Function to handle multiple approve action
+  const handleApproveMultipleClick = () => {
+    setMultipleCurrentAction("approve");
+    setMultipleOpen(true); // Open the multiple confirmation modal
+  };
+
+  // Function to handle multiple reject action
+  const handleRejectMultipleClick = () => {
+    setMultipleCurrentAction("reject");
+    setMultipleOpen(true); // Open the multiple confirmation modal
+  };
+
+  // Function to handle confirmation of the multiple action
+  const handleMultipleConfirm = async () => {
+    try {
+      if (currentMultipleAction === "approve") {
+        for (const application of selectedApplications) {
+          const response = await fetch(`/api/application/approveApplication`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              "application_id": application.application_id,
+              "approverRemarks": remarks[application.application_id] || remarksMultiple, // Use individual or multiple remarks
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Error approving application:", errorData.message);
+          }
+        }
+      } else if (currentMultipleAction === "reject") {
+        for (const application of selectedApplications) {
+          const response = await fetch(`/api/application/rejectApplication`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              "application_id": application.application_id,
+              "approverRemarks": remarks[application.application_id] || remarksMultiple,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Error rejecting application:", errorData.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleMultipleConfirm:", error);
+    } finally {
+      setMultipleOpen(false); // Close the modal after the action
+      handleRefresh(); // Refresh the application list
+    }
   };
 
   return (
@@ -238,7 +346,7 @@ export default function ManageApplicationPage() {
           <Flex gap={"10px"} direction={"column"}>
             <Flex justifyContent={"space-between"}>
               <h1 className="w-full text-2xl font-bold">
-                Application for Review
+                Applications for Review
               </h1>
               <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
             </Flex>
@@ -306,9 +414,19 @@ export default function ManageApplicationPage() {
             </VStack>
           </Box>
         </div>
-
         {/* Application Review Card on the right side */}
         <Box w="1/2" ml={"30px"}>
+          {selectedApplications.length > 1 && (
+            <div className="flex flex-col gap-4 mb-4">
+              <MultipleRemarks
+                remarks={remarksMultiple}
+                onChange={(value) => setRemarksMultiple(value)}
+                isDisabled={isRemarksDisabled}
+              />
+              <ApproveMultiple onClick={handleApproveMultipleClick} />
+              <RejectMultiple onClick={handleRejectMultipleClick} />
+            </div>
+          )}
           {selectedApplicationDetails ? (
             <>
               <ApplicationReviewCard
@@ -373,6 +491,14 @@ export default function ManageApplicationPage() {
         onConfirm={handleConfirm}
         action={currentAction}
         selectedApplication={selectedApplicationDetails}
+      />
+      {/* Confirmation Multiple Modal */}
+      <ConfirmationMultipleModal
+        isOpen={isMultipleOpen}
+        onClose={() => setMultipleOpen(false)} // Close multiple modal
+        onConfirm={handleMultipleConfirm}
+        action={currentMultipleAction}
+        selectedApplications={selectedApplications} // Pass selected applications if needed
       />
     </main>
   );
