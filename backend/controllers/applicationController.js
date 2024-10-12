@@ -3,6 +3,7 @@ const { checkforOverlap, checkWhetherSameDate, splitDatesByDay } = require('../s
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
+const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
 const { uploadFile } = require('../services/uploads/s3');
 
@@ -115,7 +116,7 @@ const uploadFilesToS3 = async (files, userId) => {
 };
 
 // Helper Function for recurrence logic for regular applications
-const createRecurringApplications = async (masterApplicationId, recurrenceRule, startDate, endDate, recurrenceEndDate, createdBy) => {
+const createRecurringApplications = async (masterApplicationId, recurrenceRule, startDate, endDate, recurrenceEndDate, requestorRemarks, createdBy) => {
     let applications = [];
     let currentStartDate = moment(startDate);
     let currentEndDate = moment(endDate);
@@ -131,6 +132,7 @@ const createRecurringApplications = async (masterApplicationId, recurrenceRule, 
             created_by: createdBy,
             last_update_by: createdBy,
             linked_application: masterApplicationId,
+            requestor_remarks: requestorRemarks,
             status: 'Pending',
         });
 
@@ -144,10 +146,11 @@ const createRecurringApplications = async (masterApplicationId, recurrenceRule, 
 // POST function - to create new application
 const createNewApplication = async (req, res, next) => {
     try {
+        console.log(req.body);
         let { id, application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body
+
         const files = req.files;
         let employeeInfo = await Employee.findByPk(id);
-        console.log(files);
 
         if (!employeeInfo) {
             return res.status(404).json({ message: "Employee not found." });
@@ -192,10 +195,10 @@ const createNewApplication = async (req, res, next) => {
         if (files && files.length > 0) {
             await uploadFilesToS3(files, employeeInfo.id);
         }
-        
+
         // If it's a regular application, generate recurring child events
         if (application_type === "Regular" && recurrence_rule && recurrence_end_date) {
-            await createRecurringApplications(newApplication.application_id, recurrence_rule, startDate, endDate, recurrence_end_date, id);
+            await createRecurringApplications(newApplication.application_id, recurrence_rule, startDate, endDate, recurrence_end_date, requestor_remarks, id);
         }
 
         console.log("New Application:", newApplication);
