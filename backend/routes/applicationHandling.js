@@ -27,6 +27,8 @@ const createNewApplicationValidationRules = () => {
         check("startDate").isISO8601().toDate().withMessage("Invalid Start Date For Application"),
         check("endDate").isISO8601().toDate().withMessage("Invalid End Date for Application"),
         check("requestor_remarks").optional().isString().isLength({ max: 255 }).withMessage("Requestor Remarks Is Too Long For Application"),
+        check("recurrence_rule").optional().isString().withMessage("Invalid Recurrence Rule For Application"),
+        check("recurrence_end_date").optional().isISO8601().toDate().withMessage("Invalid Recurrence End Date For Application"),
     ];
 };
 
@@ -34,7 +36,6 @@ const createNewApplicationValidationRules = () => {
 const approvePendingApplicationValidationRules = () => {
     return [
         check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
-        check("approvedDates").optional().isArray().withMessage("Approved Dates Must Be An Array of Dates"),
         check("approverRemarks").isString().isLength({ max: 255 }).withMessage("Approver Remarks Is Too Long"),
     ];
 };
@@ -58,7 +59,6 @@ const withdrawPendingApplicationValidationRules = () => {
 const withdrawApprovedApplicationValidationRules = () => {
     return [
         check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
-        check("rejectedDates").optional().isArray().withMessage("Rejected Dates Must Be An Array of Dates"),
     ];
 };
 
@@ -77,7 +77,6 @@ const vaildateParameters = (req, res, next) => {
 
 router.get("/retrieveApplication", retrieveApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveApplications(req, res));
 router.get("/retrievePendingApplication", ensureManagerAndAbove, (req, res) => applicationController.retrievePendingApplications(req, res));
-router.get("/retrieveLinkedApplications", retrieveLinkedApplicationsValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveLinkedApplications(req, res));
 router.post("/createNewApplication", createNewApplicationValidationRules(), ensureLoggedIn, upload.array('files'), (req, res) => applicationController.createNewApplication(req, res))
 router.put("/approveApplication", approvePendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
 router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
