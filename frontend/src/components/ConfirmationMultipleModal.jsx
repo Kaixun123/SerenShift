@@ -25,7 +25,7 @@ const formatDateTime = (dateString) => {
   return new Date(dateString).toLocaleString("en-GB", options); // en-GB formats as dd/mm/yyyy
 };
 
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplication }) => {
+const Multiple = ({ isOpen, onClose, onConfirm, action, selectedApplications }) => {
   const toast = useToast(); // Initialize Chakra's toast hook
 
   const handleConfirm = async () => {
@@ -35,8 +35,8 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplica
 
       // Show success toast based on action
       toast({
-        title: action === "approve" ? "Application Approved" : "Application Rejected",
-        description: `The application for ${selectedApplication?.first_name} ${selectedApplication?.last_name} has been successfully ${action === "approve" ? "approved" : "rejected"}.`,
+        title: action === "approve" ? "Applications Approved" : "Applications Rejected",
+        description: `The applications have been successfully ${action === "approve" ? "approved" : "rejected"}.`,
         status: "success",
         duration: 3000, // Duration for the toast in milliseconds
         isClosable: true,
@@ -49,7 +49,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplica
       // Show error toast if something goes wrong with the API call
       toast({
         title: "Action Failed",
-        description: `There was an error trying to ${action} the application.`,
+        description: `There was an error trying to ${action} the applications.`,
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -68,17 +68,21 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplica
         <ModalBody>
           <Text>
             {action === "approve"
-              ? `Are you sure you want to approve the application of `
-              : `Are you sure you want to reject the application of `}
+              ? `Are you sure you want to approve the applications of ` 
+              : `Are you sure you want to reject the applications of ` }
             <Text as="span" fontWeight="bold">
-              {selectedApplication?.first_name} {selectedApplication?.last_name}
+              {selectedApplications.length} application{selectedApplications.length > 1 ? "s" : ""}
             </Text>
             ?
           </Text>
-          <Text mt={2}>
-            <Text as="span" fontWeight="bold">Date: </Text>
-            {formatDateTime(selectedApplication?.start_date)} - {formatDateTime(selectedApplication?.end_date)}
-          </Text>
+          {selectedApplications.map((application) => (
+            <Text mt={2} key={application.id}>
+              <Text as="span" fontWeight="bold">
+                {application.first_name} {application.last_name}:
+              </Text>{" "}
+              {formatDateTime(application.start_date)} - {formatDateTime(application.end_date)}
+            </Text>
+          ))}
         </ModalBody>
         <ModalFooter>
           <Button
@@ -97,4 +101,4 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplica
   );
 };
 
-export default ConfirmationModal;
+export default Multiple;

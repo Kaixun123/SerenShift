@@ -1,11 +1,10 @@
 const { Application, Employee, Schedule } = require('../models');
-const { checkforOverlap, checkWhetherSameDate, splitDatesByDay } = require('../services/common/applicationHelper');
+const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3 } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
 const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
-const { uploadFile } = require('../services/uploads/s3');
 
 
 // GET function - to retrieve application data based on userId and status
@@ -33,7 +32,6 @@ const retrieveApplications = async (req, res, next) => {
                 last_update_by: application.last_update_by,
                 verify_by: application.verify_by,
                 verify_timestamp: application.verify_timestamp,
-                linked_application: application.linked_application,
                 status: application.status,
                 requestor_remarks: application.requestor_remarks,
                 approver_remarks: application.requestor_remarks,
@@ -85,7 +83,6 @@ const retrievePendingApplications = async (req, res, next) => {
                         last_update_by: application.last_update_by,
                         verify_by: application.verify_by,
                         verify_timestamp: application.verify_timestamp,
-                        linked_application: application.linked_application,
                         status: application.status,
                         requestor_remarks: application.requestor_remarks,
                         approver_remarks: application.requestor_remarks,
@@ -107,16 +104,8 @@ const retrievePendingApplications = async (req, res, next) => {
     }
 }
 
-// Helper Function to upload files to S3
-const uploadFilesToS3 = async (files, userId) => {
-    if (!files || files.length === 0) return;
-
-    const uploadPromises = files.map(file => uploadFile(file, 'application', userId, false, { id: userId }));
-    await Promise.all(uploadPromises);
-};
-
 // Helper Function for recurrence logic for regular applications
-const createRecurringApplications = async (masterApplicationId, recurrenceRule, startDate, endDate, recurrenceEndDate, requestorRemarks, createdBy) => {
+const createRecurringApplications = async (recurrenceRule, startDate, endDate, recurrenceEndDate, requestorRemarks, createdBy) => {
     let applications = [];
     let currentStartDate = moment(startDate);
     let currentEndDate = moment(endDate);
@@ -131,14 +120,12 @@ const createRecurringApplications = async (masterApplicationId, recurrenceRule, 
             application_type: 'Regular',
             created_by: createdBy,
             last_update_by: createdBy,
-            linked_application: masterApplicationId,
             requestor_remarks: requestorRemarks,
             status: 'Pending',
         });
 
         applications.push(application);
     }
-
     return applications;
 };
 
@@ -147,10 +134,10 @@ const createRecurringApplications = async (masterApplicationId, recurrenceRule, 
 const createNewApplication = async (req, res, next) => {
     try {
         console.log(req.body);
-        let { id, application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body
+        let { application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body
 
         const files = req.files;
-        let employeeInfo = await Employee.findByPk(id);
+        let employeeInfo = await Employee.findByPk(req.user.id);
 
         if (!employeeInfo) {
             return res.status(404).json({ message: "Employee not found." });
@@ -177,7 +164,7 @@ const createNewApplication = async (req, res, next) => {
         let existingPendingRes = await checkforOverlap(startDate, endDate, existingPending, 'existing');
         let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedApplication, 'approved')
         if (existingPendingRes || approvedApplicationRes) {
-            return res.status(404).json({ message: `Invalid application period. New application cannot overlap with the existing or approved application.` });
+            return res.status(400).json({ message: `Invalid application period. New application cannot overlap with the existing or approved application.` });
         }
 
         // Create a new application
@@ -198,7 +185,7 @@ const createNewApplication = async (req, res, next) => {
 
         // If it's a regular application, generate recurring child events
         if (application_type === "Regular" && recurrence_rule && recurrence_end_date) {
-            await createRecurringApplications(newApplication.application_id, recurrence_rule, startDate, endDate, recurrence_end_date, requestor_remarks, id);
+            await createRecurringApplications(recurrence_rule, startDate, endDate, recurrence_end_date, requestor_remarks, req.user.id);
         }
 
         console.log("New Application:", newApplication);
@@ -212,7 +199,7 @@ const createNewApplication = async (req, res, next) => {
 
 // PUT function - to update application status to approved - inherited from managerController.js
 const approvePendingApplication = async (req, res) => {
-    let { application_id, approvedDates, approverRemarks } = req.body;
+    let { application_id, approverRemarks } = req.body;
     const transaction = await sequelize.transaction();
     try {
         let application = await Application.findByPk(application_id);
@@ -238,91 +225,23 @@ const approvePendingApplication = async (req, res) => {
             }
         });
         if (conflictingSchedule.length > 0)
-            return res.status(400).json({ message: "Conflicting schedule found" });
-        if (application.linkedApplication == null) {
-            application.status = "Approved";
-            application.verify_by = req.user.id;
-            application.verify_timestamp = new Date();
-            application.approver_remarks = approverRemarks;
-            await application.save({ transaction });
-            await Schedule.create({
-                start_date: application.start_date,
-                end_date: application.end_date,
-                created_by: requestor.id,
-                schedule_type: application.application_type,
-                verify_by: req.user.id,
-                verify_timestamp: new Date(),
-                last_update_by: req.user.id
-            }, { transaction });
-            await transaction.commit();
-            return res.status(200).json({ message: "Application approved successfully" });
-        } else if (application.linkedApplication != null && (approvedDates == null || approvedDates.length == 0))
-            return res.status(400).json({ message: "You need to specify the approved dates for multiple linked applications" });
-        else {
-            let currentApplication = application;
-            let bulkInsertSchedules = [];
-            let approvedDatesObjects = approvedDates.map(date => new Date(date));
-            while (currentApplication != null) {
-                if (currentApplication.status != "Pending")
-                    return res.status(400).json({ message: "All linked applications must be in Pending status" });
-                else if (scheduleHasNotPassedCurrentDay(currentApplication.start_date))
-                    return res.status(400).json({ message: "Cannot approve a linked application which had started" });
-                else if (currentApplication.created_by != requestor.id)
-                    return res.status(400).json({ message: "This linked application is linked to a different requestor" });
-                else if (currentApplication.created_by == requestor.id && approver.id != requestor.reporting_manager)
-                    return res.status(400).json({ message: "Only the direct reporting manager can approve this linked applications" });
-                let conflictingSchedule = await Schedule.findAll({
-                    where: {
-                        start_date: {
-                            [Op.between]: [currentApplication.start_date, currentApplication.end_date]
-                        },
-                        end_date: {
-                            [Op.between]: [currentApplication.start_date, currentApplication.end_date]
-                        },
-                        created_by: requestor.id
-                    }
-                });
-                if (conflictingSchedule.length > 0)
-                    return res.status(400).json({ message: "Conflicting schedule found for a linked application" });
-                if (approvedDatesObjects.some(date => checkWhetherSameDate(date, currentApplication.start_date))) {
-                    currentApplication.status = "Approved";
-                    currentApplication.verify_by = req.user.id;
-                    currentApplication.verify_timestamp = new Date();
-                    currentApplication.last_update_by = req.user.id;
-                    currentApplication.approver_remarks = approverRemarks;
-                    await currentApplication.save({ transaction });
-                    let newSchedule = Schedule.build({
-                        start_date: currentApplication.start_date,
-                        end_date: currentApplication.end_date,
-                        created_by: requestor.id,
-                        schedule_type: currentApplication.application_type,
-                        verify_by: req.user.id,
-                        verify_timestamp: new Date(),
-                        last_update_by: req.user.id
-                    });
-                    bulkInsertSchedules.push(newSchedule);
-                    approvedDatesObjects = approvedDatesObjects.filter(date => !checkWhetherSameDate(date, currentApplication.start_date));
-                    if (currentApplication.linked_application == null)
-                        break;
-                    else
-                        currentApplication = await Application.findByPk(currentApplication.linked_application);
-                } else {
-                    currentApplication.status = "Rejected";
-                    currentApplication.last_update_by = req.user.id;
-                    currentApplication.approver_remarks = approverRemarks;
-                    await currentApplication.save({ transaction });
-                    if (currentApplication.linked_application == null)
-                        break;
-                    else
-                        currentApplication = await Application.findByPk(currentApplication.linked_application);
-                }
-            }
-            if (approvedDatesObjects.length > 0)
-                return res.status(400).json({ message: "Some approved dates do not match any linked applications" });
-            await Schedule.bulkCreate(bulkInsertSchedules, { transaction });
-            await transaction.commit();
-            return res.status(200).json({ message: "Applications processed successfully" });
-        }
+            return res.status(400).json({ message: "A conflicting schedule was found" });
+        application.status = "Approved";
+        application.verify_by = req.user.id;
+        application.verify_timestamp = new Date();
+        application.approver_remarks = approverRemarks;
+        await application.save({ transaction });
+        await Schedule.create({
+            start_date: application.start_date,
+            end_date: application.end_date,
+            created_by: requestor.id,
+            schedule_type: application.application_type,
+            verify_by: req.user.id,
+            verify_timestamp: new Date(),
+            last_update_by: req.user.id
+        }, { transaction });
+        await transaction.commit();
+        return res.status(200).json({ message: "Application approved successfully" });
     } catch (error) {
         await transaction.rollback();
         return res.status(500).json({ message: "An error occurred while approving the application", error });
@@ -345,42 +264,19 @@ const rejectPendingApplication = async (req, res) => {
         let approver = await Employee.findByPk(req.user.id);
         if (requestor.reporting_manager != approver.id)
             return res.status(400).json({ message: "Only the direct reporting manager can reject this application" });
-        if (application.linked_application == null) {
-            application.status = "Rejected";
-            application.last_update_by = req.user.id;
-            application.approver_remarks = approverRemarks;
-            await application.save({ transaction });
-            await transaction.commit();
-            return res.status(200).json({ message: "Application rejected successfully" });
-        } else {
-            let currentApplication = application;
-            while (currentApplication != null) {
-                if (currentApplication.status != "Pending")
-                    return res.status(400).json({ message: "All linked applications must be in Pending status" });
-                else if (scheduleHasNotPassedCurrentDay(currentApplication.start_date))
-                    return res.status(400).json({ message: "Cannot reject a linked application which has started" });
-                else if (currentApplication.created_by != requestor.id)
-                    return res.status(400).json({ message: "This linked application is linked to a different requestor" });
-                else if (currentApplication.created_by == requestor.id && approver.id != requestor.reporting_manager)
-                    return res.status(400).json({ message: "Only the direct reporting manager can reject this linked applications" });
-                currentApplication.status = "Rejected";
-                currentApplication.last_update_by = req.user.id;
-                currentApplication.approver_remarks = approverRemarks;
-                await currentApplication.save({ transaction });
-                if (currentApplication.linked_application == null)
-                    break;
-                else
-                    currentApplication = await Application.findByPk(currentApplication.linked_application);
-            }
-            await transaction.commit();
-            return res.status(200).json({ message: "Applications rejected successfully" });
-        }
+        application.status = "Rejected";
+        application.last_update_by = req.user.id;
+        application.approver_remarks = approverRemarks;
+        await application.save({ transaction });
+        await transaction.commit();
+        return res.status(200).json({ message: "Application rejected successfully" });
     } catch (error) {
         await transaction.rollback();
         return res.status(500).json({ message: "An error occurred while rejecting the application", error });
     }
 };
 
+// PUT function - to update pending application status to withdrawn
 const withdrawPendingApplication = async (req, res) => {
     try {
         // Get the current employee using the user ID from the request
@@ -397,12 +293,12 @@ const withdrawPendingApplication = async (req, res) => {
         }
 
         // Get the application ID from the request body
-        const { applicationId } = req.body;
+        const { application_id } = req.body;
 
         // Find the application with the given ID, status 'pending', and created by the staff member
         const application = await Application.findOne({
             where: {
-                application_id: applicationId,
+                application_id: application_id,
                 status: 'Pending',
                 created_by: staffId
             }
@@ -429,6 +325,7 @@ const withdrawPendingApplication = async (req, res) => {
     }
 };
 
+// PUT function - to update approved application status to withdrawn
 const withdrawApprovedApplication = async (req, res) => {
         try {
             const { schedule_id } = req.body; 

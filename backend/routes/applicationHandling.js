@@ -4,13 +4,12 @@ const multer = require('multer');
 const { check, validationResult } = require("express-validator");
 const { ensureLoggedIn, ensureManagerAndAbove, ensureManager } = require("../middlewares/authMiddleware");
 const applicationController = require("../controllers/applicationController");
-
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Retrieve Application Validation Rules
 const retrieveApplicationValidationRules = () => {
     return [
-        check("id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid ID"),
+        check("id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
         check("status").isString().isIn(['Pending', 'Approved', 'Rejected', 'Withdrawn']).withMessage("Invalid Status"),
     ];
 };
@@ -19,9 +18,11 @@ const retrieveApplicationValidationRules = () => {
 const createNewApplicationValidationRules = () => {
     return [
         check("application_type").isString().isIn(['Regular', 'Ad Hoc']).withMessage("Invalid Application Type"),
-        check("startDate").isISO8601().toDate().withMessage("Invalid Start Date"),
-        check("endDate").isISO8601().toDate().withMessage("Invalid End Date"),
-        check("requestor_remarks").optional().isString().isLength({ max: 255 }).withMessage("Requestor Remarks Is Too Long"),
+        check("startDate").isISO8601().toDate().withMessage("Invalid Start Date For Application"),
+        check("endDate").isISO8601().toDate().withMessage("Invalid End Date for Application"),
+        check("requestor_remarks").optional().isString().isLength({ max: 255 }).withMessage("Requestor Remarks Is Too Long For Application"),
+        check("recurrence_rule").optional().isString().withMessage("Invalid Recurrence Rule For Application"),
+        check("recurrence_end_date").optional().isISO8601().toDate().withMessage("Invalid Recurrence End Date For Application"),
     ];
 };
 
@@ -29,7 +30,6 @@ const createNewApplicationValidationRules = () => {
 const approvePendingApplicationValidationRules = () => {
     return [
         check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
-        check("approvedDates").optional().isArray().withMessage("Approved Dates Must Be An Array of Dates"),
         check("approverRemarks").isString().isLength({ max: 255 }).withMessage("Approver Remarks Is Too Long"),
     ];
 };
