@@ -41,7 +41,8 @@ Schedule.init(
             allowNull: false,
         },
         linked_schedule: {
-            type: DataTypes.INTEGER(6)
+            type: DataTypes.INTEGER(6),
+            allowNull: true,
         }
     },
     {

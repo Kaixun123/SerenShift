@@ -58,6 +58,7 @@ module.exports = {
       },
       linked_application: {
         type: Sequelize.INTEGER(6),
+        allowNull: true,
         references: {
           model: 'Applications',
           key: 'application_id',
@@ -143,6 +144,7 @@ module.exports = {
       },
       linked_schedule: {
         type: Sequelize.INTEGER(6),
+        allowNull: true,
         references: {
           model: 'Schedules',
           key: 'schedule_id',

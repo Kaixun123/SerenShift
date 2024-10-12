@@ -8,7 +8,7 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER(6),
+        type: Sequelize.INTEGER(),
       },
       start_date: {
         type: Sequelize.DATE,

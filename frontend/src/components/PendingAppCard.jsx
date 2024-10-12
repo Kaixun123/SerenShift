@@ -7,14 +7,20 @@ import { LuAlarmClock } from "react-icons/lu";
 const PendingApplicationCard = ({
   start_date,
   application_type,
+  status,
   requestor_remarks,
   onWithdraw,
+  first_name,
+  last_name,
+  // department,
+  position,
+  canManage,
 }) => {
   // Format the date to display as DD-MM-YYYY
   const formatDate = (datetime) => {
     const date = new Date(datetime);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
@@ -36,7 +42,7 @@ const PendingApplicationCard = ({
       overflow="hidden"
       className="shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
     >
-      <Flex justify="space-between" align="flex-start">
+      <Flex gap={"15px"} justify="space-between" align="flex-start">
         {/* Left Side */}
         <VStack spacing={"18px"} align="flex-start" flex="1">
           <Badge
@@ -47,11 +53,22 @@ const PendingApplicationCard = ({
             textAlign="center"
             className="text-white bg-yellow-primary capitalize font-medium"
           >
-            Pending
+            {status}
           </Badge>
-          <Text fontSize="sm">
-            {requestor_remarks || "No remarks provided"}
-          </Text>
+
+          <Flex gap={"4px"} flexDirection={"column"}>
+            {canManage === true ? (
+              <Text fontSize="lg" fontWeight={"bold"} flexWrap={"wrap"}>
+                {first_name} {last_name} - {position}
+              </Text>
+            ) : (
+              ""
+            )}
+            <Text fontSize="sm">
+              {requestor_remarks || "No remarks provided"}
+            </Text>
+          </Flex>
+
           <Badge
             fontSize="xs"
             p={1}
@@ -103,14 +120,18 @@ const PendingApplicationCard = ({
             </Flex>
           </Box>
 
-          <Button
-            colorScheme="red"
-            variant="outline"
-            size="sm"
-            onClick={() => onWithdraw({ start_date, application_type })}
-          >
-            Withdraw
-          </Button>
+          {canManage === false ? (
+            <Button
+              colorScheme="red"
+              variant="outline"
+              size="sm"
+              onClick={() => onWithdraw({ start_date, application_type })}
+            >
+              Withdraw
+            </Button>
+          ) : (
+            ""
+          )}
         </VStack>
       </Flex>
     </Box>

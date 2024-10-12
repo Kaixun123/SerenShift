@@ -63,7 +63,7 @@ async function splitScheduleByDate(startDate, endDate) {
             // Handle case where start is before business hours
             start = currentDayStart;
         }
-        
+
         if (start.isSameOrBefore(currentDayStart) && end.isSameOrAfter(currentDayEnd)) {
             // Full day schedule (09:00 to 18:00)
             blocks.push({
@@ -105,6 +105,17 @@ async function splitScheduleByDate(startDate, endDate) {
     return blocks;
 }
 
+function scheduleHasNotPassedCurrentDay(date) {
+    // Strip the time part by setting the hours, minutes, seconds, and milliseconds to zero
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    // Get today's date and strip the time part
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Compare the dates
+    return dateOnly <= today;
+}
+
 module.exports = {
-    splitScheduleByDate
+    splitScheduleByDate,
+    scheduleHasNotPassedCurrentDay,
 };

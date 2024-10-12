@@ -129,7 +129,7 @@ export default function NewApplicationPage() {
         employeeInfo.length != 0 &&
         type != "" &&
         timeSlot != "" &&
-        reason != ""
+        reason != "" &&
         (!recurrenceError) // Ensure no recurrence error exists
       ) {
         const formatDate = (dateString) => {
@@ -157,8 +157,8 @@ export default function NewApplicationPage() {
         const formData = new FormData();
         formData.append('id', employeeInfo.id);
         formData.append('application_type', type);
-        formData.append('start_date', formattedStartDateTime);
-        formData.append('end_date', formattedEndDateTime);
+        formData.append('startDate', formattedStartDateTime);
+        formData.append('endDate', formattedEndDateTime);
         formData.append('requestor_remarks', reason);
         files.forEach(file => {
           formData.append('files', file);
@@ -220,8 +220,7 @@ export default function NewApplicationPage() {
         subText={"Plan your schedule timely and wisely!"}
       />
 
-      <div className="flex p-[40px] gap-[60px] justify-between ">
-
+      <div className="flex p-[40px] gap-[60px] justify-between ">  
         {/* Section: Calender */}
         <div className="flex flex-col w-1/2 gap-[5px]"> 
           <div className="flex h-[350px] justify-center">
@@ -394,6 +393,8 @@ export default function NewApplicationPage() {
               <div>
                 <FileUploader onFilesChange={handleFilesChange} />
               </div>
+              <input type="hidden" name="startDate" value={formattedDate.startDate} />
+              <input type="hidden" name="endDate" value={formattedDate.endDate} />
               <Button
                 colorScheme="green"
                 variant="solid"
@@ -419,8 +420,6 @@ export default function NewApplicationPage() {
             </FormControl>
           </form>
         </div>
-
-        
       </div>
     </main>
   );
