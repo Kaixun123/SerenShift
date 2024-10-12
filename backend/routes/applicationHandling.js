@@ -18,7 +18,7 @@ const createNewApplicationValidationRules = () => {
         check("application_type").isString().isIn(['Regular', 'Ad Hoc']).withMessage("Invalid Application Type"),
         check("startDate").isISO8601().toDate().withMessage("Invalid Start Date"),
         check("endDate").isISO8601().toDate().withMessage("Invalid End Date"),
-        check("requestor_remarks").isString().isLength({ max: 255 }).withMessage("Requestor Remarks Is Too Long"),
+        check("requestor_remarks").optional().isString().isLength({ max: 255 }).withMessage("Requestor Remarks Is Too Long"),
     ];
 };
 
@@ -26,7 +26,7 @@ const createNewApplicationValidationRules = () => {
 const approvePendingApplicationValidationRules = () => {
     return [
         check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
-        check("approvedDates").isArray().withMessage("Approved Dates Must Be An Array of Dates"),
+        check("approvedDates").optional().isArray().withMessage("Approved Dates Must Be An Array of Dates"),
         check("approverRemarks").isString().isLength({ max: 255 }).withMessage("Approver Remarks Is Too Long"),
     ];
 };
@@ -50,7 +50,7 @@ const withdrawPendingApplicationValidationRules = () => {
 const withdrawApprovedApplicationValidationRules = () => {
     return [
         check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
-        check("rejectedDates").isArray().withMessage("Rejected Dates Must Be An Array of Dates"),
+        check("rejectedDates").optional().isArray().withMessage("Rejected Dates Must Be An Array of Dates"),
     ];
 };
 
