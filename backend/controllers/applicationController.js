@@ -3,6 +3,7 @@ const { checkforOverlap, checkWhetherSameDate, splitDatesByDay } = require('../s
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
+const { sequelize } = require('../services/database/mysql');
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplications = async (req, res, next) => {
