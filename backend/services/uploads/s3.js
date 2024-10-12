@@ -31,7 +31,7 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
     if (!file.originalname || !file.buffer || !file.mimetype) {
         throw new Error('Invalid file object. The file must have originalname, buffer, and mimetype properties.');
     }
-    
+
 
     const fileName = file.originalname.split('.').shift();
     const fileExtension = file.originalname.split('.').pop();
@@ -49,21 +49,21 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
     try {
         const command = new PutObjectCommand({
             Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
-            Key: `${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
+            Key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
             Body: file.buffer,
             ContentType: file.mimetype,
         });
         await s3.send(command);
         if (foundFile) {
             await foundFile.update({
-                s3_key: `${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
+                s3_key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
                 last_update_by: user.id,
             });
         } else {
             await File.create({
                 file_name: fileName,
                 file_extension: fileExtension,
-                s3_key: `${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
+                s3_key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
                 related_entity: relatedEntityType,
                 related_entity_id: relatedEntityID,
                 created_by: user.id,
@@ -97,14 +97,19 @@ const retrieveFileDetails = async (relatedEntityType, relatedEntityID) => {
     });
     let results = [];
     for (let file of foundFiles) {
-        let presignedUrl = await generatePresignedUrl(file.s3_key);
-        results.push({
-            file_id: file.file_id,
-            file_name: file.file_name,
-            file_extension: file.file_extension,
-            download_url: presignedUrl,
-        });
+        if (checkFileExists(file.s3_key)) {
+            let presignedUrl = await generatePresignedUrl(file.s3_key);
+            results.push({
+                file_id: file.file_id,
+                file_name: file.file_name,
+                file_extension: file.file_extension,
+                download_url: presignedUrl,
+            });
+        } else {
+            await file.destroy();
+        }
     }
+    return results;
 };
 
 // Delete a file from S3
