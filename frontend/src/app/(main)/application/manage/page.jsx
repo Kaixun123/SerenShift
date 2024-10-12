@@ -1,9 +1,9 @@
 "use client";
 // Import components
 import TopHeader from "@/components/TopHeader";
-import PendingApplicationCard from "@/components/PendingAppCard";
+import PendingApplicationCard from "@/components/PendingApplicationCard";
 import RefreshButton from "@/components/RefreshButton";
-import ApplicationReviewCard from "@/components/ApplicationReviewCard";
+import ApplicationReviewCard from "@/components/ReviewApplicationCard";
 import ApproverRemarks from "@/components/RemarksCard";
 import ApproveApplicationButton from "@/components/ApproveButton";
 import RejectApplicationButton from "@/components/RejectButton";

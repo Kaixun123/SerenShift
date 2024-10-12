@@ -1,7 +1,7 @@
 "use client";
 // import components
 import TopHeader from "@/components/TopHeader";
-import PendingApplicationCard from "@/components/PendingAppCard";
+import PendingApplicationCard from "@/components/PendingApplicationCard";
 import WithdrawalModal from "@/components/WithdrawModal";
 import RefreshButton from "@/components/RefreshButton";
 import { useEffect, useState } from "react";
