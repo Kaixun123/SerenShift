@@ -6,7 +6,7 @@ class Blacklist extends Model { }
 Blacklist.init(
     {
         blacklist_id: {
-            type: DataTypes.INTEGER(6),
+            type: DataTypes.INTEGER(),
             allowNull: false,
             primaryKey: true,
             autoIncrement: true,

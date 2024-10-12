@@ -42,6 +42,7 @@ Application.init(
     },
     linked_application: {
       type: DataTypes.INTEGER(6),
+      allowNull: true,
     },
     status: {
       type: DataTypes.ENUM,
