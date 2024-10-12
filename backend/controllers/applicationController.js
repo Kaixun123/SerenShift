@@ -1,11 +1,10 @@
 const { Application, Employee, Schedule } = require('../models');
 const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3 } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
-const { scheduleHasNotPassedCurrentDay } = require('../services/common/scheduleHelper');
+const { scheduleHasNotPassedCurrentDay, scheduleIsCurrentDayAndAfter } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
 const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
-
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplications = async (req, res, next) => {
@@ -131,7 +130,9 @@ const retrieveApprovedApplications = async (req, res, next) => {
                 }
 
                 if (subApplicationRes && subApplicationRes.length > 0) {
-                    subResponse.approvedApplications = subApplicationRes.map(application => ({
+                    subResponse.approvedApplications = subApplicationRes
+                    .filter(application => scheduleIsCurrentDayAndAfter(application.start_date))
+                    .map(application => ({
                         application_id: application.application_id,
                         start_date: application.start_date,
                         end_date: application.end_date,

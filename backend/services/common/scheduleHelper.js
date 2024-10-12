@@ -115,7 +115,18 @@ function scheduleHasNotPassedCurrentDay(date) {
     return dateOnly <= today;
 }
 
+function scheduleIsCurrentDayAndAfter(date) {
+    // Strip the time part by setting the hours, minutes, seconds, and milliseconds to zero
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    // Get today's date and strip the time part
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Compare the dates
+    return dateOnly >= today;
+}
+
 module.exports = {
     splitScheduleByDate,
     scheduleHasNotPassedCurrentDay,
+    scheduleIsCurrentDayAndAfter
 };
