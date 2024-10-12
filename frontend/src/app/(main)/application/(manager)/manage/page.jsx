@@ -39,6 +39,7 @@ export default function ManageApplicationPage() {
       setRefresh(true);
       setSelectedSubIds([]);
       setSelectedApplications([]);
+      setPage(1)
       setRefreshing(false);
     }, 200);
     setRefresh(false);
@@ -74,10 +75,12 @@ export default function ManageApplicationPage() {
       setSubList(subPendingApplication);
 
       if (subordinateIds.length !== 0) {
-        const formattedList = subPendingApplication.filter((sub) =>
-          subordinateIds.includes(sub.user_id.toString())
+        const formattedList = subPendingApplication.filter(
+          (sub) =>
+            subordinateIds.includes(sub.user_id.toString()) &&
+            sub.pendingApplications.length > 0
         );
-        setSubApplication(formattedList);
+        setSubApplication(formattedList.length > 0 ? formattedList : []);
       } else {
         setSubApplication(subPendingApplication);
       }
@@ -116,12 +119,18 @@ export default function ManageApplicationPage() {
   const items = paginatedApplications[activePage - 1]?.map((application) => (
     <Flex key={application.application_id} alignItems="center">
       <Checkbox
-        className="mr-2"
-        checked={selectedApplications.some((app) => app.application_id === application.application_id)} // Check by application_id
+        className="mr-3"
+        checked={selectedApplications.some(
+          (app) => app.application_id === application.application_id
+        )} // Check by application_id
         onChange={() => {
-          const isSelected = selectedApplications.some((app) => app.application_id === application.application_id);
+          const isSelected = selectedApplications.some(
+            (app) => app.application_id === application.application_id
+          );
           const newSelectedApplications = isSelected
-            ? selectedApplications.filter((app) => app.application_id !== application.application_id)
+            ? selectedApplications.filter(
+                (app) => app.application_id !== application.application_id
+              )
             : [...selectedApplications, application]; // Store the full application object when selected
 
           setSelectedApplications(newSelectedApplications);
@@ -167,9 +176,10 @@ export default function ManageApplicationPage() {
   };
 
   // Handle pagination within selected applications
-  const selectedApplicationDetails = selectedApplications.length > 0 
-    ? selectedApplications[currentApplicationIndex]
-    : null;
+  const selectedApplicationDetails =
+    selectedApplications.length > 0
+      ? selectedApplications[currentApplicationIndex]
+      : null;
 
   // Handle remarks change
   const handleRemarksChange = (applicationId, value) => {
@@ -177,9 +187,10 @@ export default function ManageApplicationPage() {
   };
 
   const currentDate = new Date();
-  const isDateInvalid = selectedApplicationDetails && 
-    (new Date(selectedApplicationDetails.start_date) < currentDate || 
-     new Date(selectedApplicationDetails.end_date) < currentDate);
+  const isDateInvalid =
+    selectedApplicationDetails &&
+    (new Date(selectedApplicationDetails.start_date) < currentDate ||
+      new Date(selectedApplicationDetails.end_date) < currentDate);
 
   const isRemarksDisabled = !selectedApplicationDetails || isDateInvalid;
 
@@ -199,11 +210,17 @@ export default function ManageApplicationPage() {
   const handleConfirm = () => {
     if (currentAction === "approve") {
       // Hard-coded approve action
-      console.log("Approving application:", selectedApplicationDetails.application_id);
+      console.log(
+        "Approving application:",
+        selectedApplicationDetails.application_id
+      );
       // TODO: Replace with your approve API call
     } else if (currentAction === "reject") {
       // Hard-coded reject action
-      console.log("Rejecting application:", selectedApplicationDetails.application_id);
+      console.log(
+        "Rejecting application:",
+        selectedApplicationDetails.application_id
+      );
       // TODO: Replace with your reject API call
     }
     onClose(); // Close the modal after the action
@@ -291,7 +308,7 @@ export default function ManageApplicationPage() {
         </div>
 
         {/* Application Review Card on the right side */}
-        <Box w="1/2" ml={5}>
+        <Box w="1/2" ml={"30px"}>
           {selectedApplicationDetails ? (
             <>
               <ApplicationReviewCard
@@ -328,15 +345,20 @@ export default function ManageApplicationPage() {
           )}
           <ApproverRemarks
             remarks={remarks[selectedApplicationDetails?.application_id] || ""} // Access remarks
-            onChange={(value) => handleRemarksChange(selectedApplicationDetails.application_id, value)} 
+            onChange={(value) =>
+              handleRemarksChange(
+                selectedApplicationDetails.application_id,
+                value
+              )
+            }
             isDisabled={isRemarksDisabled}
           />
           <Flex mt={4} justifyContent="flex-end" gap={4}>
-            <ApproveApplicationButton 
+            <ApproveApplicationButton
               isDisabled={!selectedApplicationDetails || isDateInvalid}
               onClick={handleApproveClick} // Attach onClick handler
             />
-            <RejectApplicationButton 
+            <RejectApplicationButton
               isDisabled={!selectedApplicationDetails || isDateInvalid}
               onClick={handleRejectClick} // Attach onClick handler
             />

@@ -57,7 +57,8 @@ const retrievePendingApplications = async (req, res, next) => {
 
                 let subApplicationRes = await Application.findAll({
                     where: {
-                        created_by: sub.user_id
+                        created_by: sub.user_id,
+                        status: "Pending"
                     }
                 })
 
