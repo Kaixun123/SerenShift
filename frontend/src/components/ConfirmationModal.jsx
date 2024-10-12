@@ -28,22 +28,34 @@ const formatDateTime = (dateString) => {
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplication }) => {
   const toast = useToast(); // Initialize Chakra's toast hook
 
-  const handleConfirm = () => {
-    // Trigger confirmation action (approve or reject)
-    onConfirm();
+  const handleConfirm = async () => {
+    try {
+      // Trigger confirmation action (approve or reject) via API call
+      await onConfirm(); // Wait for the onConfirm function to execute (this will call the API)
 
-    // Show success toast based on action
-    toast({
-      title: action === "approve" ? "Application Approved" : "Application Rejected",
-      description: `The application for ${selectedApplication?.first_name} ${selectedApplication?.last_name} has been successfully ${action === "approve" ? "approved" : "rejected"}.`,
-      status: "success",
-      duration: 3000, // Duration for the toast in milliseconds
-      isClosable: true,
-      position: "top", // Position of the toast
-    });
+      // Show success toast based on action
+      toast({
+        title: action === "approve" ? "Application Approved" : "Application Rejected",
+        description: `The application for ${selectedApplication?.first_name} ${selectedApplication?.last_name} has been successfully ${action === "approve" ? "approved" : "rejected"}.`,
+        status: "success",
+        duration: 3000, // Duration for the toast in milliseconds
+        isClosable: true,
+        position: "top", // Position of the toast
+      });
 
-    // Close the modal after confirming
-    onClose();
+      // Close the modal after confirming
+      onClose();
+    } catch (error) {
+      // Show error toast if something goes wrong with the API call
+      toast({
+        title: "Action Failed",
+        description: `There was an error trying to ${action} the application.`,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+    }
   };
 
   return (

@@ -11,7 +11,7 @@ import ConfirmationModal from "@/components/ConfirmationModal"; // Import Confir
 import { useEffect, useState } from "react";
 
 // Chakra UI
-import { Box, VStack, Text, Flex, useDisclosure } from "@chakra-ui/react";
+import { Box, VStack, Text, Flex, useDisclosure, useToast } from "@chakra-ui/react";
 
 // Mantine
 import { MultiSelect, Pagination, Checkbox } from "@mantine/core";
@@ -32,6 +32,8 @@ export default function ManageApplicationPage() {
   // Modal state
   const { isOpen, onOpen, onClose } = useDisclosure(); // useDisclosure hook from Chakra UI
   const [currentAction, setCurrentAction] = useState(null); // Track current action (approve/reject)
+
+  const toast = useToast();
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -207,24 +209,62 @@ export default function ManageApplicationPage() {
   };
 
   // Function to handle confirmation of the action
-  const handleConfirm = () => {
-    if (currentAction === "approve") {
-      // Hard-coded approve action
-      console.log(
-        "Approving application:",
-        selectedApplicationDetails.application_id
-      );
-      // TODO: Replace with your approve API call
-    } else if (currentAction === "reject") {
-      // Hard-coded reject action
-      console.log(
-        "Rejecting application:",
-        selectedApplicationDetails.application_id
-      );
-      // TODO: Replace with your reject API call
+  const handleConfirm = async () => {
+    const applicationId = selectedApplicationDetails.application_id; // Get the application ID
+    
+    try {
+      if (currentAction === "approve") {
+        // Approve action
+        const response = await fetch(`/api/application/approveApplication`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            "application_id": applicationId, // Include the application ID
+            "approverRemarks": remarks[applicationId] || "", // Include remarks if any
+          }),
+        });
+  
+        if (response.ok) {
+          console.log("Application approved:", applicationId);
+          // Optionally, update the UI to reflect the approval
+        } else {
+          const errorData = await response.json();
+          console.error("Error approving application:", errorData.message);
+          // Optionally, show an error message to the user
+        }
+      } else if (currentAction === "reject") {
+        // Reject action
+        const response = await fetch(`/api/application/rejectApplication`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            "application_id": applicationId, // Include the application ID
+            "approverRemarks": remarks[applicationId] || "", // Include remarks if any
+          }),
+        });
+  
+        if (response.ok) {
+          console.log("Application rejected:", applicationId);
+          // Optionally, update the UI to reflect the rejection
+        } else {
+          const errorData = await response.json();
+          console.error("Error rejecting application:", errorData.message);
+          // Optionally, show an error message to the user
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleConfirm:", error);
+    } finally {
+      onClose(); // Close the modal after the action
     }
-    onClose(); // Close the modal after the action
   };
+  
 
   return (
     <main>
@@ -368,11 +408,11 @@ export default function ManageApplicationPage() {
 
       {/* Confirmation Modal */}
       <ConfirmationModal
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        action={currentAction}
-        selectedApplication={selectedApplicationDetails}
+      isOpen={isOpen}
+      onClose={onClose}
+      onConfirm={handleConfirm}
+      action={currentAction}
+      selectedApplication={selectedApplicationDetails}
       />
     </main>
   );
