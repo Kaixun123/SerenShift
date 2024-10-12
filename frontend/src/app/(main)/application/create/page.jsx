@@ -125,6 +125,67 @@ export default function NewApplicationPage() {
     e.preventDefault();
     setLoading(true);
 
+      // Validate required fields
+  if (!formattedDate.startDate) {
+    toast({
+      title: "Start Date is required.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+    });
+    setLoading(false);
+    return;
+  }
+
+  if (!formattedDate.endDate) {
+    toast({
+      title: "End Date is required.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+    });
+    setLoading(false);
+    return;
+  }
+
+  if (!type) {
+    toast({
+      title: "Please select a type of arrangement.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+    });
+    setLoading(false);
+    return;
+  }
+
+  if (!timeSlot) {
+    toast({
+      title: "Please select a timeslot.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+    });
+    setLoading(false);
+    return;
+  }
+
+  if (!reason) {
+    toast({
+      title: "Please provide a reason for your application.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+    });
+    setLoading(false);
+    return;
+  }
+
     try {
       if (
         employeeInfo.length != 0 &&
