@@ -14,12 +14,6 @@ const retrieveApplicationValidationRules = () => {
     ];
 };
 
-const retrieveLinkedApplicationsValidationRules = () => {
-    return [
-        check("id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
-    ]
-};
-
 // Create New Application Validation Rules
 const createNewApplicationValidationRules = () => {
     return [

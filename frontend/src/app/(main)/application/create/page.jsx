@@ -2,7 +2,6 @@
 // import components
 import TopHeader from "@/components/TopHeader";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import FileUploader from "@/components/FileUpload";
 
 // chakra-ui

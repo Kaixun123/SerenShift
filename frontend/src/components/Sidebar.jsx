@@ -7,14 +7,12 @@ import {
   Modal,
   ModalOverlay,
   ModalContent,
-  ModalFooter,
   ModalHeader,
   ModalBody,
-  ModalCloseButton,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useRouter, usePathname } from "next/navigation";
-import { useMemo, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 
 // react icons
@@ -22,11 +20,10 @@ import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager } from "react-icons/gr";
-import { CgFileDocument, CgList } from "react-icons/cg";
+import { CgList } from "react-icons/cg";
 
 export default function SideBar() {
   const router = useRouter();
-  const pathname = usePathname();
   const toast = useToast();
   const [isValidToken, setIsValidToken] = useState(false);
 
@@ -144,7 +141,7 @@ export default function SideBar() {
       router.replace("/auth/login");
     } else {
       checkTokenValidity(); // Check the token validity
-      let intervalId = setInterval(() => {
+      setInterval(() => {
         checkTokenValidity();
       }, 500000);
     }

@@ -40,8 +40,6 @@ export default function ManageApplicationPage() {
   const [isMultipleOpen, setMultipleOpen] = useState(false); // State for multiple confirmation modal
   const [currentMultipleAction, setMultipleCurrentAction] = useState(null);
 
-  const toast = useToast();
-
   const handleRefresh = () => {
     setRefreshing(true);
     setTimeout(() => {

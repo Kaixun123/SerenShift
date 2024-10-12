@@ -12,7 +12,6 @@ const PendingApplicationCard = ({
   onWithdraw,
   first_name,
   last_name,
-  department,
   position,
   canManage,
   occurence,
