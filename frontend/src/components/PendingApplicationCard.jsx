@@ -12,9 +12,10 @@ const PendingApplicationCard = ({
   onWithdraw,
   first_name,
   last_name,
-  // department,
+  department,
   position,
   canManage,
+  occurence,
 }) => {
   // Format the date to display as DD-MM-YYYY
   const formatDate = (datetime) => {
@@ -45,44 +46,55 @@ const PendingApplicationCard = ({
       <Flex gap={"15px"} justify="space-between" align="flex-start">
         {/* Left Side */}
         <VStack spacing={"18px"} align="flex-start" flex="1">
-          <Badge
-            fontSize="xs"
-            p={1}
-            w={"95px"}
-            borderRadius="4"
-            textAlign="center"
-            className="text-white bg-yellow-primary capitalize font-medium"
-          >
-            {status}
-          </Badge>
-
+          {status ?
+            <Badge
+              fontSize="xs"
+              p={1}
+              w={"95px"}
+              borderRadius="4"
+              textAlign="center"
+              className="text-white bg-yellow-primary capitalize font-medium"
+            >
+              {status}
+            </Badge>
+            :
+            <></>
+          }
           <Flex gap={"4px"} flexDirection={"column"}>
-            {canManage === true ? (
+            {(canManage === true && first_name && last_name && position) ?
               <Text fontSize="lg" fontWeight={"bold"} flexWrap={"wrap"}>
                 {first_name} {last_name} - {position}
               </Text>
-            ) : (
-              ""
-            )}
+              :
+              <></>
+            }
+            {(canManage === true && occurence) ?
+              < Text fontSize="lg" fontWeight={"bold"} flexWrap={"wrap"}>
+                Occuerence #{occurence}
+              </Text>
+              :
+              <></>
+            }
             <Text fontSize="sm">
               {requestor_remarks || "No remarks provided"}
             </Text>
           </Flex>
-
-          <Badge
-            fontSize="xs"
-            p={1}
-            w={"70px"}
-            borderRadius="10px"
-            textAlign="center"
-            className={`text-white capitalize font-normal ${
-              application_type === "Regular" ? "bg-[#DF4EE3]" : "bg-[#181818]"
-            }`}
-          >
-            {application_type}
-          </Badge>
+          {application_type ?
+            <Badge
+              fontSize="xs"
+              p={1}
+              w={"70px"}
+              borderRadius="10px"
+              textAlign="center"
+              className={`text-white capitalize font-normal ${application_type === "Regular" ? "bg-[#DF4EE3]" : "bg-[#181818]"
+                }`}
+            >
+              {application_type}
+            </Badge>
+            :
+            <></>
+          }
         </VStack>
-
         {/* Right Side */}
         <VStack spacing={"20px"} align="stretch" flex="1">
           {/* Combined gray box for date and time */}
@@ -119,7 +131,6 @@ const PendingApplicationCard = ({
               </Text>
             </Flex>
           </Box>
-
           {canManage === false ? (
             <Button
               colorScheme="red"
@@ -133,8 +144,8 @@ const PendingApplicationCard = ({
             ""
           )}
         </VStack>
-      </Flex>
-    </Box>
+      </Flex >
+    </Box >
   );
 };
 

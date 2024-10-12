@@ -4,24 +4,29 @@ const multer = require('multer');
 const { check, validationResult } = require("express-validator");
 const { ensureLoggedIn, ensureManagerAndAbove } = require("../middlewares/authMiddleware");
 const applicationController = require("../controllers/applicationController");
-
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Retrieve Application Validation Rules
 const retrieveApplicationValidationRules = () => {
     return [
-        check("id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid ID"),
+        check("id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
         check("status").isString().isIn(['Pending', 'Approved', 'Rejected', 'Withdrawn']).withMessage("Invalid Status"),
     ];
+};
+
+const retrieveLinkedApplicationsValidationRules = () => {
+    return [
+        check("id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
+    ]
 };
 
 // Create New Application Validation Rules
 const createNewApplicationValidationRules = () => {
     return [
         check("application_type").isString().isIn(['Regular', 'Ad Hoc']).withMessage("Invalid Application Type"),
-        check("startDate").isISO8601().toDate().withMessage("Invalid Start Date"),
-        check("endDate").isISO8601().toDate().withMessage("Invalid End Date"),
-        check("requestor_remarks").optional().isString().isLength({ max: 255 }).withMessage("Requestor Remarks Is Too Long"),
+        check("startDate").isISO8601().toDate().withMessage("Invalid Start Date For Application"),
+        check("endDate").isISO8601().toDate().withMessage("Invalid End Date for Application"),
+        check("requestor_remarks").optional().isString().isLength({ max: 255 }).withMessage("Requestor Remarks Is Too Long For Application"),
     ];
 };
 
@@ -72,6 +77,7 @@ const vaildateParameters = (req, res, next) => {
 
 router.get("/retrieveApplication", retrieveApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveApplications(req, res));
 router.get("/retrievePendingApplication", ensureManagerAndAbove, (req, res) => applicationController.retrievePendingApplications(req, res));
+router.get("/retrieveLinkedApplications", retrieveLinkedApplicationsValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveLinkedApplications(req, res));
 router.post("/createNewApplication", createNewApplicationValidationRules(), ensureLoggedIn, upload.array('files'), (req, res) => applicationController.createNewApplication(req, res))
 router.put("/approveApplication", approvePendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
 router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));

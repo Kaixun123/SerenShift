@@ -1,14 +1,14 @@
 import { Box, Text, Flex, Input, Link, Textarea } from "@chakra-ui/react";
 
 const ApplicationReviewCard = ({
-  startDate = "",
-  endDate = "",
-  applicationType = "",
-  first_name = "",
-  last_name = "",
-  position = "",
-  requestor_remarks = "",
-  supportingDocs = "",
+  startDate,
+  endDate,
+  applicationType,
+  first_name,
+  last_name,
+  position,
+  requestor_remarks,
+  supportingDocs,
 }) => {
   // Construct the applicant's full name
   const applicantName = `${first_name} ${last_name}`;
@@ -59,84 +59,105 @@ const ApplicationReviewCard = ({
       bg="white"
     >
       <Flex direction="column" gap={3}>
-        <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">Applicant</Text>
-          <Input
-            isReadOnly
-            value={applicantName}
-            bg="gray.100"
-            border="none"
-            size="sm"
-            width="70%"
-          />
-        </Flex>
-
-        <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">Applicant Position</Text>
-          <Input
-            isReadOnly
-            value={position}
-            bg="gray.100"
-            border="none"
-            size="sm"
-            width="70%"
-          />
-        </Flex>
-
-        <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">Type of Arrangement</Text>
-          <Input
-            isReadOnly
-            value={applicationType}
-            bg="gray.100"
-            border="none"
-            size="sm"
-            width="70%"
-          />
-        </Flex>
-
-        <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">Start Date/Time</Text>
-          <Input
-            isReadOnly
-            value={formatDateTime(startDate) || "23/09/2024 01:00 PM"}
-            bg={isPastDate ? "red.100" : "gray.100"} // Change background color to red if past date
-            border="none"
-            size="sm"
-            width="70%"
-          />
-        </Flex>
-
-        <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">End Date/Time</Text>
-          <Input
-            isReadOnly
-            value={formatDateTime(endDate) || "23/09/2024 06:00 PM"}
-            bg={isPastDate ? "red.100" : "gray.100"} // Change background color to red if past date
-            border="none"
-            size="sm"
-            width="70%"
-          />
-        </Flex>
-
-        <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">Requestor Remarks</Text>
-          <Textarea isReadOnly
-            value={requestor_remarks}
-            bg="gray.100"
-            border="none"
-            size="sm"
-            width="70%" />
-        </Flex>
-
-        <Flex align="center" justify="space-between">
-          <Text fontWeight="bold">Supporting Documents</Text>
-          <Link href="#" color="blue.500" isExternal>
-            {supportingDocs}
-          </Link>
-        </Flex>
+        {applicantName ?
+          <Flex align="center" justify="space-between">
+            <Text fontWeight="bold">Applicant</Text>
+            <Input
+              isReadOnly
+              value={applicantName}
+              bg="gray.100"
+              border="none"
+              size="sm"
+              width="70%"
+            />
+          </Flex>
+          : <></>
+        }
+        {position ?
+          <Flex align="center" justify="space-between">
+            <Text fontWeight="bold">Applicant Position</Text>
+            <Input
+              isReadOnly
+              value={position}
+              bg="gray.100"
+              border="none"
+              size="sm"
+              width="70%"
+            />
+          </Flex>
+          :
+          <></>
+        }
+        {applicationType ?
+          <Flex align="center" justify="space-between">
+            <Text fontWeight="bold">Type of Arrangement</Text>
+            <Input
+              isReadOnly
+              value={applicationType}
+              bg="gray.100"
+              border="none"
+              size="sm"
+              width="70%"
+            />
+          </Flex>
+          :
+          <></>
+        }
+        {startDate ?
+          <Flex align="center" justify="space-between">
+            <Text fontWeight="bold">Start Date/Time</Text>
+            <Input
+              isReadOnly
+              value={formatDateTime(startDate) || "23/09/2024 01:00 PM"}
+              bg={isPastDate ? "red.100" : "gray.100"} // Change background color to red if past date
+              border="none"
+              size="sm"
+              width="70%"
+            />
+          </Flex>
+          :
+          <></>
+        }
+        {endDate ?
+          <Flex align="center" justify="space-between">
+            <Text fontWeight="bold">End Date/Time</Text>
+            <Input
+              isReadOnly
+              value={formatDateTime(endDate) || "23/09/2024 06:00 PM"}
+              bg={isPastDate ? "red.100" : "gray.100"} // Change background color to red if past date
+              border="none"
+              size="sm"
+              width="70%"
+            />
+          </Flex>
+          :
+          <></>
+        }
+        {requestor_remarks ?
+          <Flex align="center" justify="space-between">
+            <Text fontWeight="bold">Requestor Remarks</Text>
+            <Textarea isReadOnly
+              value={requestor_remarks}
+              bg="gray.100"
+              border="none"
+              size="sm"
+              width="70%" />
+          </Flex>
+          :
+          <></>
+        }
+        {supportingDocs ?
+          <Flex align="center" justify="space-between">
+            <Text fontWeight="bold">Supporting Documents</Text>
+            <Link href="#" color="blue.500" isExternal>
+              {supportingDocs}
+            </Link>
+          </Flex>
+          :
+          <></>
+        }
       </Flex>
-    </Box>
+    </Box >
   );
 };
 

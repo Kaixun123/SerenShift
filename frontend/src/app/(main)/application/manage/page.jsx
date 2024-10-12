@@ -309,6 +309,7 @@ export default function ManageApplicationPage() {
       });
     }
     onClose(); // Close the modal after the action
+    handleRefresh(); // Refresh the application list
   };
 
   return (

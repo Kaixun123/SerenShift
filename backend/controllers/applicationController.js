@@ -107,6 +107,66 @@ const retrievePendingApplications = async (req, res, next) => {
     }
 }
 
+// GET Function - retrieve linked applications
+const retrieveLinkedApplications = async (req, res, next) => {
+    let { id } = req.query;
+    let queriedApplication = await Application.findByPk(id);
+    if (queriedApplication == null)
+        return res.status(404).json({ message: "Application not found" });
+    let linkedApplications = [];
+    console.log(queriedApplication);
+    if (queriedApplication.linked_application == null) {
+        let linkedApplication = await Application.findAll({
+            where: {
+                linked_application: id
+            }
+        });
+        if (linkedApplication.length == 0)
+            return res.status(404).json({ message: "No linked applications found with this application" });
+        else if (linkedApplication.length > 1)
+            return res.status(400).json({ message: "Multiple linked applications found" });
+        linkedApplications.push(linkedApplication[0]);
+        linkedApplication = await Application.findByPk(linkedApplication[0].linked_application);
+        while (linkedApplication != null) {
+            linkedApplications.push(linkedApplication);
+            linkedApplication = await Application.findByPk(linkedApplication.linked_application);
+            if (linkedApplication.linked_application == null)
+                break;
+        }
+    } else {
+        let linkedApplication = queriedApplication;
+        if (linkedApplication == null)
+            return res.status(404).json({ message: "One of the Linked applications not found" });
+        while (linkedApplication != null) {
+            linkedApplications.push(linkedApplication);
+            if (linkedApplication.linked_application == null)
+                break;
+            else
+                linkedApplication = await Application.findByPk(linkedApplication.linked_application);
+        }
+    }
+    linkedApplications.sort((a, b) => a.start_date - b.start_date);
+    let requestor = await Employee.findByPk(queriedApplication.created_by);
+    let approver = await Employee.findByPk(req.user.id);
+    return res.status(200).json({
+        requestor: {
+            id: requestor.id,
+            first_name: requestor.first_name,
+            last_name: requestor.last_name,
+            department: requestor.department,
+            position: requestor.position,
+        },
+        approver: {
+            id: approver.id,
+            first_name: approver.first_name,
+            last_name: approver.last_name,
+            department: approver.department,
+            position: approver.position
+        },
+        applications: linkedApplications
+    });
+}
+
 // Helper Function to upload files to S3
 const uploadFilesToS3 = async (files, userId) => {
     if (!files || files.length === 0) return;
@@ -381,6 +441,7 @@ const rejectPendingApplication = async (req, res) => {
     }
 };
 
+// PUT function - to update pending application status to withdrawn
 const withdrawPendingApplication = async (req, res) => {
     try {
         // Get the current employee using the user ID from the request
@@ -397,12 +458,12 @@ const withdrawPendingApplication = async (req, res) => {
         }
 
         // Get the application ID from the request body
-        const { applicationId } = req.body;
+        const { application_id } = req.body;
 
         // Find the application with the given ID, status 'pending', and created by the staff member
         const application = await Application.findOne({
             where: {
-                application_id: applicationId,
+                application_id: application_id,
                 status: 'Pending',
                 created_by: staffId
             }
@@ -429,6 +490,7 @@ const withdrawPendingApplication = async (req, res) => {
     }
 };
 
+// PUT function - to update approved application status to withdrawn
 const withdrawApprovedApplication = async (req, res) => {
     let { application_id, rejectedDates } = req.body;
     const transaction = await sequelize.transaction();
@@ -564,6 +626,7 @@ const withdrawApprovedApplication = async (req, res) => {
 module.exports = {
     retrieveApplications,
     retrievePendingApplications,
+    retrieveLinkedApplications,
     createNewApplication,
     approvePendingApplication,
     rejectPendingApplication,
