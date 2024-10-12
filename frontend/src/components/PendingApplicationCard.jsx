@@ -45,20 +45,30 @@ const PendingApplicationCard = ({
       <Flex gap={"15px"} justify="space-between" align="flex-start">
         {/* Left Side */}
         <VStack spacing={"18px"} align="flex-start" flex="1">
-          {status ?
-            <Badge
-              fontSize="xs"
-              p={1}
-              w={"95px"}
-              borderRadius="4"
-              textAlign="center"
-              className="text-white bg-yellow-primary capitalize font-medium"
-            >
-              {status}
-            </Badge>
-            :
-            <></>
+        {status ? (
+          <Badge
+          fontSize="xs"
+          p={1}
+          w={"95px"}
+          borderRadius="4"
+          textAlign="center"
+          fontWeight="medium"
+          bg={
+            status === "Pending"
+              ? "yellow.500" // Yellow for Pending
+              : status === "Approved"
+              ? "green.500" // Green for Approved
+              : status === "Edited"
+              ? "red.500" // Red for Edited
+              : "gray.500" // Default gray for other statuses
           }
+          color="white" // Ensure the text is white
+        >
+          {status}
+        </Badge>
+        ) : (
+          <></>
+        )}
           <Flex gap={"4px"} flexDirection={"column"}>
             {(canManage === true && first_name && last_name && position) ?
               <Text fontSize="lg" fontWeight={"bold"} flexWrap={"wrap"}>
