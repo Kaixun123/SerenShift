@@ -3,11 +3,11 @@
 import TopHeader from "@/components/TopHeader";
 import PendingApplicationCard from "@/components/PendingAppCard";
 import RefreshButton from "@/components/RefreshButton";
-import ApplicationReviewCard from "@/components/AppReviewCard";
+import ApplicationReviewCard from "@/components/ApplicationReviewCard";
 import ApproverRemarks from "@/components/RemarksCard";
 import ApproveApplicationButton from "@/components/ApproveButton";
 import RejectApplicationButton from "@/components/RejectButton";
-import ConfirmationModal from "@/components/ConfirmationModal"; 
+import ConfirmationModal from "@/components/ConfirmationModal";
 import ApproveMultiple from '@/components/ApproveMultipleButton';
 import RejectMultiple from '@/components/RejectMultipleButton';
 import MultipleRemarks from '@/components/RemarksMultiple';
@@ -37,7 +37,7 @@ export default function ManageApplicationPage() {
   const { isOpen, onOpen, onClose } = useDisclosure(); // useDisclosure hook from Chakra UI
   const [currentAction, setCurrentAction] = useState(null); // Track current action (approve/reject)
   const [isMultipleOpen, setMultipleOpen] = useState(false); // State for multiple confirmation modal
-  const [currentMultipleAction, setMultipleCurrentAction] = useState(null); 
+  const [currentMultipleAction, setMultipleCurrentAction] = useState(null);
 
   const toast = useToast();
 
@@ -138,8 +138,8 @@ export default function ManageApplicationPage() {
           );
           const newSelectedApplications = isSelected
             ? selectedApplications.filter(
-                (app) => app.application_id !== application.application_id
-              )
+              (app) => app.application_id !== application.application_id
+            )
             : [...selectedApplications, application]; // Store the full application object when selected
 
           setSelectedApplications(newSelectedApplications);
@@ -218,7 +218,7 @@ export default function ManageApplicationPage() {
   // Function to handle confirmation of the action
   const handleConfirm = async () => {
     const applicationId = selectedApplicationDetails.application_id; // Get the application ID
-    
+
     try {
       if (currentAction === "approve") {
         // Approve action
@@ -233,7 +233,7 @@ export default function ManageApplicationPage() {
             "approverRemarks": remarks[applicationId] || "", // Include remarks if any
           }),
         });
-  
+
         if (response.ok) {
           console.log("Application approved:", applicationId);
           // Optionally, update the UI to reflect the approval
@@ -255,7 +255,7 @@ export default function ManageApplicationPage() {
             "approverRemarks": remarks[applicationId] || "", // Include remarks if any
           }),
         });
-  
+
         if (response.ok) {
           console.log("Application rejected:", applicationId);
           // Optionally, update the UI to reflect the rejection
@@ -269,9 +269,10 @@ export default function ManageApplicationPage() {
       console.error("Error in handleConfirm:", error);
     } finally {
       onClose(); // Close the modal after the action
+      handleRefresh(); // Refresh the application list
     }
   };
-  
+
   // Function to handle multiple approve action
   const handleApproveMultipleClick = () => {
     setMultipleCurrentAction("approveMultiple");
@@ -307,7 +308,7 @@ export default function ManageApplicationPage() {
         isClosable: true,
       });
     }
-    onMultipleClose(); // Close the modal after the action
+    onClose(); // Close the modal after the action
   };
 
   return (
@@ -392,11 +393,11 @@ export default function ManageApplicationPage() {
         </div>
         {/* Application Review Card on the right side */}
         <Box w="1/2" ml={"30px"}>
-        {selectedApplications.length > 1 && (
+          {selectedApplications.length > 1 && (
             <div className="flex flex-col gap-4 mb-4">
               <MultipleRemarks />
               <ApproveMultiple onClick={handleApproveMultipleClick} />
-              <RejectMultiple onClick={handleRejectMultipleClick}/>
+              <RejectMultiple onClick={handleRejectMultipleClick} />
             </div>
           )}
           {selectedApplicationDetails ? (
@@ -458,11 +459,11 @@ export default function ManageApplicationPage() {
 
       {/* Confirmation Modal */}
       <ConfirmationModal
-      isOpen={isOpen}
-      onClose={onClose}
-      onConfirm={handleConfirm}
-      action={currentAction}
-      selectedApplication={selectedApplicationDetails}
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={handleConfirm}
+        action={currentAction}
+        selectedApplication={selectedApplicationDetails}
       />
       {/* Confirmation Multiple Modal */}
       <ConfirmationMultipleModal

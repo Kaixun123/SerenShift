@@ -1,4 +1,4 @@
-import { Box, Text, Flex, Input, Link } from "@chakra-ui/react";
+import { Box, Text, Flex, Input, Link, Textarea } from "@chakra-ui/react";
 
 const ApplicationReviewCard = ({
   startDate = "",
@@ -121,14 +121,12 @@ const ApplicationReviewCard = ({
 
         <Flex align="center" justify="space-between">
           <Text fontWeight="bold">Requestor Remarks</Text>
-          <Input
-            isReadOnly
+          <Textarea isReadOnly
             value={requestor_remarks}
             bg="gray.100"
             border="none"
             size="sm"
-            width="70%"
-          />
+            width="70%" />
         </Flex>
 
         <Flex align="center" justify="space-between">

@@ -72,7 +72,7 @@ export default function PendingApplicationPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ applicationId }),
+        body: JSON.stringify({ application_id: applicationId }),
       });
       if (response.ok) {
         // Update the pending applications state
