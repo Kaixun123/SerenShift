@@ -32,6 +32,7 @@ export default function PendingApplicationPage() {
     setTimeout(() => {
       setRefresh(true);
       setRefreshing(false);
+      setPage(1);
     }, 200);
     setRefresh(false);
   };
@@ -80,6 +81,7 @@ export default function PendingApplicationPage() {
           prev.filter((app) => app.application_id !== applicationId)
         );
         onModalWithdrawClose();
+        setPage(1);
       } else {
         console.error("Failed to withdraw application");
       }

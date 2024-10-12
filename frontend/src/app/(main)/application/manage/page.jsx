@@ -28,6 +28,7 @@ export default function ManageApplicationPage() {
   const [selectedApplications, setSelectedApplications] = useState([]); // Track selected applications
   const [currentApplicationIndex, setCurrentApplicationIndex] = useState(0); // For paginating through selected applications
   const [remarks, setRemarks] = useState({}); // State for remarks per application
+  const [remarksMultiple, setRemarksMultiple] = useState(""); // State for multiple remarks
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -47,7 +48,7 @@ export default function ManageApplicationPage() {
       setRefresh(true);
       setSelectedSubIds([]);
       setSelectedApplications([]);
-      setPage(1)
+      setPage(1);
       setRefreshing(false);
     }, 200);
     setRefresh(false);
@@ -275,41 +276,64 @@ export default function ManageApplicationPage() {
 
   // Function to handle multiple approve action
   const handleApproveMultipleClick = () => {
-    setMultipleCurrentAction("approveMultiple");
+    setMultipleCurrentAction("approve");
     setMultipleOpen(true); // Open the multiple confirmation modal
   };
 
   // Function to handle multiple reject action
   const handleRejectMultipleClick = () => {
-    setMultipleCurrentAction("rejectMultiple");
+    setMultipleCurrentAction("reject");
     setMultipleOpen(true); // Open the multiple confirmation modal
   };
 
   // Function to handle confirmation of the multiple action
-  const handleMultipleConfirm = () => {
-    // For now, just log the selected applications
-    if (currentMultipleAction === "approveMultiple") {
-      console.log("Approved applications:", selectedApplications);
-      // Here you can also show a toast notification
-      toast({
-        title: "Applications Approved",
-        description: `${selectedApplications.length} applications have been approved.`,
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } else if (currentMultipleAction === "rejectMultiple") {
-      console.log("Rejected applications:", selectedApplications);
-      toast({
-        title: "Applications Rejected",
-        description: `${selectedApplications.length} applications have been rejected.`,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+  const handleMultipleConfirm = async () => {
+    try {
+      if (currentMultipleAction === "approve") {
+        for (const application of selectedApplications) {
+          const response = await fetch(`/api/application/approveApplication`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              "application_id": application.application_id,
+              "approverRemarks": remarks[application.application_id] || remarksMultiple, // Use individual or multiple remarks
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Error approving application:", errorData.message);
+          }
+        }
+      } else if (currentMultipleAction === "reject") {
+        for (const application of selectedApplications) {
+          const response = await fetch(`/api/application/rejectApplication`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              "application_id": application.application_id,
+              "approverRemarks": remarks[application.application_id] || remarksMultiple,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Error rejecting application:", errorData.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleMultipleConfirm:", error);
+    } finally {
+      setMultipleOpen(false); // Close the modal after the action
+      handleRefresh(); // Refresh the application list
     }
-    onClose(); // Close the modal after the action
-    handleRefresh(); // Refresh the application list
   };
 
   return (
@@ -324,7 +348,7 @@ export default function ManageApplicationPage() {
           <Flex gap={"10px"} direction={"column"}>
             <Flex justifyContent={"space-between"}>
               <h1 className="w-full text-2xl font-bold">
-                Application for Review
+                Applications for Review
               </h1>
               <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
             </Flex>
@@ -396,7 +420,11 @@ export default function ManageApplicationPage() {
         <Box w="1/2" ml={"30px"}>
           {selectedApplications.length > 1 && (
             <div className="flex flex-col gap-4 mb-4">
-              <MultipleRemarks />
+              <MultipleRemarks
+                remarks={remarksMultiple}
+                onChange={(value) => setRemarksMultiple(value)}
+                isDisabled={isRemarksDisabled}
+              />
               <ApproveMultiple onClick={handleApproveMultipleClick} />
               <RejectMultiple onClick={handleRejectMultipleClick} />
             </div>
