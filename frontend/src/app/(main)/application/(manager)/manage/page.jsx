@@ -7,7 +7,11 @@ import ApplicationReviewCard from "@/components/AppReviewCard";
 import ApproverRemarks from "@/components/RemarksCard";
 import ApproveApplicationButton from "@/components/ApproveButton";
 import RejectApplicationButton from "@/components/RejectButton";
-import ConfirmationModal from "@/components/ConfirmationModal"; // Import ConfirmationModal
+import ConfirmationModal from "@/components/ConfirmationModal"; 
+import ApproveMultiple from '@/components/ApproveMultipleButton';
+import RejectMultiple from '@/components/RejectMultipleButton';
+import MultipleRemarks from '@/components/RemarksMultiple';
+import ConfirmationMultipleModal from "@/components/ConfirmationMultipleModal";
 import { useEffect, useState } from "react";
 
 // Chakra UI
@@ -32,6 +36,8 @@ export default function ManageApplicationPage() {
   // Modal state
   const { isOpen, onOpen, onClose } = useDisclosure(); // useDisclosure hook from Chakra UI
   const [currentAction, setCurrentAction] = useState(null); // Track current action (approve/reject)
+  const [isMultipleOpen, setMultipleOpen] = useState(false); // State for multiple confirmation modal
+  const [currentMultipleAction, setMultipleCurrentAction] = useState(null); 
 
   const toast = useToast();
 
@@ -266,6 +272,43 @@ export default function ManageApplicationPage() {
     }
   };
   
+  // Function to handle multiple approve action
+  const handleApproveMultipleClick = () => {
+    setMultipleCurrentAction("approveMultiple");
+    setMultipleOpen(true); // Open the multiple confirmation modal
+  };
+
+  // Function to handle multiple reject action
+  const handleRejectMultipleClick = () => {
+    setMultipleCurrentAction("rejectMultiple");
+    setMultipleOpen(true); // Open the multiple confirmation modal
+  };
+
+  // Function to handle confirmation of the multiple action
+  const handleMultipleConfirm = () => {
+    // For now, just log the selected applications
+    if (currentMultipleAction === "approveMultiple") {
+      console.log("Approved applications:", selectedApplications);
+      // Here you can also show a toast notification
+      toast({
+        title: "Applications Approved",
+        description: `${selectedApplications.length} applications have been approved.`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } else if (currentMultipleAction === "rejectMultiple") {
+      console.log("Rejected applications:", selectedApplications);
+      toast({
+        title: "Applications Rejected",
+        description: `${selectedApplications.length} applications have been rejected.`,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+    onMultipleClose(); // Close the modal after the action
+  };
 
   return (
     <main>
@@ -347,9 +390,15 @@ export default function ManageApplicationPage() {
             </VStack>
           </Box>
         </div>
-
         {/* Application Review Card on the right side */}
         <Box w="1/2" ml={"30px"}>
+        {selectedApplications.length > 1 && (
+            <div className="flex flex-col gap-4 mb-4">
+              <MultipleRemarks />
+              <ApproveMultiple onClick={handleApproveMultipleClick} />
+              <RejectMultiple onClick={handleRejectMultipleClick}/>
+            </div>
+          )}
           {selectedApplicationDetails ? (
             <>
               <ApplicationReviewCard
@@ -414,6 +463,14 @@ export default function ManageApplicationPage() {
       onConfirm={handleConfirm}
       action={currentAction}
       selectedApplication={selectedApplicationDetails}
+      />
+      {/* Confirmation Multiple Modal */}
+      <ConfirmationMultipleModal
+        isOpen={isMultipleOpen}
+        onClose={() => setMultipleOpen(false)} // Close multiple modal
+        onConfirm={handleMultipleConfirm}
+        action={currentMultipleAction}
+        selectedApplications={selectedApplications} // Pass selected applications if needed
       />
     </main>
   );
