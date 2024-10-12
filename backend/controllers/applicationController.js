@@ -104,6 +104,63 @@ const retrievePendingApplications = async (req, res, next) => {
     }
 }
 
+// GET Function - retrieve pending applications - inherited from managerController.js
+const retrieveApprovedApplications = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        let subordinates = await fetchSubordinates(userId);
+
+        let response = await Promise.all(
+            subordinates.map(async sub => {
+
+                let subApplicationRes = await Application.findAll({
+                    where: {
+                        created_by: sub.user_id,
+                        status: "Approved"
+                    }
+                })
+
+                let subResponse = {
+                    user_id: sub.user_id,
+                    first_name: sub.first_name,
+                    last_name: sub.last_name,
+                    department: sub.department,
+                    position: sub.position,
+                    country: sub.country,
+                    email: sub.email,
+                }
+
+                if (subApplicationRes && subApplicationRes.length > 0) {
+                    subResponse.approvedApplications = subApplicationRes.map(application => ({
+                        application_id: application.application_id,
+                        start_date: application.start_date,
+                        end_date: application.end_date,
+                        application_type: application.application_type,
+                        created_by: application.created_by,
+                        last_update_by: application.last_update_by,
+                        verify_by: application.verify_by,
+                        verify_timestamp: application.verify_timestamp,
+                        status: application.status,
+                        requestor_remarks: application.requestor_remarks,
+                        approver_remarks: application.requestor_remarks,
+                        created_timestamp: application.created_timestamp,
+                        last_update_timestamp: application.last_update_timestamp
+                    }))
+                } else {
+                    subResponse.approvedApplications = []; // No pending applications
+                }
+
+                return subResponse;
+            })
+        )
+
+        return res.status(200).json(response);
+    } catch (error) {
+        console.error("Error fetching application:", error);
+        return res.status(500).json({ error: "An error occurred while fetching application." });
+    }
+}
+
 // Helper Function for recurrence logic for regular applications
 const createRecurringApplications = async (recurrenceRule, startDate, endDate, recurrenceEndDate, requestorRemarks, createdBy) => {
     let applications = [];
@@ -385,6 +442,7 @@ const withdrawApprovedApplication = async (req, res) => {
 module.exports = {
     retrieveApplications,
     retrievePendingApplications,
+    retrieveApprovedApplications,
     createNewApplication,
     approvePendingApplication,
     rejectPendingApplication,
