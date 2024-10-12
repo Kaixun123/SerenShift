@@ -6,10 +6,10 @@ import Image from 'next/image';
 import styles from './Styling/FileUpload.module.css'
 import { useToast } from '@chakra-ui/react';
 
-const FileUploader = ({ onFilesChange }) => {
+const FileUploader = ({ onFilesChange, clearFiles }) => {
     const [files, setFiles] = useState([]);
     const toast = useToast();
-    const maxFileLength = 30;
+    const maxFileLength = 50;
     const maxSize = 2.2 * 1024 * 1024; // 2.2 MB in bytes
 
     function nameLengthValidator(file) {
@@ -41,34 +41,41 @@ const FileUploader = ({ onFilesChange }) => {
         'application/msword': [], // .doc files
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [], // .docx files
       },
-      maxFiles: 3,
+      maxFiles: 5,
       multiple: true,
       maxSize: maxSize,
       validator: nameLengthValidator,
       onDrop: (acceptedFiles, fileRejections) => {
-        const updatedFiles = acceptedFiles.map(file => Object.assign(file, {
-          preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-        }));
+        // Merge the new files with the existing files
+        const updatedFiles = [
+            ...files, // Spread the existing files
+            ...acceptedFiles.map(file => Object.assign(file, {
+                preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+            }))
+        ];
+
         setFiles(updatedFiles);
+
+        // Call the callback to pass files to the parent component
         if (typeof onFilesChange === 'function') {
-          onFilesChange(updatedFiles); // Pass the files to the parent component if the callback is provided
+            onFilesChange(updatedFiles);
         }
 
         // Handle file rejections
         fileRejections.forEach(({ file, errors }) => {
-          errors.forEach((error) => {
-            if (error.code === 'file-too-large') {
-              toast({
-                title: "File Too Large",
-                description: `The file ${file.name} exceeds the size limit of ${(maxSize / (1024 * 1024)).toFixed(1)} MB.`,
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-              });
-            }
-          });
+            errors.forEach((error) => {
+                if (error.code === 'file-too-large') {
+                    toast({
+                        title: "File Too Large",
+                        description: `The file ${file.name} exceeds the size limit of ${(maxSize / (1024 * 1024)).toFixed(1)} MB.`,
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                }
+            });
         });
-      }
+      },
     });
 
     const dropzoneClass = `
@@ -84,7 +91,7 @@ const FileUploader = ({ onFilesChange }) => {
     setFiles(updatedFiles);
     if (onFilesChange) {
       onFilesChange(updatedFiles); // Pass the updated files to the parent component if the callback is provided
-    } // Pass the updated files to the parent component
+    }
   };
 
     const thumbs = files.map(file => (
@@ -122,9 +129,11 @@ const FileUploader = ({ onFilesChange }) => {
     ));  
 
     useEffect(() => {
-      // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
-      return () => files.forEach(file => URL.revokeObjectURL(file.preview));
-    }, [files]);
+      if (clearFiles) {
+        files.forEach(file => URL.revokeObjectURL(file.preview)); // Revoke previews to prevent memory leaks
+        setFiles([]); // Clear file state
+      }
+    }, [clearFiles]);
   
     return (
       <section className="container">

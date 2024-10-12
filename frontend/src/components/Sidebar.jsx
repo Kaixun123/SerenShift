@@ -74,13 +74,7 @@ export default function SideBar() {
       href: "/schedule/subordinate",
       icon: GrUserManager,
       title: "Subordinate Calendar",
-    },
-    {
-      id: 6,
-      href: "/application/manage",
-      icon: CgFileDocument,
-      title: "Manage Applications",
-    },
+    }
   ];
 
   // const activeMenu = useMemo(
