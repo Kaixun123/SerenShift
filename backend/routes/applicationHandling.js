@@ -1,8 +1,11 @@
 const express = require("express");
 const router = express.Router();
+const multer = require('multer');
 const { check, validationResult } = require("express-validator");
 const { ensureLoggedIn, ensureManagerAndAbove } = require("../middlewares/authMiddleware");
 const applicationController = require("../controllers/applicationController");
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Retrieve Application Validation Rules
 const retrieveApplicationValidationRules = () => {
@@ -69,7 +72,7 @@ const vaildateParameters = (req, res, next) => {
 
 router.get("/retrieveApplication", retrieveApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveApplications(req, res));
 router.get("/retrievePendingApplication", ensureManagerAndAbove, (req, res) => applicationController.retrievePendingApplications(req, res));
-router.post("/createNewApplication", createNewApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.createNewApplication(req, res))
+router.post("/createNewApplication", createNewApplicationValidationRules(), ensureLoggedIn, upload.array('files'), (req, res) => applicationController.createNewApplication(req, res))
 router.put("/approveApplication", approvePendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
 router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
 router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));

@@ -22,7 +22,7 @@ import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager } from "react-icons/gr";
-import { CgList } from "react-icons/cg";
+import { CgFileDocument, CgList } from "react-icons/cg";
 
 export default function SideBar() {
   const router = useRouter();
@@ -74,6 +74,12 @@ export default function SideBar() {
       href: "/schedule/subordinate",
       icon: GrUserManager,
       title: "Subordinate Calendar",
+    },
+    {
+      id: 6,
+      href: "/application/manage",
+      icon: CgFileDocument,
+      title: "Manage Applications",
     },
   ];
 

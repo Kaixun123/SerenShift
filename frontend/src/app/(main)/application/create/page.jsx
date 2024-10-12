@@ -2,23 +2,26 @@
 // import components
 import TopHeader from "@/components/TopHeader";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import FileUploader from "@/components/FileUpload";
 
 // chakra-ui
 import {
   FormControl,
+  Text,
   FormLabel,
   Input,
   Select,
   Button,
   Textarea,
   useToast,
+  Tooltip,
+  Box
 } from "@chakra-ui/react";
+import { AiOutlineInfoCircle } from "react-icons/ai";
 
 // mantine
 import { DatePicker, DatesProvider } from "@mantine/dates";
-
-//react-dropzone (file uploads)
-import { useDropzone } from "react-dropzone";
 
 export default function NewApplicationPage() {
   const toast = useToast();
@@ -35,6 +38,21 @@ export default function NewApplicationPage() {
   const [type, setType] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
+  const [files, setFiles] = useState([]);
+  const [recurrenceRule, setRecurrenceRule] = useState("");
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
+  const [recurrenceError, setRecurrenceError] = useState(""); // error handling
+
+  // Tooltip messages based on application type
+  const startDateTooltipMessage =
+  type === "Regular"
+    ? "This is the starting date of the single instance of the regular event."
+    : "This is the date when the one-time event starts.";
+
+  const endDateTooltipMessage =
+    type === "Regular"
+      ? "This is the duration of the single instance of the regular event."
+      : "This is the end date for the one-time event.";
 
   const handleCalendarChange = (selectedDates) => {
     setCalendarValue(selectedDates);
@@ -66,6 +84,23 @@ export default function NewApplicationPage() {
     });
   };
 
+  const handleFilesChange = (files) => {
+    setFiles(files);
+  };
+
+  // Validate recurrence end date is after the event end date
+  const handleRecurrenceEndDateChange = (e) => {
+    const selectedRecurrenceEndDate = new Date(e.target.value);
+    const eventEndDate = new Date(formattedDate.endDate);
+    
+    if (selectedRecurrenceEndDate <= eventEndDate) {
+      setRecurrenceError("Recurrence end date must be after the event end date.");
+    } else {
+      setRecurrenceError("");
+    }
+    setRecurrenceEndDate(e.target.value);
+  };
+
   useEffect(() => {
     async function fetchEmployeeData() {
       try {
@@ -94,7 +129,8 @@ export default function NewApplicationPage() {
         employeeInfo.length != 0 &&
         type != "" &&
         timeSlot != "" &&
-        reason != ""
+        reason != "" &&
+        (!recurrenceError) // Ensure no recurrence error exists
       ) {
         const formatDate = (dateString) => {
           const date = new Date(dateString);
@@ -118,18 +154,25 @@ export default function NewApplicationPage() {
           formattedEndDateTime += " 18:00:00";
         }
 
+        const formData = new FormData();
+        formData.append('id', employeeInfo.id);
+        formData.append('application_type', type);
+        formData.append('startDate', formattedStartDateTime);
+        formData.append('endDate', formattedEndDateTime);
+        formData.append('requestor_remarks', reason);
+        files.forEach(file => {
+          formData.append('files', file);
+        });
+
+        //append only for regular applications 
+        if (type == "Regular"){
+          formData.append("reccurence_rule", recurrenceRule);
+          formData.append("reccurence_end_date", recurrenceEndDate);
+        }
+
         const response = await fetch("/api/application/createNewApplication", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: employeeInfo.id,
-            application_type: type,
-            start_date: formattedStartDateTime,
-            end_date: formattedEndDateTime,
-            requestor_remarks: reason,
-          }),
+          body: formData,
         });
 
         if (response.status === 201) {
@@ -160,6 +203,9 @@ export default function NewApplicationPage() {
         setType("");
         setTimeSlot("");
         setReason("");
+        setFiles([]);
+        setRecurrenceRule("");
+        setRecurrenceEndDate("");
         setLoading(false);
       }
     } catch (error) {
@@ -174,8 +220,9 @@ export default function NewApplicationPage() {
         subText={"Plan your schedule timely and wisely!"}
       />
 
-      <div className="flex p-[30px] gap-[60px] justify-between ">
-        <div className="flex flex-col w-1/2 gap-[20px]">
+      <div className="flex p-[40px] gap-[60px] justify-between ">  
+        {/* Section: Calender */}
+        <div className="flex flex-col w-1/2 gap-[5px]"> 
           <div className="flex h-[350px] justify-center">
             <DatesProvider settings={{ consistentWeeks: true }}>
               <DatePicker
@@ -203,7 +250,49 @@ export default function NewApplicationPage() {
               </Button>
             </div>
           </div>
+          <div className="flex w-full flex-wrap gap-5 lg:flex-nowrap lg:gap-4 mt-5">
+            <div className="w-full lg:w-1/2">
+              <FormLabel> 
+                <Box display="inline-flex" alignItems="center" gap={2}>
+                  {type === "Regular" ? "Event Start" : "Start Date"}{" "}
+                  <Tooltip label={startDateTooltipMessage} fontSize="md">
+                    <span>
+                      <AiOutlineInfoCircle size={15} color="grey" />
+                    </span>
+                  </Tooltip>
+                </Box>
+              </FormLabel>
+              <Input
+                placeholder="Start Date"
+                name="startDate"
+                value={formattedDate.startDate}
+                readOnly
+              />
+            </div>
+            <div className="w-full lg:w-1/2">
+              <FormLabel> 
+                <Box display="inline-flex" alignItems="center" gap={2}> 
+                  {type === "Regular" ? "Event End" : "Start End"}{" "}
+                  <Tooltip label={endDateTooltipMessage} fontSize="md">
+                    <span>
+                      <AiOutlineInfoCircle size={15} color="grey" />
+                    </span>
+                  </Tooltip>
+                </Box>
+              </FormLabel>
+              <Input
+                placeholder="End Date"
+                name="endDate"
+                value={formattedDate.endDate}
+                readOnly
+              />
+            </div>
+          </div>
+        </div>
 
+        {/* Section: Form */}
+        <div className="flex flex-col w-1/2 mt-1 gap-[20px]">
+          <Text as='b' mb={3} fontSize={"2xl"}>Enter your Application Details</Text>
           <form noValidate>
             <FormControl isRequired className="flex flex-col gap-5">
               <div className="flex w-full flex-wrap lg:flex-nowrap">
@@ -219,32 +308,60 @@ export default function NewApplicationPage() {
                 </Select>
               </div>
 
-              <div className="flex w-full flex-wrap gap-5 lg:flex-nowrap lg:gap-4">
-                <div className="w-full lg:w-1/2">
-                  <FormLabel>Start Date</FormLabel>
-                  <Input
-                    placeholder="Start Date"
-                    name="startDate"
-                    value={formattedDate.startDate}
-                    readOnly
-                  />
-                </div>
-                <div className="w-full lg:w-1/2">
-                  <FormLabel>End Date</FormLabel>
-                  <Input
-                    placeholder="End Date"
-                    name="endDate"
-                    value={formattedDate.endDate}
-                    readOnly
-                  />
-                </div>
-              </div>
+              {type === "Regular" && (
+                <>
+                  <div className="flex w-full flex-wrap lg:flex-nowrap">
+                    <FormLabel className="w-full">Recurrence Rule</FormLabel>
+                    <Select
+                      placeholder="Select Recurrence Rule"
+                      value={recurrenceRule}
+                      onChange={(e) => setRecurrenceRule(e.target.value)}
+                    >
+                      <option value={"week"}>Weekly</option>
+                      <option value={"month"}>Monthly</option>
+                    </Select>
+                  </div>
+
+                  <div isInvalid={recurrenceError !== ""}>
+                    <FormLabel className="w-full"  isRequired={true} sx={{ ".chakra-form__required-indicator": { display: "none" } }}>
+                      <Box display="inline-flex" alignItems="center">
+                        Recurrence End Date{" "}
+                        {/* Add the required asterisk */}
+                        <Text color="red.500" as="span" ml={1}>
+                          *
+                        </Text>
+                        {/* Tooltip with info icon */}
+                        <Tooltip label="Select when the regular arrangement should stop" fontSize="md">
+                          <span>
+                            <AiOutlineInfoCircle size={18} color="grey" style={{ marginLeft: "5px" }} />
+                          </span>
+                        </Tooltip>
+                      </Box>
+                    </FormLabel>
+
+                    <Input
+                      type="date"
+                      value={recurrenceEndDate}
+                      onChange={handleRecurrenceEndDateChange}
+                      min={formattedDate.endDate ? formattedDate.endDate : ""}
+                    />
+
+                    {recurrenceError && (
+                      <Text color="red.500" fontSize="sm">
+                        {recurrenceError}
+                      </Text>
+                    )}
+                  </div>
+                </>
+              )}
+
               <div className="flex w-full flex-wrap lg:flex-nowrap">
                 <FormLabel className="w-full">Timeslot</FormLabel>
                 <Select
                   placeholder="Select the timeslot"
                   value={timeSlot}
                   onChange={handleTimeSlot}
+                  required
                 >
                   <option value={"am"}>AM (09:00 - 13:00)</option>
                   <option value={"pm"}>PM (14:00 - 18:00)</option>
@@ -270,8 +387,14 @@ export default function NewApplicationPage() {
                   onChange={handleReasonChange}
                   placeholder="Write your reason here..."
                   size="sm"
+                  required
                 />
               </div>
+              <div>
+                <FileUploader onFilesChange={handleFilesChange} />
+              </div>
+              <input type="hidden" name="startDate" value={formattedDate.startDate} />
+              <input type="hidden" name="endDate" value={formattedDate.endDate} />
               <Button
                 colorScheme="green"
                 variant="solid"
@@ -285,6 +408,9 @@ export default function NewApplicationPage() {
                   type != "" &&
                   timeSlot != "" &&
                   reason != ""
+                    ? false
+                    : true &&
+                  !recurrenceError // ensure no errors
                     ? false
                     : true
                 }
