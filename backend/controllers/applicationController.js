@@ -94,10 +94,36 @@ const uploadFilesToS3 = async (files, userId) => {
     await Promise.all(uploadPromises);
 };
 
+// Helper Function for recurrence logic for regular applications
+const createRecurringApplications = async (masterApplicationId, recurrenceRule, startDate, endDate, recurrenceEndDate, createdBy) => {
+    let applications = [];
+    let currentStartDate = moment(startDate);
+    let currentEndDate = moment(endDate);
+
+    while (currentStartDate.isBefore(recurrenceEndDate)) {
+        currentStartDate.add(1, recurrenceRule); // E.g., add 1 week or 1 month
+        currentEndDate.add(1, recurrenceRule);
+
+        const application = await Application.create({
+            start_date: currentStartDate.toDate(),
+            end_date: currentEndDate.toDate(),
+            application_type: 'Regular',
+            created_by: createdBy,
+            last_update_by: createdBy,
+            linked_application: masterApplicationId,
+            status: 'Pending',
+        });
+
+        applications.push(application);
+    }
+
+    return applications;
+};
+
 // POST function - to create new application
 const createNewApplication = async (req, res, next) => {
     try {
-        let { id, application_type, start_date, end_date, requestor_remarks } = req.body
+        let { id, application_type, start_date, end_date, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body
         const files = req.files;
         let employeeInfo = await Employee.findByPk(id);
         console.log(files);
@@ -147,7 +173,12 @@ const createNewApplication = async (req, res, next) => {
         if (files && files.length > 0) {
             await uploadFilesToS3(files, employeeInfo.id);
         }
-        // Log the results for debugging
+        
+        // If it's a regular application, generate recurring child events
+        if (application_type === "Regular" && recurrence_rule && recurrence_end_date) {
+            await createRecurringApplications(newApplication.application_id, recurrence_rule, start_date, end_date, recurrence_end_date, id);
+        }
+
         console.log("New Application:", newApplication);
 
         return res.status(201).json({ message: "New application successfully created.", result: newApplication })
