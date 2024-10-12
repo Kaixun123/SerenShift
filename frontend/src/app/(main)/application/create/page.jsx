@@ -39,6 +39,7 @@ export default function NewApplicationPage() {
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
   const [files, setFiles] = useState([]);
+  const [clearFiles, setClearFiles] = useState(false); 
   const [recurrenceRule, setRecurrenceRule] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [recurrenceError, setRecurrenceError] = useState(""); // error handling
@@ -204,6 +205,8 @@ export default function NewApplicationPage() {
         setTimeSlot("");
         setReason("");
         setFiles([]);
+        setClearFiles(true);
+        setTimeout(() => setClearFiles(false), 500);
         setRecurrenceRule("");
         setRecurrenceEndDate("");
         setLoading(false);
@@ -298,7 +301,7 @@ export default function NewApplicationPage() {
               <div className="flex w-full flex-wrap lg:flex-nowrap">
                 <FormLabel className="w-full">Type of Arrangement</FormLabel>
                 <Select
-                  placeholder="Select Regular"
+                  placeholder="Select Type"
                   value={type}
                   onChange={handleTypeSelect}
                   required
@@ -391,7 +394,7 @@ export default function NewApplicationPage() {
                 />
               </div>
               <div>
-                <FileUploader onFilesChange={handleFilesChange} />
+                <FileUploader onFilesChange={handleFilesChange} clearFiles={clearFiles} />
               </div>
               <input type="hidden" name="startDate" value={formattedDate.startDate} />
               <input type="hidden" name="endDate" value={formattedDate.endDate} />
