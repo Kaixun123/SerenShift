@@ -166,8 +166,8 @@ export default function NewApplicationPage() {
 
         //append only for regular applications 
         if (type == "Regular"){
-          formData.append("reccurence_rule", recurrenceRule);
-          formData.append("reccurence_end_date", recurrenceEndDate);
+          formData.append("recurrence_rule", recurrenceRule);
+          formData.append("recurrence_end_date", recurrenceEndDate);
         }
 
         const response = await fetch("/api/application/createNewApplication", {
@@ -322,8 +322,8 @@ export default function NewApplicationPage() {
                     </Select>
                   </div>
 
-                  <div isInvalid={recurrenceError !== ""}>
-                    <FormLabel className="w-full"  isRequired={true} sx={{ ".chakra-form__required-indicator": { display: "none" } }}>
+                  <div isinvalid={recurrenceError ? "true" : undefined}>
+                    <FormLabel className="w-full"  isrequired={"true"} sx={{ ".chakra-form__required-indicator": { display: "none" } }}>
                       <Box display="inline-flex" alignItems="center">
                         Recurrence End Date{" "}
                         {/* Add the required asterisk */}
