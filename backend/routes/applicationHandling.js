@@ -50,7 +50,7 @@ const withdrawPendingApplicationValidationRules = () => {
 const withdrawApprovedApplicationValidationRules = () => {
     return [
         check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }),
-        check(rejectedDates).isArray(),
+        check("rejectedDates").isArray(),
     ];
 };
 
@@ -72,7 +72,7 @@ router.get("/retrievePendingApplication", rejectPendingApplicationValidationRule
 router.post("/createNewApplication", createNewApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.createNewApplication(req, res))
 router.put("/approveApplication", approvePendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
 router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
-router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters(), ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
+router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
 router.put("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.withdrawApprovedApplication(req, res));
 
 module.exports = router;
