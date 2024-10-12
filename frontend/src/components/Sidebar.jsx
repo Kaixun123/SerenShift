@@ -95,15 +95,15 @@ export default function SideBar() {
     return (
       <>
         <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
-          <Link href="/application/manage" className="flex gap-3 items-center w-[400px]">
-            <CgList className="w-5 h-5" />
-            Manage Application
-          </Link>
-        </div>
-        <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
           <Link href="/schedule/subordinate" className="flex gap-3 items-center w-[400px]">
             <GrUserManager className="w-5 h-5" />
             Subordinate Calendar
+          </Link>
+        </div>
+        <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
+          <Link href="/application/manage" className="flex gap-3 items-center w-[400px]">
+            <CgList className="w-5 h-5" />
+            Manage Application
           </Link>
         </div>
         <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
