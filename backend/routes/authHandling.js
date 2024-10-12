@@ -4,10 +4,10 @@ const { check, validationResult } = require("express-validator");
 const { ensureLoggedIn } = require("../middlewares/authMiddleware");
 const authController = require('../controllers/authController')
 // Validation Rules
-const loginFormValidationRules = () => {
+const loginValidationRules = () => {
     return [
-        check("emailAddress").isEmail().withMessage("Invalid email address").notEmpty().trim(),
-        check("password").notEmpty().withMessage("Password cannot be empty").trim(),
+        check("emailAddress").isEmail().notEmpty().withMessage("Invalid email address").trim(),
+        check("password").isString().notEmpty().withMessage("Password cannot be empty").trim(),
     ];
 }
 // Validation Middleware
@@ -23,7 +23,7 @@ const vaildateParameters = (req, res, next) => {
 };
 
 router.patch('/extendDuration', ensureLoggedIn, (req, res) => authController.extendDuration(req, res))
-router.post('/login', loginFormValidationRules(), vaildateParameters, (req, res) => authController.login(req, res))
+router.post('/login', loginValidationRules(), vaildateParameters, (req, res) => authController.login(req, res))
 router.get('/logout', ensureLoggedIn, (req, res) => authController.logout(req, res))
 router.get('/me', ensureLoggedIn, (req, res) => authController.me(req, res))
 router.get('/validateToken', ensureLoggedIn, (req, res) => authController.validateToken(req, res))

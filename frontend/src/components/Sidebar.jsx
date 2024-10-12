@@ -15,11 +15,14 @@ import {
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useMemo, useEffect, useState } from "react";
+
+
 // react icons
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager } from "react-icons/gr";
+import { CgList } from "react-icons/cg";
 
 export default function SideBar() {
   const router = useRouter();
@@ -61,6 +64,13 @@ export default function SideBar() {
     },
     {
       id: 5,
+      href: "/application/manage",
+      icon: CgList,
+      title: "Manage Application",
+    },
+    {
+      id: 6,
+
       href: "/schedule/subordinate",
       icon: GrUserManager,
       title: "Subordinate Calendar",
@@ -75,7 +85,6 @@ export default function SideBar() {
   // Function to check token validity by calling the backend
   const checkTokenValidity = async () => {
     try {
-      
       const response = await fetch("/api/auth/validateToken", {
         method: "GET",
         credentials: "include", // Include cookies in the request
@@ -109,8 +118,8 @@ export default function SideBar() {
         description: "Thank you for using our service",
         status: "success",
         isClosable: true,
-        position: 'top-right',
-
+        position: "top-right",
+        position: "top-right",
       });
       router.push("/auth/login");
     } else {
@@ -121,7 +130,8 @@ export default function SideBar() {
         description: "An error has occured. Please try again later",
         status: "error",
         isClosable: true,
-        position: 'top-right',
+        position: "top-right",
+        position: "top-right",
       });
     }
   };
@@ -153,8 +163,8 @@ export default function SideBar() {
         <ModalContent>
           <ModalHeader>Session expired</ModalHeader>
           <ModalBody>
-            Your session has expired. You will be redirected to the login
-            page.
+            Your session has expired. You will be redirected to the login page.
+            Your session has expired. You will be redirected to the login page.
           </ModalBody>
         </ModalContent>
       </Modal>
