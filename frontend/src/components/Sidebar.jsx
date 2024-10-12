@@ -87,19 +87,6 @@ export default function SideBar() {
       icon: GrChapterAdd,
       title: "New Application",
     },
-    {
-      id: 5,
-      href: "/application/manage",
-      icon: CgList,
-      title: "Manage Application",
-    },
-    {
-      id: 6,
-
-      href: "/schedule/subordinate",
-      icon: GrUserManager,
-      title: "Subordinate Calendar",
-    }
   ];
 
   const renderManagerItems = () => {
@@ -108,7 +95,19 @@ export default function SideBar() {
     return (
       <>
         <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
-          <Link href="/manager/withdraw" className="flex gap-3 items-center">
+          <Link href="/application/manage" className="flex gap-3 items-center w-[400px]">
+            <CgList className="w-5 h-5" />
+            Manage Application
+          </Link>
+        </div>
+        <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
+          <Link href="/schedule/subordinate" className="flex gap-3 items-center w-[400px]">
+            <GrUserManager className="w-5 h-5" />
+            Subordinate Calendar
+          </Link>
+        </div>
+        <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
+          <Link href="/application/withdraw" className="flex gap-3 items-center w-[400px]">
             <GrDocumentMissing className="w-5 h-5" />
             Withdraw Applications
           </Link>
