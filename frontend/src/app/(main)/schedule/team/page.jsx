@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Box, Stack, Flex } from "@chakra-ui/react";
+import { Box, Stack, Flex, Text } from "@chakra-ui/react";
 import TopHeader from "@/components/TopHeader";
 import { MultiSelect } from "@mantine/core";
 import FullCalendar from "@fullcalendar/react"; // Import FullCalendar
@@ -9,15 +9,18 @@ import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
 import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
 import listPlugin from "@fullcalendar/list"; // List view plugin
 import RefreshButton from "@/components/RefreshButton";
-import Legend from "@/components/Legend";
 import "@/components/Calendar.css";
 
-const TeamSchedulePage = () => {
+const SubordinateSchedulePage = () => {
   const [loading, setLoading] = useState(false);
-  const [colleagues, setColleagues] = useState([]);
+  const [colleagues, setColleagues] = useState([]); // Holds subordinate data
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [scheduleData, setScheduleData] = useState(null);
   const [employee, setEmployee] = useState({ department: "" });
+
+  // For refresh functionality
+  const [isRefresh, setRefresh] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     async function fetchEmployeeData() {
@@ -39,7 +42,7 @@ const TeamSchedulePage = () => {
     setScheduleData(null);
 
     try {
-      const colleaguesResponse = await fetch("/api/employee/colleagues");
+      const colleaguesResponse = await fetch("/api/employee/subordinates");
       const colleaguesData = await colleaguesResponse.json();
 
       const query =
@@ -47,7 +50,7 @@ const TeamSchedulePage = () => {
           ? `?colleague_id=${colleagueIds.join(",")}`
           : "";
       const scheduleResponse = await fetch(
-        `/api/schedule/teamschedule${query}`
+        `/api/schedule/subordinateSchedule${query}`
       );
       const scheduleData = await scheduleResponse.json();
 
@@ -65,49 +68,54 @@ const TeamSchedulePage = () => {
   };
 
   useEffect(() => {
-    handleApiCalls([]);
-  }, []);
+    handleApiCalls([]); // Fetch data on mount or refresh
+  }, [isRefresh]);
 
   const handleColleagueSelect = (selectedIds) => {
     setSelectedColleagueIds(selectedIds);
-    handleApiCalls(selectedIds);
+    handleApiCalls(selectedIds); // Update schedules based on selected colleague IDs
   };
 
   const handleRefresh = () => {
-    // Reset the colleague selection and fetch data again
-    setSelectedColleagueIds([]);
-    handleApiCalls([]);
+    // Trigger re-fetching of data with a slight delay for the refreshing effect
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefresh(true);
+      setRefreshing(false);
+      setSelectedColleagueIds([]); // Reset colleague selection
+    }, 200);
+    setRefresh(false); // Reset refresh state
   };
 
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
-      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
-        colleagues.map((colleague) => {
-          const eventDate = new Date(date);
-          let start, end;
+        Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+          colleagues.map((colleague) => {
+            const eventDate = new Date(date);
+            let start, end;
 
-          if (timePeriod === "Full Day") {
-            start = new Date(eventDate.setHours(9, 0, 0));
-            end = new Date(eventDate.setHours(18, 0, 0));
-          } else if (timePeriod === "AM") {
-            start = new Date(eventDate.setHours(9, 0, 0));
-            end = new Date(eventDate.setHours(13, 0, 0));
-          } else if (timePeriod === "PM") {
-            start = new Date(eventDate.setHours(14, 0, 0));
-            end = new Date(eventDate.setHours(18, 0, 0));
-          }
+            if (timePeriod === "Full Day") {
+              start = new Date(eventDate.setHours(9, 0, 0));
+              end = new Date(eventDate.setHours(18, 0, 0));
+            } else if (timePeriod === "AM") {
+              start = new Date(eventDate.setHours(9, 0, 0));
+              end = new Date(eventDate.setHours(13, 0, 0));
+            } else if (timePeriod === "PM") {
+              start = new Date(eventDate.setHours(14, 0, 0));
+              end = new Date(eventDate.setHours(18, 0, 0));
+            }
 
-          return {
-            title: `${colleague}`,
-            start,
-            end,
-            allDay: false,
-            timePeriod,
-          };
-        })
+            return {
+              title: `${colleague}`,
+              start,
+              end,
+              allDay: false,
+              timePeriod,
+            };
+          })
+        )
       )
-    )
     : [];
 
   const eventContent = (eventInfo) => {
@@ -154,7 +162,7 @@ const TeamSchedulePage = () => {
 
     return {
       style: {
-        backgroundColor: backgroundColor,
+        backgroundColor,
         color: "#fff",
         borderRadius: "4px",
         padding: "3px",
@@ -166,78 +174,22 @@ const TeamSchedulePage = () => {
     };
   };
 
-  // Custom tooltip creation
-  const eventDidMount = (info) => {
-    const timePeriod = info.event.extendedProps.timePeriod;
-    const startTime = info.event.start
-      ? info.event.start.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-      : "N/A";
-    const endTime = info.event.end
-      ? info.event.end.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-      : "N/A";
-    const title = info.event.title || "No Title";
-
-    const tooltipContent = `${title} (${timePeriod})<br>Time: ${startTime} to ${endTime}`;
-
-    const tooltipDiv = document.createElement("div");
-    tooltipDiv.className = "custom-tooltip";
-    tooltipDiv.innerHTML = tooltipContent;
-
-    document.body.appendChild(tooltipDiv);
-
-    info.el.onmouseenter = function () {
-      tooltipDiv.style.display = "block";
-      const rect = info.el.getBoundingClientRect();
-      tooltipDiv.style.left = `${rect.left + window.scrollX}px`;
-      tooltipDiv.style.top = `${rect.top + window.scrollY - tooltipDiv.offsetHeight - 10
-        }px`;
-    };
-
-    info.el.onmouseleave = function () {
-      tooltipDiv.style.display = "none";
-    };
-  };
-
-  // Custom tooltip styles
-  const customTooltipStyles = `
-    .custom-tooltip {
-      position: absolute;
-      background-color: #333;
-      color: #fff;
-      padding: 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      line-height: 1.5;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      z-index: 1000;
-      white-space: nowrap;
-      display: none;
-    }
-
-    .custom-tooltip::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: #333 transparent transparent transparent;
-    }
-  `;
-
-  // Inject custom tooltip styles
-  useEffect(() => {
-    const styleElement = document.createElement("style");
-    styleElement.innerHTML = customTooltipStyles;
-    document.head.appendChild(styleElement);
-  }, []);
+  // Legend component
+  const Legend = () => (
+    <Box mb={4}>
+      <Text fontSize="lg" fontWeight="bold">
+        Legend:
+      </Text>
+      <Flex direction="row" align="center">
+        <Box w="20px" h="20px" bg="#4CAF50" mr={2} />
+        <Text mr={4}>Full Day</Text>
+        <Box w="20px" h="20px" bg="#F4C542" mr={2} />
+        <Text mr={4}>AM</Text>
+        <Box w="20px" h="20px" bg="#4DA1FF" mr={2} />
+        <Text>PM</Text>
+      </Flex>
+    </Box>
+  );
 
   return (
     <main>
@@ -251,7 +203,7 @@ const TeamSchedulePage = () => {
         <Box flex="1" p={4}>
           <Flex justifyContent="space-between" alignItems="center">
             <Legend />
-            <Stack direction="row" alignItems="center">
+            <Stack direction="row">
               <MultiSelect
                 data={colleagues
                   .sort((a, b) => a.first_name.localeCompare(b.first_name))
@@ -259,11 +211,12 @@ const TeamSchedulePage = () => {
                     value: String(colleague.user_id),
                     label: `${colleague.first_name} ${colleague.last_name}`,
                   }))}
-                placeholder={
-                  selectedColleagueIds.length === 0 ? "Select Colleagues" : ""
-                }
+                  placeholder={
+                    selectedColleagueIds.length === 0 ? "Select Colleague" : ""
+                  }
                 value={selectedColleagueIds.map(String)}
                 onChange={handleColleagueSelect}
+                clearable
                 styles={{
                   input: {
                     width: "304px",
@@ -273,30 +226,11 @@ const TeamSchedulePage = () => {
                   },
                 }}
               />
-              <RefreshButton onClick={handleRefresh} />
+              <RefreshButton onClick={handleRefresh} isLoading={refreshing} />
             </Stack>
           </Flex>
 
           <Box height="calc(68vh)">
-            <style>{`
-    /* Remove background color for events in the list view */
-    .fc-view-list .fc-list-event {
-      background-color: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-    
-    /* Ensure event title and time retain appropriate colors in the list view */
-    .fc-view-list .fc-list-event-title,
-    .fc-view-list .fc-list-event-time {
-      color: #000 !important;
-    }
-      
-    .fc-list-event-dot {
-    display: none !important;
-}
-  `}</style>
-
             <FullCalendar
               plugins={[
                 dayGridPlugin,
@@ -315,10 +249,7 @@ const TeamSchedulePage = () => {
               selectable={true}
               nowIndicator={true}
               eventPropGetter={eventPropGetter}
-              dateClick={(info) => console.log("Date clicked:", info.dateStr)}
-              eventClick={(info) => console.log("Event clicked:", info.event)}
               eventContent={eventContent}
-              eventDidMount={eventDidMount} // Attach tooltip creation to event mount
               dayMaxEventRows={2}
               height="100%"
               slotMinTime="09:00:00"
@@ -332,4 +263,4 @@ const TeamSchedulePage = () => {
   );
 };
 
-export default TeamSchedulePage;
+export default SubordinateSchedulePage;

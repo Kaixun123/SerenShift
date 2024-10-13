@@ -49,9 +49,10 @@ export default function SideBar() {
     },
     {
       id: 3,
-      href: "/application/pending",
-      icon: MdOutlinePendingActions,
-      title: "Pending Application",
+
+      href: "/schedule/subordinate",
+      icon: GrUserManager,
+      title: "Subordinate Calendar",
     },
     {
       id: 4,
@@ -61,17 +62,16 @@ export default function SideBar() {
     },
     {
       id: 5,
-      href: "/application/manage",
-      icon: CgList,
-      title: "Manage Application",
+      href: "/application/pending",
+      icon: MdOutlinePendingActions,
+      title: "Pending Applications",
     },
     {
       id: 6,
-
-      href: "/schedule/subordinate",
-      icon: GrUserManager,
-      title: "Subordinate Calendar",
-    }
+      href: "/application/manage",
+      icon: CgList,
+      title: "Manage Applications",
+    },
   ];
 
   // const activeMenu = useMemo(

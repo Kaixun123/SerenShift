@@ -261,7 +261,7 @@ const SubordinateSchedulePage = () => {
         <Box position="relative" zIndex="2">
           <TopHeader
             mainText={`${employee.department} Department Schedule`}
-            subText={"Viewing your team's schedule"}
+            subText={"Viewing your subordinates' schedule"}
           />
         </Box>
         <Box flex="1" p={4}>
@@ -275,9 +275,12 @@ const SubordinateSchedulePage = () => {
                     value: String(colleague.user_id),
                     label: `${colleague.first_name} ${colleague.last_name}`,
                   }))}
-                placeholder="Select Subordinates"
+                  placeholder={
+                    selectedColleagueIds.length === 0 ? "Select Subordinate" : ""
+                  }
                 value={selectedColleagueIds.map(String)}
                 onChange={handleColleagueSelect}
+                clearable
                 styles={{
                   input: {
                     width: "304px",
@@ -317,7 +320,7 @@ const SubordinateSchedulePage = () => {
                 interactionPlugin,
                 listPlugin,
               ]}
-              initialView="timeGridWeek"
+              initialView="dayGridMonth"
               events={events}
               headerToolbar={{
                 left: "prev,next today",
