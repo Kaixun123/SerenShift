@@ -18,6 +18,10 @@ const SubordinateSchedulePage = () => {
   const [scheduleData, setScheduleData] = useState(null);
   const [employee, setEmployee] = useState({ department: "" });
 
+  // For Refresh button
+  const [isRefresh, setRefresh] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
   useEffect(() => {
     async function fetchEmployeeData() {
       try {
@@ -31,7 +35,7 @@ const SubordinateSchedulePage = () => {
       }
     }
     fetchEmployeeData();
-  }, []);
+  }, [isRefresh]);
 
   const handleApiCalls = async (colleagueIds) => {
     setLoading(true);
@@ -73,41 +77,46 @@ const SubordinateSchedulePage = () => {
   };
 
   const handleRefresh = () => {
-    // Reset the colleague selection and fetch data again
-    setSelectedColleagueIds([]);
-    handleApiCalls([]);
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefresh(true);
+      // Reset the colleague selection and fetch data again
+      setSelectedColleagueIds([]);
+      handleApiCalls([]);
+      setRefreshing(false);
+    }, 200);
+    setRefresh(false);
   };
-
 
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
-      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
-        colleagues.map((colleague) => {
-          const eventDate = new Date(date);
-          let start, end;
+        Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+          colleagues.map((colleague) => {
+            const eventDate = new Date(date);
+            let start, end;
 
-          if (timePeriod === "Full Day") {
-            start = new Date(eventDate.setHours(9, 0, 0));
-            end = new Date(eventDate.setHours(18, 0, 0));
-          } else if (timePeriod === "AM") {
-            start = new Date(eventDate.setHours(9, 0, 0));
-            end = new Date(eventDate.setHours(13, 0, 0));
-          } else if (timePeriod === "PM") {
-            start = new Date(eventDate.setHours(14, 0, 0));
-            end = new Date(eventDate.setHours(18, 0, 0));
-          }
+            if (timePeriod === "Full Day") {
+              start = new Date(eventDate.setHours(9, 0, 0));
+              end = new Date(eventDate.setHours(18, 0, 0));
+            } else if (timePeriod === "AM") {
+              start = new Date(eventDate.setHours(9, 0, 0));
+              end = new Date(eventDate.setHours(13, 0, 0));
+            } else if (timePeriod === "PM") {
+              start = new Date(eventDate.setHours(14, 0, 0));
+              end = new Date(eventDate.setHours(18, 0, 0));
+            }
 
-          return {
-            title: `${colleague}`,
-            start,
-            end,
-            allDay: false,
-            timePeriod,
-          };
-        })
+            return {
+              title: `${colleague}`,
+              start,
+              end,
+              allDay: false,
+              timePeriod,
+            };
+          })
+        )
       )
-    )
     : [];
 
   const eventContent = (eventInfo) => {
@@ -171,15 +180,15 @@ const SubordinateSchedulePage = () => {
     const timePeriod = info.event.extendedProps.timePeriod;
     const startTime = info.event.start
       ? info.event.start.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       : "N/A";
     const endTime = info.event.end
       ? info.event.end.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       : "N/A";
     const title = info.event.title || "No Title";
 
@@ -195,7 +204,9 @@ const SubordinateSchedulePage = () => {
       tooltipDiv.style.display = "block";
       const rect = info.el.getBoundingClientRect();
       tooltipDiv.style.left = `${rect.left + window.scrollX}px`;
-      tooltipDiv.style.top = `${rect.top + window.scrollY - tooltipDiv.offsetHeight - 10}px`;
+      tooltipDiv.style.top = `${
+        rect.top + window.scrollY - tooltipDiv.offsetHeight - 10
+      }px`;
     };
 
     info.el.onmouseleave = function () {
@@ -275,9 +286,9 @@ const SubordinateSchedulePage = () => {
                     value: String(colleague.user_id),
                     label: `${colleague.first_name} ${colleague.last_name}`,
                   }))}
-                  placeholder={
-                    selectedColleagueIds.length === 0 ? "Select Subordinate" : ""
-                  }
+                placeholder={
+                  selectedColleagueIds.length === 0 ? "Select Subordinate" : ""
+                }
                 value={selectedColleagueIds.map(String)}
                 onChange={handleColleagueSelect}
                 clearable
@@ -290,7 +301,7 @@ const SubordinateSchedulePage = () => {
                   },
                 }}
               />
-              <RefreshButton onClick={handleRefresh} />
+              <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
             </Stack>
           </Flex>
 

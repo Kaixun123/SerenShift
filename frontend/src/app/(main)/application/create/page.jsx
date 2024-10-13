@@ -15,7 +15,7 @@ import {
   Textarea,
   useToast,
   Tooltip,
-  Box
+  Box,
 } from "@chakra-ui/react";
 import { AiOutlineInfoCircle } from "react-icons/ai";
 
@@ -94,7 +94,9 @@ export default function NewApplicationPage() {
     const eventEndDate = new Date(formattedDate.endDate);
 
     if (selectedRecurrenceEndDate <= eventEndDate) {
-      setRecurrenceError("Recurrence end date must be after the event end date.");
+      setRecurrenceError(
+        "Recurrence end date must be after the event end date."
+      );
     } else {
       setRecurrenceError("");
     }
@@ -198,7 +200,8 @@ export default function NewApplicationPage() {
 
     if (type == "Regular" && !recurrenceEndDate) {
       toast({
-        title: "Please provide a reccurence end date for your regular application.",
+        title:
+          "Please provide a reccurence end date for your regular application.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -213,7 +216,7 @@ export default function NewApplicationPage() {
         type != "" &&
         timeSlot != "" &&
         reason != "" &&
-        (!recurrenceError) // Ensure no recurrence error exists
+        !recurrenceError // Ensure no recurrence error exists
       ) {
         const formatDate = (dateString) => {
           const date = new Date(dateString);
@@ -238,16 +241,16 @@ export default function NewApplicationPage() {
         }
 
         const formData = new FormData();
-        formData.append('id', employeeInfo.id);
-        formData.append('application_type', type);
-        formData.append('startDate', formattedStartDateTime);
-        formData.append('endDate', formattedEndDateTime);
-        formData.append('requestor_remarks', reason);
-        files.forEach(file => {
-          formData.append('files', file);
+        formData.append("id", employeeInfo.id);
+        formData.append("application_type", type);
+        formData.append("startDate", formattedStartDateTime);
+        formData.append("endDate", formattedEndDateTime);
+        formData.append("requestor_remarks", reason);
+        files.forEach((file) => {
+          formData.append("files", file);
         });
 
-        //append only for regular applications 
+        //append only for regular applications
         if (type == "Regular") {
           formData.append("recurrence_rule", recurrenceRule);
           formData.append("recurrence_end_date", recurrenceEndDate);
@@ -377,7 +380,9 @@ export default function NewApplicationPage() {
 
         {/* Section: Form */}
         <div className="flex flex-col w-1/2 mt-1 gap-[20px]">
-          <Text as='b' mb={3} fontSize={"2xl"}>Enter your Application Details</Text>
+          <Text as="b" mb={3} fontSize={"2xl"}>
+            Enter your Application Details
+          </Text>
           <form noValidate>
             <FormControl isRequired className="flex flex-col gap-5">
               <div className="flex w-full flex-wrap lg:flex-nowrap">
@@ -408,17 +413,29 @@ export default function NewApplicationPage() {
                   </div>
 
                   <div isinvalid={recurrenceError ? "true" : undefined}>
-                    <FormLabel className="w-full" isrequired={"true"} sx={{ ".chakra-form__required-indicator": { display: "none" } }}>
+                    <FormLabel
+                      className="w-full"
+                      isrequired={"true"}
+                      sx={{
+                        ".chakra-form__required-indicator": { display: "none" },
+                      }}
+                    >
                       <Box display="inline-flex" alignItems="center">
-                        Recurrence End Date{" "}
-                        {/* Add the required asterisk */}
+                        Recurrence End Date {/* Add the required asterisk */}
                         <Text color="red.500" as="span" ml={1}>
                           *
                         </Text>
                         {/* Tooltip with info icon */}
-                        <Tooltip label="Select when the regular arrangement should stop" fontSize="md">
+                        <Tooltip
+                          label="Select when the regular arrangement should stop"
+                          fontSize="md"
+                        >
                           <span>
-                            <AiOutlineInfoCircle size={18} color="grey" style={{ marginLeft: "5px" }} />
+                            <AiOutlineInfoCircle
+                              size={18}
+                              color="grey"
+                              style={{ marginLeft: "5px" }}
+                            />
                           </span>
                         </Tooltip>
                       </Box>
@@ -476,10 +493,21 @@ export default function NewApplicationPage() {
                 />
               </div>
               <div>
-                <FileUploader onFilesChange={handleFilesChange} clearFiles={clearFiles} />
+                <FileUploader
+                  onFilesChange={handleFilesChange}
+                  clearFiles={clearFiles}
+                />
               </div>
-              <input type="hidden" name="startDate" value={formattedDate.startDate} />
-              <input type="hidden" name="endDate" value={formattedDate.endDate} />
+              <input
+                type="hidden"
+                name="startDate"
+                value={formattedDate.startDate}
+              />
+              <input
+                type="hidden"
+                name="endDate"
+                value={formattedDate.endDate}
+              />
               <Button
                 colorScheme="green"
                 variant="solid"
@@ -488,16 +516,15 @@ export default function NewApplicationPage() {
                 onClick={createNewApplication}
                 spinnerPlacement="end"
                 isDisabled={
-                  formattedDate.startDate != "" &&
-                    formattedDate.endDate != "" &&
-                    type != "" &&
-                    timeSlot != "" &&
-                    reason != ""
-                    ? false
-                    : true &&
-                      !recurrenceError // ensure no errors
-                      ? false
-                      : true
+                  !(
+                    formattedDate.startDate &&
+                    formattedDate.endDate &&
+                    type &&
+                    timeSlot &&
+                    reason &&
+                    (type !== "Regular" ||
+                      (recurrenceRule && recurrenceEndDate && !recurrenceError))
+                  )
                 }
               >
                 Submit
