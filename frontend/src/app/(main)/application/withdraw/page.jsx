@@ -23,6 +23,8 @@ export default function WithdrawApplicationPage() {
   const [selectedPosition, setSelectedPosition] = useState("");
   const [currentApplicationIndex, setCurrentApplicationIndex] = useState(0); // For paginating through selected applications
   const [remarks, setRemarks] = useState('');
+  const [remarksMultiple, setRemarksMultiple] = useState('');
+
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -110,7 +112,7 @@ export default function WithdrawApplicationPage() {
   // Handle withdrawal function
   const handleWithdraw = async (applicationId) => {
     try {
-      const response = await fetch("/api/withdraw/withdrawApproved", {
+      const response = await fetch("/api/application/withdrawApproved", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -130,6 +132,44 @@ export default function WithdrawApplicationPage() {
       console.error("Error withdrawing application:", error);
     }
   };
+
+  // Handle multiple withdrawal function
+  const handleWithdrawMultiple = async (applicationIds) => {
+    try {
+      // Make sure applicationIds is an array
+      if (!Array.isArray(applicationIds) || applicationIds.length === 0) {
+        console.error("No applications selected for withdrawal.");
+        return;
+      }
+  
+      // Loop through each applicationId and send the withdraw request one by one
+      for (const applicationId of applicationIds) {
+        const response = await fetch("/api/application/withdrawApproved", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ applicationId }),
+        });
+  
+        if (response.ok) {
+          // If the request was successful, remove the application from the state
+          setApprovedApplications((prev) =>
+            prev.filter((app) => app.application_id !== applicationId)
+          );
+        } else {
+          console.error(`Failed to withdraw application with ID ${applicationId}`);
+        }
+      }
+  
+      // After all requests have been processed, close the modal
+      onModalWithdrawClose();
+  
+    } catch (error) {
+      console.error("Error withdrawing applications:", error);
+    }
+  };
+  
 
   function handlePagination(array, size) {
     if (!array.length) {
@@ -442,8 +482,34 @@ export default function WithdrawApplicationPage() {
         </div>
 
         <div className="w-1/2">
-        <Box w="1/2" maxW="400px" ml={10} mt={10}>
-        {selectedApplicationDetails ? (
+        <Box w="1/2" maxW="400px" ml={10}>
+        {selectedApplications.length > 1 && (
+            <div className="flex flex-col gap-4 mb-4">
+              <Text fontWeight="bold" color="gray.600">
+                Reason for Withdrawal (All Selected): <span style={{ color: 'red' }}>*</span>
+              </Text>
+              <Textarea
+                placeholder="Enter required reason here..."
+                onChange={(e) => setRemarksMultiple(e.target.value)}
+                bg="gray.50"
+                borderColor="gray.300"
+                focusBorderColor="blue.500"
+                resize="none"
+                height="100px"
+              />
+              <Flex mt={4} justifyContent="flex-start" w="full">
+                <Button 
+                    colorScheme="red"
+                    width="full"
+                    onClick={handleWithdrawMultiple}
+                    isDisabled={!(remarks && String(remarks).trim())}
+                    >
+                  Withdraw All Selected
+                </Button>
+              </Flex>
+            </div>
+          )} 
+          {selectedApplicationDetails ? (
             <>
               <ApplicationReviewCard
                 startDate={selectedApplicationDetails.start_date}
@@ -483,7 +549,6 @@ export default function WithdrawApplicationPage() {
             </Text>
               <Textarea
                 placeholder="Enter required reason here..."
-                value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 bg="gray.50"
                 borderColor="gray.300"
@@ -498,7 +563,7 @@ export default function WithdrawApplicationPage() {
                 colorScheme="red"
                 width="full"
                 onClick={handleWithdraw}
-                isDisabled={!remarks.trim()}
+                isDisabled={!(remarks && String(remarks).trim())}
                 >
               Withdraw Application
             </Button>
