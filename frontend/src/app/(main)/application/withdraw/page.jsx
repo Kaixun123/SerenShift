@@ -478,11 +478,11 @@ export default function WithdrawApplicationPage() {
             />
           )}
           <Box mt={4}>
-              <Text fontWeight="bold" color="gray.600">
-                Reason for Withdrawal:
-              </Text>
+            <Text fontWeight="bold" color="gray.600">
+              Reason for Withdrawal: <span style={{ color: 'red' }}>*</span>
+            </Text>
               <Textarea
-                placeholder="Write any remarks here..."
+                placeholder="Enter required reason here..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 bg="gray.50"
