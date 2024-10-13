@@ -18,6 +18,7 @@ const FileUploader = ({ onFilesChange, clearFiles }) => {
         toast({
           title: "File Name Too Long",
           description: `The file name is larger than ${maxFileLength} characters.`,
+          position: "top-right",
           status: "error",
           duration: 5000,
           isClosable: true,
@@ -54,6 +55,7 @@ const FileUploader = ({ onFilesChange, clearFiles }) => {
           toast({
             title: "File Limit Exceeded",
             description: `You can only upload up to ${maxFilesAllowed} files.`,
+            position: "top-right",
             status: "error",
             duration: 5000,
             isClosable: true,
@@ -75,6 +77,18 @@ const FileUploader = ({ onFilesChange, clearFiles }) => {
             onFilesChange(updatedFiles);
         }
 
+         // Show a success toast message
+        if (acceptedFiles.length > 0) {
+          toast({
+            title: "Files Uploaded Successfully",
+            position: "top-right",
+            description: `${acceptedFiles.length} file(s) were uploaded successfully.`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+        }
+
         // Handle file rejections
         fileRejections.forEach(({ file, errors }) => {
             errors.forEach((error) => {
@@ -82,6 +96,7 @@ const FileUploader = ({ onFilesChange, clearFiles }) => {
                     toast({
                         title: "File Too Large",
                         description: `The file ${file.name} exceeds the size limit of ${(maxSize / (1024 * 1024)).toFixed(1)} MB.`,
+                        position: "top-right",
                         status: "error",
                         duration: 5000,
                         isClosable: true,
@@ -90,6 +105,7 @@ const FileUploader = ({ onFilesChange, clearFiles }) => {
                   toast({
                     title: "Unsupported File Type",
                     description: `The file ${file.name} is not a supported format.`,
+                    position: "top-right",
                     status: "error",
                     duration: 5000,
                     isClosable: true,
