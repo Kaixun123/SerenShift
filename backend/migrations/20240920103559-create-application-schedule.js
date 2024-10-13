@@ -8,7 +8,7 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER(6),
+        type: Sequelize.INTEGER(),
       },
       start_date: {
         type: Sequelize.DATE,
@@ -56,16 +56,6 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
       },
-      linked_application: {
-        type: Sequelize.INTEGER(6),
-        allowNull: true,
-        references: {
-          model: 'Applications',
-          key: 'application_id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
-      },
       status: {
         type: Sequelize.ENUM('Pending', 'Approved', 'Rejected', 'Withdrawn'),
         allowNull: false,
@@ -94,7 +84,7 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER(6),
+        type: Sequelize.INTEGER(),
       },
       start_date: {
         type: Sequelize.DATE,
@@ -141,16 +131,6 @@ module.exports = {
       verify_timestamp: {
         type: Sequelize.DATE,
         allowNull: false,
-      },
-      linked_schedule: {
-        type: Sequelize.INTEGER(6),
-        allowNull: true,
-        references: {
-          model: 'Schedules',
-          key: 'schedule_id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
       },
       created_timestamp: {
         allowNull: false,

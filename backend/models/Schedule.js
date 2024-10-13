@@ -6,7 +6,7 @@ class Schedule extends Model { }
 Schedule.init(
     {
         schedule_id: {
-            type: DataTypes.INTEGER(6),
+            type: DataTypes.INTEGER(),
             allowNull: false,
             primaryKey: true,
             autoIncrement: true,
@@ -40,10 +40,6 @@ Schedule.init(
             type: DataTypes.DATE,
             allowNull: false,
         },
-        linked_schedule: {
-            type: DataTypes.INTEGER(6),
-            allowNull: true,
-        }
     },
     {
         sequelize,
