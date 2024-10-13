@@ -22,6 +22,7 @@ export default function WithdrawApplicationPage() {
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [selectedPosition, setSelectedPosition] = useState("");
   const [currentApplicationIndex, setCurrentApplicationIndex] = useState(0); // For paginating through selected applications
+  const [remarks, setRemarks] = useState('');
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -482,8 +483,8 @@ export default function WithdrawApplicationPage() {
               </Text>
               <Textarea
                 placeholder="Write any remarks here..."
-                // value={remarks}
-                // onChange={(e) => onChange(e.target.value)}
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
                 bg="gray.50"
                 borderColor="gray.300"
                 focusBorderColor="blue.500"
@@ -494,9 +495,11 @@ export default function WithdrawApplicationPage() {
             </Box>
           <Flex mt={4} justifyContent="flex-start" w="full">
             <Button 
-                colorScheme="red" 
+                colorScheme="red"
                 width="full"
-                onClick={handleWithdraw}>
+                onClick={handleWithdraw}
+                isDisabled={!remarks.trim()}
+                >
               Withdraw Application
             </Button>
           </Flex>
