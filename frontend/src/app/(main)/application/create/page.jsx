@@ -186,6 +186,31 @@ export default function NewApplicationPage() {
     return;
   }
 
+  if (type == "Regular" && !recurrenceRule){
+    toast({
+      title: "Please provide a reccurence rule for your regular application.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+    });
+    setLoading(false);
+    return;
+  }
+
+  if (type == "Regular" && !recurrenceEndDate){
+    toast({
+      title: "Please provide a reccurence end date for your regular application.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+    });
+    setLoading(false);
+    return;
+  }
+
+
     try {
       if (
         employeeInfo.length != 0 &&
