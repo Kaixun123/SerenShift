@@ -69,16 +69,42 @@ const splitDatesByDay = (startDate, endDate) => {
 }
 
 // Helper Function to upload files to S3
-const uploadFilesToS3 = async (files, userId) => {
+const uploadFilesToS3 = async (files, applicationId, userId) => {
     if (!files || files.length === 0) return;
 
-    const uploadPromises = files.map(file => uploadFile(file, 'application', userId, false, { id: userId }));
+    const uploadPromises = files.map(file => uploadFile(file, 'application', applicationId, false, { id: userId }));
     await Promise.all(uploadPromises);
 };
+
+
+// Helper Function for recurrence logic for regular applications
+const createRecurringApplications = async (recurrenceRule, startDate, endDate, recurrenceEndDate, requestorRemarks, createdBy) => {
+    let applications = [];
+    let currentStartDate = moment(startDate);
+    let currentEndDate = moment(endDate);
+
+    while (currentStartDate.isBefore(recurrenceEndDate)) {
+        currentStartDate.add(1, recurrenceRule); // E.g., add 1 week or 1 month
+        currentEndDate.add(1, recurrenceRule);
+
+        const application = await Application.create({
+            start_date: currentStartDate.toDate(),
+            end_date: currentEndDate.toDate(),
+            application_type: 'Regular',
+            created_by: createdBy,
+            last_update_by: createdBy,
+            requestor_remarks: requestorRemarks,
+            status: 'Pending',
+        });
+
+        applications.push(application);
+    }
+}
 
 module.exports = {
     checkforOverlap,
     checkWhetherSameDate,
     splitDatesByDay,
     uploadFilesToS3,
+    createRecurringApplications,
 };

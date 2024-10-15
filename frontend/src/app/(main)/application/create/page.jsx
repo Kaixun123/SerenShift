@@ -298,6 +298,11 @@ export default function NewApplicationPage() {
     }
   };
 
+  // Calculate the maximum date for recurrence end date (1 year from today)
+  const today = new Date();
+  const nextYear = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+  const maxRecurrenceEndDate = nextYear.toISOString().split('T')[0];
+
   return (
     <main>
       <TopHeader
@@ -429,6 +434,7 @@ export default function NewApplicationPage() {
                       value={recurrenceEndDate}
                       onChange={handleRecurrenceEndDateChange}
                       min={formattedDate.endDate ? formattedDate.endDate : ""}
+                      max={maxRecurrenceEndDate}
                     />
 
                     {recurrenceError && (
