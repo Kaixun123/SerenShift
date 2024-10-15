@@ -36,16 +36,19 @@ const PendingApplicationCard = ({
 
   return (
     <Box
-      w={"100%"}
-      px={"30px"} // Adjust padding to reduce overall size
-      py={"15px"}
+      p={"20px"} // Adjust padding to reduce overall size
       borderRadius="16px"
       overflow="hidden"
-      className="shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
+      className="w-full lg:w-[570px] shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
     >
-      <Flex gap={"15px"} justify="space-between" align="flex-start">
+      <Flex
+        gap={"15px"}
+        justify="space-between"
+        align="flex-start"
+        className="flex-col lg:flex-row"
+      >
         {/* Left Side */}
-        <VStack spacing={"18px"} align="flex-start" flex="1">
+        <VStack spacing={"15px"} align="flex-start" flex="1">
           {status ? (
             <Badge
               fontSize="xs"
@@ -96,8 +99,9 @@ const PendingApplicationCard = ({
             <></>
           )}
         </VStack>
+
         {/* Right Side */}
-        <VStack spacing={"20px"} align="stretch" flex="1">
+        <VStack spacing={"10px"} align="stretch" flex="1">
           {/* Combined gray box for start date and time */}
           <Box
             bg="gray.200"
@@ -110,10 +114,18 @@ const PendingApplicationCard = ({
             <Text fontSize="sm" color="gray.600" fontWeight="bold">
               Start Date & Time:
             </Text>
-            <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={"2"}>
+            <Flex
+              justifyContent="space-between"
+              alignItems="center"
+              flexWrap="wrap"
+              gap={"2"}
+            >
               <Flex alignItems="center">
                 <Box className="flex items-center justify-center bg-white rounded-[50%] p-2">
-                  <IoCalendarOutline className="w-5 h-5" style={{ color: "#3D89FB" }} />
+                  <IoCalendarOutline
+                    className="w-5 h-5"
+                    style={{ color: "#3D89FB" }}
+                  />
                 </Box>
                 <Text fontSize="sm" ml={2}>
                   {formatDate(start_date)} {/* Start Date */}
@@ -121,7 +133,10 @@ const PendingApplicationCard = ({
               </Flex>
               <Flex alignItems="center">
                 <Box className="flex items-center justify-center bg-white rounded-[50%] p-2">
-                  <LuAlarmClock className="w-5 h-5" style={{ color: "#F29268" }} />
+                  <LuAlarmClock
+                    className="w-5 h-5"
+                    style={{ color: "#F29268" }}
+                  />
                 </Box>
                 <Text fontSize="sm" ml={2}>
                   {formatTime(start_date)} {/* Start Time */}
@@ -141,10 +156,18 @@ const PendingApplicationCard = ({
             <Text fontSize="sm" color="gray.600" fontWeight="bold">
               End Date & Time:
             </Text>
-            <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={"2"}>
+            <Flex
+              justifyContent="space-between"
+              alignItems="center"
+              flexWrap="wrap"
+              gap={"2"}
+            >
               <Flex alignItems="center">
                 <Box className="flex items-center justify-center bg-white rounded-[50%] p-2">
-                  <IoCalendarOutline className="w-5 h-5" style={{ color: "#3D89FB" }} />
+                  <IoCalendarOutline
+                    className="w-5 h-5"
+                    style={{ color: "#3D89FB" }}
+                  />
                 </Box>
                 <Text fontSize="sm" ml={2}>
                   {formatDate(end_date)} {/* End Date */}
@@ -152,7 +175,10 @@ const PendingApplicationCard = ({
               </Flex>
               <Flex alignItems="center">
                 <Box className="flex items-center justify-center bg-white rounded-[50%] p-2">
-                  <LuAlarmClock className="w-5 h-5" style={{ color: "#F29268" }} />
+                  <LuAlarmClock
+                    className="w-5 h-5"
+                    style={{ color: "#F29268" }}
+                  />
                 </Box>
                 <Text fontSize="sm" ml={2}>
                   {formatTime(end_date)} {/* End Time */}

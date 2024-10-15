@@ -35,7 +35,7 @@ const SubordinateSchedulePage = () => {
       }
     }
     fetchEmployeeData();
-  }, []);
+  }, [isRefresh]);
 
   const handleApiCalls = async (colleagueIds = []) => {
     setLoading(true);
@@ -81,8 +81,8 @@ const SubordinateSchedulePage = () => {
     setRefreshing(true);
     setTimeout(() => {
       setRefresh(true);
-      setRefreshing(false);
       setSelectedColleagueIds([]); // Reset colleague selection
+      setRefreshing(false);
     }, 200);
     setRefresh(false); // Reset refresh state
   };
@@ -211,9 +211,9 @@ const SubordinateSchedulePage = () => {
                     value: String(colleague.user_id),
                     label: `${colleague.first_name} ${colleague.last_name}`,
                   }))}
-                  placeholder={
-                    selectedColleagueIds.length === 0 ? "Select Colleague" : ""
-                  }
+                placeholder={
+                  selectedColleagueIds.length === 0 ? "Select Colleague" : ""
+                }
                 value={selectedColleagueIds.map(String)}
                 onChange={handleColleagueSelect}
                 clearable
@@ -226,7 +226,7 @@ const SubordinateSchedulePage = () => {
                   },
                 }}
               />
-              <RefreshButton onClick={handleRefresh} isLoading={refreshing} />
+              <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
             </Stack>
           </Flex>
 
