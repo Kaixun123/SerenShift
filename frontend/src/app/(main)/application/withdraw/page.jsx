@@ -448,13 +448,10 @@ export default function WithdrawApplicationPage() {
               ))}
             </Select>
           <Box mt={4}>
-          <MantineProvider withGlobalStyles withNormalizeCSS>
-            <Checkbox 
-              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'white'} }} 
+          <Checkbox 
               label="Select All"
               onChange={(e) => handleSelectAll(e.currentTarget.checked)}
-            />
-          </MantineProvider>
+          />
           </Box>
           <Box py={5} h={"100%"}>
           <VStack spacing={5} h={"100%"}>
