@@ -1,30 +1,19 @@
 'use strict';
 
-// Helper function to generate random dates within a specific range (past or future)
-const generateRandomDateInRange = (daysRange = 30, past = false) => {
+// Helper function to generate random dates within a specific range (e.g., within the next 30 days)
+const generateRandomDate = (daysRange = 30) => {
   let randomDate;
   do {
     const today = new Date();
     const randomDays = Math.floor(Math.random() * daysRange);
     randomDate = new Date(today);
-    randomDate.setDate(today.getDate() + (past ? -randomDays : randomDays));
-  } while (randomDate.getDay() === 0 || randomDate.getDay() === 6); // Avoid weekends
+    randomDate.setDate(today.getDate() + randomDays);
+  } while (randomDate.getDay() === 0 || randomDate.getDay() === 6); // 0 = Sunday, 6 = Saturday
   return randomDate;
 };
 
-// Helper function to check for schedule conflicts
-const hasConflict = (newStartDate, newEndDate, schedules) => {
-  return schedules.some(schedule => {
-    return (
-      (newStartDate >= schedule.start_date && newStartDate < schedule.end_date) ||
-      (newEndDate > schedule.start_date && newEndDate <= schedule.end_date) ||
-      (newStartDate <= schedule.start_date && newEndDate >= schedule.end_date)
-    );
-  });
-};
-
-// Modified generateFixedTimes for specific ranges (either past or future)
-const generateFixedTimes = (past = false) => {
+// Helper function to generate start and end times for morning, afternoon, or whole day
+const generateFixedTimes = () => {
   const MORNING_START = new Date().setHours(9, 0, 0, 0);  // 9:00 am
   const MORNING_END = new Date().setHours(13, 0, 0, 0);    // 1:00 pm
   const AFTERNOON_START = new Date().setHours(14, 0, 0, 0); // 2:00 pm
@@ -47,17 +36,51 @@ const generateFixedTimes = (past = false) => {
     endTime = new Date(WHOLE_DAY_END);
   }
 
-  // Add randomness to the start date (past or future)
-  const randomDate = generateRandomDateInRange(30, past);
+  // Add randomness to the start date
+  const randomDate = generateRandomDate(30); // Generate random date within the next 30 days
   startTime.setFullYear(randomDate.getFullYear(), randomDate.getMonth(), randomDate.getDate());
   endTime.setFullYear(randomDate.getFullYear(), randomDate.getMonth(), randomDate.getDate());
 
   return { startDate: startTime, endDate: endTime };
 };
 
+// Helper function to generate a random number of entries
+const getRandomInt = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+// Helper function to generate repeated "Regular" applications for the next few weeks
+const generateWeeklyRegularApplications = (startDate, weeks = 4) => {
+  let applications = [];
+  const { startDate: baseStart, endDate: baseEnd } = generateFixedTimes();
+
+  for (let i = 0; i < weeks; i++) {
+    const regularStartDate = new Date(baseStart);
+    regularStartDate.setDate(regularStartDate.getDate() + (i * 7));  // Increment by 7 days for each week
+
+    const regularEndDate = new Date(baseEnd);
+    regularEndDate.setDate(regularEndDate.getDate() + (i * 7));  // Increment by 7 days for each week
+
+    applications.push({
+      start_date: regularStartDate,
+      end_date: regularEndDate,
+      application_type: 'Regular',
+      status: 'Pending',
+      created_by: null,
+      last_update_by: null,
+      verify_by: null,
+      verify_timestamp: null,
+      created_timestamp: new Date(),
+      last_update_timestamp: new Date(),
+    });
+  }
+
+  return applications;
+};
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Fetch existing employees
+    // Step 1: Fetch existing employees from the database using queryInterface
     const employees = await queryInterface.sequelize.query(
       'SELECT * FROM Employees',
       { type: Sequelize.QueryTypes.SELECT }
@@ -71,78 +94,66 @@ module.exports = {
     let schedules = [];
     let applications = [];
 
-    for (const employee of employees) {
-      const existingSchedules = await queryInterface.sequelize.query(
-        `SELECT * FROM Schedules WHERE created_by = ?`,
-        {
-          replacements: [employee.id],
-          type: Sequelize.QueryTypes.SELECT
-        }
-      );
+    employees.forEach(employee => {
+      // Step 3: Create schedules for each employee
+      const scheduleCount = getRandomInt(1, 5); // Generate between 1 and 5 schedules per employee
+      for (let i = 0; i < scheduleCount; i++) {
+        const { startDate, endDate } = generateFixedTimes(); // Generate fixed start and end times with random dates
+        const isRegularSchedule = Math.random() < 0.2;  // 20% chance of generating a Regular schedule
 
-      // Create approved application and schedule pairs with start and end dates within the last 30 days
-      for (let i = 0; i < 2; i++) {  // Let's create two approved past applications per employee
-        let { startDate, endDate } = generateFixedTimes(true);  // Generate dates in the past 30 days
-
-        // Ensure no schedule conflicts for approved applications
-        while (hasConflict(startDate, endDate, existingSchedules)) {
-          ({ startDate, endDate } = generateFixedTimes(true));
-        }
-
-        schedules.push({
+        const scheduleEntry = {
           start_date: startDate,
           end_date: endDate,
-          schedule_type: 'Ad Hoc',
+          schedule_type: isRegularSchedule ? 'Regular' : 'Ad Hoc',
           created_by: employee.id,
           last_update_by: employee.id,
           verify_by: employee.reporting_manager,
           verify_timestamp: new Date(),
           created_timestamp: new Date(),
           last_update_timestamp: new Date(),
-        });
+        };
 
-        applications.push({
-          start_date: startDate,
-          end_date: endDate,
-          application_type: 'Ad Hoc',
-          status: 'Approved',
-          created_by: employee.id,
-          last_update_by: employee.id,
-          verify_by: null,
-          verify_timestamp: null,
-          created_timestamp: new Date(),
-          last_update_timestamp: new Date(),
-        });
+        // Push to the schedules array
+        schedules.push(scheduleEntry);
       }
 
-      // Create rejected/withdrawn applications with start and end dates within the last 30 days
-      for (let i = 0; i < 2; i++) {  // Let's create two rejected/withdrawn applications per employee
-        const { startDate, endDate } = generateFixedTimes(true);  // Generate dates in the past 30 days
+      // Step 4: Create applications for each employee
+      const applicationCount = getRandomInt(1, 5); // Generate between 1 and 5 applications per employee
+      for (let i = 0; i < applicationCount; i++) {
+        const { startDate, endDate } = generateFixedTimes(); // Generate fixed start and end times with random dates
+        const isRegularApplication = Math.random() < 0.2;  // 20% chance of generating a Regular application
 
-        const status = Math.random() < 0.5 ? 'Rejected' : 'Withdrawn';
-
-        applications.push({
-          start_date: startDate,
-          end_date: endDate,
-          application_type: 'Ad Hoc',
-          status: status,
-          created_by: employee.id,
-          last_update_by: employee.id,
-          verify_by: null,
-          verify_timestamp: null,
-          created_timestamp: new Date(),
-          last_update_timestamp: new Date(),
-        });
+        if (isRegularApplication) {
+          const regularApplications = generateWeeklyRegularApplications(startDate, 4); // Repeat for 4 weeks
+          regularApplications.forEach(regular => {
+            regular.created_by = employee.id;
+            regular.last_update_by = employee.id;
+            applications.push(regular);
+          });
+        } else {
+          applications.push({
+            start_date: startDate,
+            end_date: endDate,
+            application_type: 'Ad Hoc',
+            status: 'Pending',
+            created_by: employee.id,
+            last_update_by: employee.id,
+            verify_by: null,
+            verify_timestamp: null,
+            created_timestamp: new Date(),
+            last_update_timestamp: new Date(),
+          });
+        }
       }
-    }
+    });
 
-    // Insert all schedules and applications
+    // Step 5: Insert all schedules and applications
     await queryInterface.bulkInsert('Schedules', schedules);
     await queryInterface.bulkInsert('Applications', applications);
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Delete the inserted schedules and applications
+    // Step 6: Delete the inserted schedule and application entries
     await queryInterface.bulkDelete('Schedules', null, {});
     await queryInterface.bulkDelete('Applications', null, {});
   }
