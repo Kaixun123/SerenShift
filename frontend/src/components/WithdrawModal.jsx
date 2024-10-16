@@ -43,7 +43,7 @@ const WithdrawalModal = ({
   const handleConfirm = () => {
     onConfirm();
     toast({
-      title: "Pending Application Successfully Withdrawn",
+      title: "Application Successfully Withdrawn",
       status: "success",
       duration: 3000,
       isClosable: true,
