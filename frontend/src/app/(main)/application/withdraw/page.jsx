@@ -25,6 +25,10 @@ export default function WithdrawApplicationPage() {
   const [remarks, setRemarks] = useState('');
   const [remarksMultiple, setRemarksMultiple] = useState('');
 
+  // Modal state
+  const { isOpen, onOpen, onClose } = useDisclosure(); // useDisclosure hook from Chakra UI
+
+
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
