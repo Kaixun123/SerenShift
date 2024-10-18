@@ -21,6 +21,7 @@ import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager } from "react-icons/gr";
 import { CgList } from "react-icons/cg";
+import { FiHome } from "react-icons/fi";
 
 export default function SideBar() {
   const router = useRouter();
@@ -71,6 +72,13 @@ export default function SideBar() {
       href: "/schedule/subordinate",
       icon: GrUserManager,
       title: "Subordinate Calendar",
+    },
+    {
+      id: 7,
+
+      href: "/hr",
+      icon: FiHome,
+      title: "Company View",
     }
   ];
 

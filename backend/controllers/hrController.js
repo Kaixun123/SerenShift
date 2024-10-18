@@ -78,18 +78,27 @@ const retrieveDeptStaffStat = async (req, res, next) => {
         const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0)); // 00:00:00 of the target date
         const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999)); // 23:59:59 of the target date
 
-        // Define AM, PM, and Full-Day ranges
-        const amStart = new Date(targetDate.setHours(9, 0, 0, 0));   // 09:00:00 (start of AM)
-        const amEnd = new Date(targetDate.setHours(13, 0, 0, 0));    // 13:00:00 (end of AM)
-        const pmStart = new Date(targetDate.setHours(14, 0, 0, 0));  // 14:00:00 (start of PM)
-        const pmEnd = new Date(targetDate.setHours(18, 0, 0, 0));    // 18:00:00 (end of PM)
-        const fullDayStart = new Date(targetDate.setHours(9, 0, 0, 0)); // 09:00:00 (start of full day)
-        const fullDayEnd = new Date(targetDate.setHours(18, 0, 0, 0));   // 18:00:00 (end of full day)
+        // Define AM, PM, and Full-Day ranges for that specific day
+        const amStart = new Date(startOfDay);  // 09:00:00 (start of AM on target day)
+        amStart.setHours(9, 0, 0, 0);
+        const amEnd = new Date(startOfDay);   // 13:00:00 (end of AM on target day)
+        amEnd.setHours(13, 0, 0, 0);
+        
+        const pmStart = new Date(startOfDay); // 14:00:00 (start of PM on target day)
+        pmStart.setHours(14, 0, 0, 0);
+        const pmEnd = new Date(startOfDay);   // 18:00:00 (end of PM on target day)
+        pmEnd.setHours(18, 0, 0, 0);
 
-        // Initialize counts for AM, PM, and Full-Day WFH
+        const fullDayStart = new Date(startOfDay);  // 09:00:00 (start of full day on target day)
+        fullDayStart.setHours(9, 0, 0, 0);
+        const fullDayEnd = new Date(startOfDay);    // 18:00:00 (end of full day on target day)
+        fullDayEnd.setHours(18, 0, 0, 0);
+
+        // Initialize counts for AM, PM, and Full-Day WFH and array for individual staff data
         let amCount = 0;
         let pmCount = 0;
         let fullDayCount = 0;
+        const wfhStaff = [];
 
         // Retrieve all employees in the specified department
         const employees = await Employee.findAll({
@@ -109,19 +118,35 @@ const retrieveDeptStaffStat = async (req, res, next) => {
                 }
             }).then(schedules => {
                 schedules.forEach(schedule => {
-                    // Full-Day WFH: Schedule spans from 09:00 to 18:00
-                    if (schedule.start_date <= fullDayStart && schedule.end_date >= fullDayEnd) {
+                    // Limit the schedule comparison to only the target date (ignoring schedules beyond the day)
+                    const scheduleStart = new Date(schedule.start_date) < startOfDay ? startOfDay : new Date(schedule.start_date);
+                    const scheduleEnd = new Date(schedule.end_date) > endOfDay ? endOfDay : new Date(schedule.end_date);
+
+                    let wfhPeriod = '';
+
+                    // Full-Day WFH: Schedule fully covers 09:00 to 18:00 on the target day
+                    if (scheduleStart <= fullDayStart && scheduleEnd >= fullDayEnd) {
                         fullDayCount++;
+                        wfhPeriod = 'Full-Day';
                     }
-
-                    // AM WFH: Schedule overlaps with AM period (09:00 to 13:00)
-                    if (schedule.start_date <= amEnd && schedule.end_date >= amStart) {
+                    // AM WFH: Schedule overlaps with AM period
+                    else if (scheduleStart <= amEnd && scheduleEnd >= amStart) {
                         amCount++;
+                        wfhPeriod = 'AM';
+                    }
+                    // PM WFH: Schedule overlaps with PM period
+                    else if (scheduleStart <= pmEnd && scheduleEnd >= pmStart) {
+                        pmCount++;
+                        wfhPeriod = 'PM';
                     }
 
-                    // PM WFH: Schedule overlaps with PM period (14:00 to 18:00)
-                    if (schedule.start_date <= pmEnd && schedule.end_date >= pmStart) {
-                        pmCount++;
+                    // If the employee worked from home, add their details to the wfhStaff array
+                    if (wfhPeriod) {
+                        wfhStaff.push({
+                            id: staff.id,
+                            name: `${staff.first_name} ${staff.last_name}`,
+                            wfhPeriod: wfhPeriod
+                        });
                     }
                 });
             });
@@ -130,18 +155,21 @@ const retrieveDeptStaffStat = async (req, res, next) => {
         // Wait for all schedule promises to resolve
         await Promise.all(schedulePromises);
 
-        // Prepare the result
-        const result = {
+        const total = amCount + pmCount + fullDayCount;
+        const wfhStats = {
             department,
             wfh: {
-                am: amCount,
-                pm: pmCount,
-                fullDay: fullDayCount
+                am: amCount / total || 0,
+                pm: pmCount / total || 0,
+                fullDay: fullDayCount / total || 0
             }
         };
 
-        // Return the WFH counts for the specified department
-        return res.status(200).json(result);
+        // Return both the WFH stats and the list of WFH staff
+        return res.status(200).json({
+            wfhStats,
+            wfhStaff
+        });
 
     } catch (error) {
         console.error("Error retrieving staff:", error);
@@ -151,5 +179,5 @@ const retrieveDeptStaffStat = async (req, res, next) => {
 
 module.exports = {
     retrieveTotalStaffStat,
-    retrieveDeptStaffStat
+    retrieveDeptStaffStat,
 };
