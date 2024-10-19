@@ -78,6 +78,15 @@ const generateWeeklyRegularApplications = (startDate, weeks = 4) => {
   return applications;
 };
 
+// Helper function to check if a date range overlaps with a blacklist date range
+const isConflictWithBlacklist = (startDate, endDate, blacklist) => {
+  return blacklist.some(bl =>
+    (startDate >= bl.start_date && startDate <= bl.end_date) ||
+    (endDate >= bl.start_date && endDate <= bl.end_date) ||
+    (bl.start_date >= startDate && bl.end_date <= endDate)
+  );
+};
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     // Step 1: Fetch existing employees from the database using queryInterface
@@ -150,10 +159,59 @@ module.exports = {
     // Step 5: Insert all schedules and applications
     await queryInterface.bulkInsert('Schedules', schedules);
     await queryInterface.bulkInsert('Applications', applications);
+
+    // Step 6: Retrieve inserted regular schedules and applications with their IDs for each employee
+    const insertedSchedules = await queryInterface.sequelize.query(
+      `SELECT schedule_id, created_by 
+       FROM Schedules 
+       WHERE schedule_type = "Regular" 
+       ORDER BY created_by, created_timestamp`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    const insertedApplications = await queryInterface.sequelize.query(
+      `SELECT application_id, created_by 
+       FROM Applications 
+       WHERE application_type = "Regular" 
+       ORDER BY created_by, created_timestamp`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    // Step 7: Update linked_application and linked_schedule fields
+    let lastApplicationForEmployee = {};
+    let lastScheduleForEmployee = {};
+
+    // Iterate through the regular applications
+    for (let i = 0; i < insertedApplications.length - 1; i++) {
+      const currentApplication = insertedApplications[i];
+      const nextApplication = insertedApplications[i + 1];
+
+      // If the next application belongs to the same employee, link them
+      if (currentApplication.created_by === nextApplication.created_by) {
+        await queryInterface.bulkUpdate('Applications',
+          { linked_application: nextApplication.application_id },
+          { application_id: currentApplication.application_id }
+        );
+      }
+    }
+
+    // Iterate through the regular schedules
+    for (let i = 0; i < insertedSchedules.length - 1; i++) {
+      const currentSchedule = insertedSchedules[i];
+      const nextSchedule = insertedSchedules[i + 1];
+
+      // If the next schedule belongs to the same employee, link them
+      if (currentSchedule.created_by === nextSchedule.created_by) {
+        await queryInterface.bulkUpdate('Schedules',
+          { linked_schedule: nextSchedule.schedule_id },
+          { schedule_id: currentSchedule.schedule_id }
+        );
+      }
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Step 6: Delete the inserted schedule and application entries
+    // Step 8: Delete the inserted schedule and application entries
     await queryInterface.bulkDelete('Schedules', null, {});
     await queryInterface.bulkDelete('Applications', null, {});
   }
