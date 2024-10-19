@@ -385,60 +385,62 @@ const withdrawPendingApplication = async (req, res) => {
 
 // PUT function - to update approved application status to withdrawn
 const withdrawApprovedApplication = async (req, res) => {
-        try {
-            const { schedule_id } = req.body; 
-            const managerId = req.user.id; 
-    
-            // Find the schedule by schedule_id
-            const schedule = await Schedule.findOne({
-                where: { 
-                    schedule_id: schedule_id 
-                }
-            });
-            
-            if (!schedule) {
-                return res.status(404).json({ message: 'Schedule not found' });
-            }
+    try {
+        const { application_id } = req.body; 
+        const managerId = req.user.id; 
 
-            if (scheduleHasNotPassedCurrentDay(schedule.start_date)) {
-            return res.status(400).json({ message: "Cannot withdraw schedule which has started" })};
-
-            let requestor = await Employee.findByPk(application.created_by);
-            let approver = await Employee.findByPk(req.user.id);
-            if (requestor.reporting_manager != approver.id) {
-                return res.status(400).json({ message: "Only the direct reporting manager can withdraw this application" })
-            };
-    
-            // Find the corresponding application by matching created_by, start_date, and end_date
-            const application = await Application.findOne({
-                where: {
-                    created_by: schedule.created_by,
-                    start_date: schedule.start_date,
-                    end_date: schedule.end_date,
-                    status: 'Approved'
-                }
-            });
-    
-            if (!application) {
-                return res.status(404).json({ message: 'Application not found or not authorized' });
-            }
-    
-            // Update the application status to 'Withdrawn'
-            application.status = 'Withdrawn';
-            application.last_update_by = managerId;
-            await application.save();
-    
-            // Delete the corresponding schedule
-            await schedule.destroy(); 
-
-            res.status(200).json({
-                message: 'Application updated to withdrawn and schedule deleted successfully',
-            });
-        } catch (error) {
-            console.error('Error withdrawing application:', error);
-            res.status(500).json({ message: 'An error occurred', error });
+        // Find the corresponding application by matching application_id
+        const application = await Application.findByPk(application_id);
+        if (!application) {
+            return res.status(404).json({ message: 'Application not found or not authorized' });
         }
+
+        if (scheduleHasNotPassedCurrentDay(application.start_date)) {
+            return res.status(400).json({ message: "Cannot withdraw application which has started" });
+        }
+
+        // Find the requestor and approver
+        let requestor = await Employee.findByPk(application.created_by);
+        let approver = await Employee.findByPk(managerId);
+        
+        if (!requestor || !approver) {
+            return res.status(404).json({ message: 'Requestor or Approver not found' });
+        }
+
+        // Check if the approver is the direct reporting manager
+        if (requestor.reporting_manager !== approver.id) {
+            return res.status(400).json({ message: "Only the direct reporting manager can withdraw this application" });
+        }
+
+        // Find the schedule by schedule_id
+        const schedule = await Schedule.findOne({
+            where: { 
+                created_by: application.created_by,
+                start_date: application.start_date
+            }
+        });
+
+        if (!schedule) {
+            return res.status(404).json({ message: 'Schedule not found' });
+        }
+
+        // Update the application status to 'Withdrawn'
+        application.status = 'Withdrawn';
+        application.last_update_by = managerId;
+        await application.save();
+
+        // Delete the corresponding schedule
+        await schedule.destroy(); 
+
+        res.status(200).json({
+            message: 'Application updated to withdrawn and schedule deleted successfully',
+        });
+    } catch (error) {
+        console.error('Error withdrawing application:', error);
+        res.status(500).json({ message: 'An error occurred', error: error.message });
     }
+};
+
 
 module.exports = {
     retrieveApplications,
