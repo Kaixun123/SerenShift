@@ -77,6 +77,6 @@ router.post("/createNewApplication", createNewApplicationValidationRules(), ensu
 router.put("/approveApplication", approvePendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
 router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
 router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
-router.put("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManager, (req, res) => applicationController.withdrawApprovedApplication(req, res));
+router.patch("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManager, (req, res) => applicationController.withdrawApprovedApplication(req, res));
 
 module.exports = router;
