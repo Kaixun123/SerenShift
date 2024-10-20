@@ -19,11 +19,6 @@ Blacklist.init(
             type: DataTypes.DATE,
             allowNull: false,
         },
-        blacklist_type: {
-            type: DataTypes.ENUM,
-            values: ['Regular', 'Ad Hoc'],
-            allowNull: false,
-        },
         created_by: {
             type: DataTypes.INTEGER(6),
             allowNull: false,
