@@ -535,7 +535,7 @@ export default function WithdrawApplicationPage() {
                 focusBorderColor="blue.500"
                 resize="none"
                 height="100px"
-                // isDisabled={isDisabled} // Use isDisabled prop to control input
+                isDisabled={selectedApplications == 0} // Use isDisabled prop to control input
               />
             </Box>
           <Flex mt={4} justifyContent="flex-start" w="full">
