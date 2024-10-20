@@ -1,9 +1,13 @@
 import { Box, Text, Textarea } from "@chakra-ui/react";
 
-export default function ApproverRemarks({ remarks = "", onChange, isDisabled }) {
+export default function ApproverRemarks({
+  remarks = "",
+  onChange,
+  isDisabled,
+}) {
   return (
     <Box>
-      <Text fontWeight="bold" color="gray.600" mb={2}>
+      <Text fontWeight="bold" color="gray.600" my={2}>
         Remarks
       </Text>
       <Textarea

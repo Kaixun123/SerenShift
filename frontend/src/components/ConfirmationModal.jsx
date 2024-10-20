@@ -40,7 +40,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplica
         status: "success",
         duration: 3000, // Duration for the toast in milliseconds
         isClosable: true,
-        position: "top", // Position of the toast
+        position: "top-right", // Position of the toast
       });
 
       // Close the modal after confirming
