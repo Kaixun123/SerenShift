@@ -68,6 +68,10 @@ module.exports = {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
+      withdrawal_remark: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
       created_timestamp: {
         allowNull: false,
         type: Sequelize.DATE,
