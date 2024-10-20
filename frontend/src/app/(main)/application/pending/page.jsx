@@ -98,6 +98,7 @@ export default function PendingApplicationPage() {
 
   const handleSaveEdit = (updatedData) => {
     console.log("Updated Application Data:", { ...applicationToEdit, ...updatedData });
+    // Here you could also send the updated data to the backend if necessary.
     setApplicationToEdit(null); // Close the edit card after saving
   };
 
@@ -188,7 +189,13 @@ export default function PendingApplicationPage() {
         <div className="w-1/2">
           {applicationToEdit && (
             <EditApplicationCard
-              applicationData={applicationToEdit}
+              applicationData={{
+                arrangementType: applicationToEdit.application_type || "", // Provide a default value
+                timeslot: applicationToEdit.timeslot || "", // Ensure timeslot is included
+                startDate: applicationToEdit.start_date || "", // Provide a default value
+                endDate: applicationToEdit.end_date || "", // Provide a default value
+                reason: applicationToEdit.requestor_remarks || "", // Provide a default value
+              }}
               onSave={handleSaveEdit}
               onCancel={handleCancelEdit}
             />
