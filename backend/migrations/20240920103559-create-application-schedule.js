@@ -68,7 +68,7 @@ module.exports = {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
-      withdrawal_remark: {
+      withdrawal_remarks: {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
