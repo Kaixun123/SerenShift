@@ -8,14 +8,14 @@ import ApproverRemarks from "@/components/RemarksCard";
 import ApproveApplicationButton from "@/components/ApproveButton";
 import RejectApplicationButton from "@/components/RejectButton";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import ApproveMultiple from '@/components/ApproveMultipleButton';
-import RejectMultiple from '@/components/RejectMultipleButton';
-import MultipleRemarks from '@/components/RemarksMultiple';
+import ApproveMultiple from "@/components/ApproveMultipleButton";
+import RejectMultiple from "@/components/RejectMultipleButton";
+import MultipleRemarks from "@/components/RemarksMultiple";
 import ConfirmationMultipleModal from "@/components/ConfirmationMultipleModal";
 import { useEffect, useState } from "react";
 
 // Chakra UI
-import { Box, VStack, Text, Flex, useDisclosure, useToast } from "@chakra-ui/react";
+import { Box, VStack, Text, Flex, useDisclosure } from "@chakra-ui/react";
 
 // Mantine
 import { MultiSelect, Pagination, Checkbox } from "@mantine/core";
@@ -75,7 +75,7 @@ export default function ManageApplicationPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: 'include',
+          credentials: "include",
         }
       );
 
@@ -125,7 +125,7 @@ export default function ManageApplicationPage() {
   );
 
   const items = paginatedApplications[activePage - 1]?.map((application) => (
-    <Flex key={application.application_id} alignItems="center">
+    <Flex key={application.application_id} alignItems="center" width="100%">
       <Checkbox
         className="mr-3"
         checked={selectedApplications.some(
@@ -137,8 +137,8 @@ export default function ManageApplicationPage() {
           );
           const newSelectedApplications = isSelected
             ? selectedApplications.filter(
-              (app) => app.application_id !== application.application_id
-            )
+                (app) => app.application_id !== application.application_id
+              )
             : [...selectedApplications, application]; // Store the full application object when selected
 
           setSelectedApplications(newSelectedApplications);
@@ -226,10 +226,10 @@ export default function ManageApplicationPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: 'include',
+          credentials: "include",
           body: JSON.stringify({
-            "application_id": applicationId, // Include the application ID
-            "approverRemarks": remarks[applicationId] || "", // Include remarks if any
+            application_id: applicationId, // Include the application ID
+            approverRemarks: remarks[applicationId] || "", // Include remarks if any
           }),
         });
 
@@ -248,10 +248,10 @@ export default function ManageApplicationPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: 'include',
+          credentials: "include",
           body: JSON.stringify({
-            "application_id": applicationId, // Include the application ID
-            "approverRemarks": remarks[applicationId] || "", // Include remarks if any
+            application_id: applicationId, // Include the application ID
+            approverRemarks: remarks[applicationId] || "", // Include remarks if any
           }),
         });
 
@@ -294,10 +294,11 @@ export default function ManageApplicationPage() {
             headers: {
               "Content-Type": "application/json",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
-              "application_id": application.application_id,
-              "approverRemarks": remarks[application.application_id] || remarksMultiple, // Use individual or multiple remarks
+              application_id: application.application_id,
+              approverRemarks:
+                remarks[application.application_id] || remarksMultiple, // Use individual or multiple remarks
             }),
           });
 
@@ -313,10 +314,11 @@ export default function ManageApplicationPage() {
             headers: {
               "Content-Type": "application/json",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
-              "application_id": application.application_id,
-              "approverRemarks": remarks[application.application_id] || remarksMultiple,
+              application_id: application.application_id,
+              approverRemarks:
+                remarks[application.application_id] || remarksMultiple,
             }),
           });
 
@@ -341,7 +343,7 @@ export default function ManageApplicationPage() {
         subText={"See your subordinate pending applications here!"}
       />
 
-      <div className="flex p-[30px]">
+      <div className="flex p-[30px] gap-[30px]">
         <div className="w-1/2">
           <Flex gap={"10px"} direction={"column"}>
             <Flex justifyContent={"space-between"}>
@@ -414,74 +416,80 @@ export default function ManageApplicationPage() {
             </VStack>
           </Box>
         </div>
-        {/* Application Review Card on the right side */}
-        <Box w="1/2" ml={"30px"}>
-          {selectedApplications.length > 1 && (
-            <div className="flex flex-col gap-4 mb-4">
-              <MultipleRemarks
-                remarks={remarksMultiple}
-                onChange={(value) => setRemarksMultiple(value)}
-                isDisabled={isRemarksDisabled}
-              />
-              <ApproveMultiple onClick={handleApproveMultipleClick} />
-              <RejectMultiple onClick={handleRejectMultipleClick} />
-            </div>
-          )}
-          {selectedApplicationDetails ? (
-            <>
-              <ApplicationReviewCard
-                startDate={selectedApplicationDetails.start_date}
-                endDate={selectedApplicationDetails.end_date}
-                applicationType={selectedApplicationDetails.application_type}
-                first_name={selectedApplicationDetails.first_name}
-                last_name={selectedApplicationDetails.last_name}
-                position={selectedApplicationDetails.position}
-                requestor_remarks={selectedApplicationDetails.requestor_remarks}
-                supportingDocs={selectedApplicationDetails.supportingDocs}
-              />
-              {selectedApplications.length > 1 && (
-                <Pagination
-                  total={selectedApplications.length}
-                  value={currentApplicationIndex + 1}
-                  onChange={(page) => setCurrentApplicationIndex(page - 1)}
-                  className="flex mt-5 justify-center"
+        <div className="w-1/2">
+          {/* Application Review Card on the right side */}
+          <Box>
+            {selectedApplications.length > 1 && (
+              <div className="flex flex-col gap-4 mb-4">
+                <MultipleRemarks
+                  remarks={remarksMultiple}
+                  onChange={(value) => setRemarksMultiple(value)}
+                  isDisabled={isRemarksDisabled}
                 />
-              )}
-            </>
-          ) : (
-            <ApplicationReviewCard
-              startDate=""
-              endDate=""
-              applicationType=""
-              first_name=""
-              last_name=""
-              position=""
-              requestor_remarks=""
-              supportingDocs=""
-              message="No WFH selected" // Custom prop to indicate no selection
+                <ApproveMultiple onClick={handleApproveMultipleClick} />
+                <RejectMultiple onClick={handleRejectMultipleClick} />
+              </div>
+            )}
+            {selectedApplicationDetails ? (
+              <>
+                <ApplicationReviewCard
+                  startDate={selectedApplicationDetails.start_date}
+                  endDate={selectedApplicationDetails.end_date}
+                  applicationType={selectedApplicationDetails.application_type}
+                  first_name={selectedApplicationDetails.first_name}
+                  last_name={selectedApplicationDetails.last_name}
+                  position={selectedApplicationDetails.position}
+                  requestor_remarks={
+                    selectedApplicationDetails.requestor_remarks
+                  }
+                  supportingDocs={selectedApplicationDetails.supportingDocs}
+                />
+                {selectedApplications.length > 1 && (
+                  <Pagination
+                    total={selectedApplications.length}
+                    value={currentApplicationIndex + 1}
+                    onChange={(page) => setCurrentApplicationIndex(page - 1)}
+                    className="flex mt-5 justify-center"
+                  />
+                )}
+              </>
+            ) : (
+              <ApplicationReviewCard
+                startDate=""
+                endDate=""
+                applicationType=""
+                first_name=""
+                last_name=""
+                position=""
+                requestor_remarks=""
+                supportingDocs=""
+                message="No WFH selected" // Custom prop to indicate no selection
+              />
+            )}
+            <ApproverRemarks
+              remarks={
+                remarks[selectedApplicationDetails?.application_id] || ""
+              } // Access remarks
+              onChange={(value) =>
+                handleRemarksChange(
+                  selectedApplicationDetails.application_id,
+                  value
+                )
+              }
+              isDisabled={isRemarksDisabled}
             />
-          )}
-          <ApproverRemarks
-            remarks={remarks[selectedApplicationDetails?.application_id] || ""} // Access remarks
-            onChange={(value) =>
-              handleRemarksChange(
-                selectedApplicationDetails.application_id,
-                value
-              )
-            }
-            isDisabled={isRemarksDisabled}
-          />
-          <Flex mt={4} justifyContent="flex-end" gap={4}>
-            <ApproveApplicationButton
-              isDisabled={!selectedApplicationDetails || isDateInvalid}
-              onClick={handleApproveClick} // Attach onClick handler
-            />
-            <RejectApplicationButton
-              isDisabled={!selectedApplicationDetails || isDateInvalid}
-              onClick={handleRejectClick} // Attach onClick handler
-            />
-          </Flex>
-        </Box>
+            <Flex mt={4} justifyContent="flex-end" gap={4}>
+              <ApproveApplicationButton
+                isDisabled={!selectedApplicationDetails || isDateInvalid}
+                onClick={handleApproveClick} // Attach onClick handler
+              />
+              <RejectApplicationButton
+                isDisabled={!selectedApplicationDetails || isDateInvalid}
+                onClick={handleRejectClick} // Attach onClick handler
+              />
+            </Flex>
+          </Box>
+        </div>
       </div>
 
       {/* Confirmation Modal */}

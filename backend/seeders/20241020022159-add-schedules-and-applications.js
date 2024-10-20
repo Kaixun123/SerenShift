@@ -78,6 +78,15 @@ const generateWeeklyRegularApplications = (startDate, weeks = 4) => {
   return applications;
 };
 
+// Helper function to check if a date range overlaps with a blacklist date range
+const isConflictWithBlacklist = (startDate, endDate, blacklist) => {
+  return blacklist.some(bl =>
+    (startDate >= bl.start_date && startDate <= bl.end_date) ||
+    (endDate >= bl.start_date && endDate <= bl.end_date) ||
+    (bl.start_date >= startDate && bl.end_date <= endDate)
+  );
+};
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     // Step 1: Fetch existing employees from the database using queryInterface
@@ -180,7 +189,6 @@ module.exports = {
       // If the next application belongs to the same employee, link them
       if (currentApplication.created_by === nextApplication.created_by) {
         await queryInterface.bulkUpdate('Applications',
-          { linked_application: nextApplication.application_id },
           { application_id: currentApplication.application_id }
         );
       }
@@ -194,7 +202,6 @@ module.exports = {
       // If the next schedule belongs to the same employee, link them
       if (currentSchedule.created_by === nextSchedule.created_by) {
         await queryInterface.bulkUpdate('Schedules',
-          { linked_schedule: nextSchedule.schedule_id },
           { schedule_id: currentSchedule.schedule_id }
         );
       }

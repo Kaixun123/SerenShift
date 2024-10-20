@@ -118,7 +118,7 @@ export default function PendingApplicationPage() {
   const [activePage, setPage] = useState(1);
 
   // Number of applications per page
-  const applicationsPerPage = 4;
+  const applicationsPerPage = 2;
   const paginatedApplications = handlePagination(
     pendingApplications,
     applicationsPerPage
