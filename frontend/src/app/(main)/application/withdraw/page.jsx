@@ -2,15 +2,15 @@
 // import components
 import TopHeader from "@/components/TopHeader";
 import PendingApplicationCard from "@/components/PendingApplicationCard";
-import WithdrawalModal from "@/components/WithdrawModal";
+import WithdrawApprovedModal from "@/components/WithdrawApprovedModal";
 import RefreshButton from "@/components/RefreshButton";
 import { useEffect, useState } from "react";
 
 // chakra-ui
-import { Box, Button, Flex, Input, Link, Select, Textarea, Text, useDisclosure, VStack } from "@chakra-ui/react";
+import { Box, Button, Flex, Input, Link, Textarea, Text, useToast, useDisclosure, VStack } from "@chakra-ui/react";
 
 // mantine
-import { MantineProvider, Pagination, Checkbox } from "@mantine/core";
+import { Pagination, Checkbox } from "@mantine/core";
 
 export default function WithdrawApplicationPage() {
   const [approvedApplications, setApprovedApplications] = useState([]);
@@ -18,16 +18,18 @@ export default function WithdrawApplicationPage() {
   const [subordinates, setSubordinates] = useState([]); // Holds subordinate data
   const [scheduleData, setScheduleData] = useState(null);
   const [currentAction, setCurrentAction] = useState(null); // Track current action
+  const [noApprovedApplications, setNoApprovedApplications] = useState(false);
+  const [paginatedApplications, setPaginatedApplications] = useState([]);
+
+  
   const [selectedApplications, setSelectedApplications] = useState([])
   const [filteredApplications, setFilteredApplications] = useState([]);
-  const [selectedPosition, setSelectedPosition] = useState("");
   const [currentApplicationIndex, setCurrentApplicationIndex] = useState(0); // For paginating through selected applications
   const [remarks, setRemarks] = useState('');
   const [remarksMultiple, setRemarksMultiple] = useState('');
 
-  // Modal state
-  const { isOpen, onOpen, onClose } = useDisclosure(); // useDisclosure hook from Chakra UI
-
+  // Toast handling
+  const toast = useToast();
 
 
   // For Refresh button
@@ -38,27 +40,6 @@ export default function WithdrawApplicationPage() {
   const selectedApplicationDetails = selectedApplications.length > 0 
     ? selectedApplications[currentApplicationIndex]
     : null;
-
-  const uniquePositions = Array.from(
-    new Set(subordinates.map((subordinate) => subordinate.position))
-  );
-  
-  // Filter applications based on selected position
-  useEffect(() => {
-    if (selectedPosition) {
-      // Filter applications based on subordinates with the selected position
-      const filteredApps = approvedApplications.filter((app) => 
-        subordinates.some((subordinate) =>
-          subordinate.position == selectedPosition && subordinate.user_id == app.created_by
-        )
-      );
-      console.log("Filtered Applications:", filteredApps); // Debugging log
-      setFilteredApplications(filteredApps); // Set filtered applications
-    } else {
-      // If no position is selected, show all applications
-      setFilteredApplications(approvedApplications);
-    }
-  }, [selectedPosition, subordinates, approvedApplications]);
   
   // For Withdrawal Modal
   const {
@@ -68,12 +49,14 @@ export default function WithdrawApplicationPage() {
   } = useDisclosure();
 
   const handleRefresh = () => {
-    setRefreshing(true);
+    setRefreshing(true); 
+    setRefresh(true); 
+  
+    // Reset refreshing and isRefresh after a short delay to mimic loading behavior
     setTimeout(() => {
-      setRefresh(true);
-      setRefreshing(false);
+      setRefreshing(false);  // Reset the refreshing state after the delay
+      setRefresh(false);     // Optionally reset isRefresh if you want it to stop triggering fetch
     }, 200);
-    setRefresh(false);
   };
 
   useEffect(() => {
@@ -103,8 +86,7 @@ export default function WithdrawApplicationPage() {
 
         const allApprovedApps = await applicationResponse.json();
         setApprovedApplications(allApprovedApps);
-          
-        console.log("DEBUG: All Approved Applications:", allApprovedApps); // Log the combined applications
+
       } catch (error) {
         console.error("Error fetching approved application data:", error); // Log errors
       }
@@ -113,67 +95,78 @@ export default function WithdrawApplicationPage() {
     fetchApprovedAppData();
   }, [isRefresh]);
   
+  useEffect(() => {
+    const noApps = approvedApplications.every(user => user.approvedApplications.length === 0);
+    setNoApprovedApplications(noApps);
+  }, [approvedApplications]);
+
   // Handle withdrawal function
-  const handleWithdraw = async (applicationId) => {
+  const handleWithdraw = async (application_id) => {
     try {
       const response = await fetch("/api/application/withdrawApproved", {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ applicationId }),
+        body: JSON.stringify({ application_id }),
       });
+
       if (response.ok) {
-        // Update the pending applications state
-        setApprovedApplications((prev) =>
-          prev.filter((app) => app.application_id !== applicationId)
+        // Update the approved applications state
+        console.log("RESPONSE OK");
+
+        // Show success toast
+        toast({
+          title: "Application Withdrawn",
+          description: "The application was successfully withdrawn.",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+
+        // Update approvedApplications state
+        setRefresh(true);
+
+        // Update selectedApplications state to remove the withdrawn application
+        setSelectedApplications((prev) =>
+          prev.filter((app) => app.application_id !== application_id)
         );
-        onModalWithdrawClose();
+
+        // Handle currentApplicationIndex adjustment if necessary
+        if (selectedApplicationDetails && selectedApplicationDetails.application_id === application_id) {
+          setCurrentApplicationIndex((prevIndex) =>
+            prevIndex > 0 ? prevIndex - 1 : 0
+          );
+        }
+
+        setRemarks('');
+        onModalWithdrawClose(); // Close modal after successful withdrawal
+
       } else {
         console.error("Failed to withdraw application");
+        // Show error toast
+        toast({
+          title: "Error",
+          description: "Failed to withdraw the application.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top-right"
+        });
       }
     } catch (error) {
       console.error("Error withdrawing application:", error);
+      // Show error toast
+      toast({
+        title: "Error",
+        description: "An error occurred while withdrawing the application.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right"
+      });
     }
   };
-
-  // Handle multiple withdrawal function
-  const handleWithdrawMultiple = async (applicationIds) => {
-    try {
-      // Make sure applicationIds is an array
-      if (!Array.isArray(applicationIds) || applicationIds.length === 0) {
-        console.error("No applications selected for withdrawal.");
-        return;
-      }
-  
-      // Loop through each applicationId and send the withdraw request one by one
-      for (const applicationId of applicationIds) {
-        const response = await fetch("/api/application/withdrawApproved", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ applicationId }),
-        });
-  
-        if (response.ok) {
-          // If the request was successful, remove the application from the state
-          setApprovedApplications((prev) =>
-            prev.filter((app) => app.application_id !== applicationId)
-          );
-        } else {
-          console.error(`Failed to withdraw application with ID ${applicationId}`);
-        }
-      }
-  
-      // After all requests have been processed, close the modal
-      onModalWithdrawClose();
-  
-    } catch (error) {
-      console.error("Error withdrawing applications:", error);
-    }
-  };
-  
 
   function handlePagination(array, size) {
     if (!array.length) {
@@ -208,65 +201,68 @@ export default function WithdrawApplicationPage() {
 
   // Number of applications per page
   const applicationsPerPage = 2;
-  const paginatedApplications = handlePagination(
-    approvedApplications
-      .sort((a, b) => a.first_name.localeCompare(b.first_name))
-      .flatMap((sub) =>
-        sub.approvedApplications.map((application) => ({
-          ...application,
-          first_name: sub.first_name,
-          last_name: sub.last_name,
-          department: sub.department,
-          position: sub.position,
-        }))
-      ),
-    applicationsPerPage
-  );
+  
+  useEffect(() => {
+    const updatedPaginatedApplications = handlePagination(
+      approvedApplications
+        .sort((a, b) => a.first_name.localeCompare(b.first_name))
+        .flatMap((sub) =>
+          sub.approvedApplications.map((application) => ({
+            ...application,
+            first_name: sub.first_name,
+            last_name: sub.last_name,
+            department: sub.department,
+            position: sub.position,
+          }))
+        ),
+      applicationsPerPage
+    );    
 
-  // Items for the current page
+    setPaginatedApplications(updatedPaginatedApplications);
+  }, [approvedApplications, applicationsPerPage]); // Dependency array includes both
+
   const items = paginatedApplications[activePage - 1]?.map((application) => {
-    console.log("Application status:", application.status);
-    
     return (
-    <Flex key={application.application_id} alignItems="center">
-      <Checkbox
-        className="mr-3"
-        checked={selectedApplications.some(
-          (app) => app.application_id === application.application_id
-        )} // Check by application_id
-        onChange={() => {
-          const isSelected = selectedApplications.some(
+      <Flex key={application.application_id} alignItems="center">
+        <Checkbox
+          className="mr-3"
+          checked={selectedApplications.some(
             (app) => app.application_id === application.application_id
-          );
-          const newSelectedApplications = isSelected
-            ? selectedApplications.filter(
-              (app) => app.application_id !== application.application_id
-            )
-            : [...selectedApplications, application]; // Store the full application object when selected
+          )} // Check by application_id
+          onChange={() => {
+            const isSelected = selectedApplications.some(
+              (app) => app.application_id === application.application_id
+            );
+            const newSelectedApplications = isSelected
+              ? selectedApplications.filter(
+                (app) => app.application_id !== application.application_id
+              )
+              : [...selectedApplications, application]; // Store the full application object when selected
 
-          setSelectedApplications(newSelectedApplications);
-          // If the application was deselected, reset the currentApplicationIndex, else update it
-          if (isSelected) {
-            setCurrentApplicationIndex(0);
-          } else {
-            setCurrentApplicationIndex(newSelectedApplications.length - 1); // Set to the newly added application's index
-          }
-        }}
-      />
-      <PendingApplicationCard
-        start_date={application.start_date}
-        end_date={application.end_date}
-        application_type={application.application_type}
-        status={application.status}
-        requestor_remarks={application.requestor_remarks}
-        first_name={application.first_name}
-        last_name={application.last_name}
-        department={application.department}
-        position={application.position}
-        canManage={true}
-      />
-    </Flex>
-  )});
+            setSelectedApplications(newSelectedApplications);
+            // If the application was deselected, reset the currentApplicationIndex, else update it
+            if (isSelected) {
+              setCurrentApplicationIndex(0);
+            } else {
+              setCurrentApplicationIndex(newSelectedApplications.length - 1); // Set to the newly added application's index
+            }
+          }}
+        />
+        <PendingApplicationCard
+          start_date={application.start_date}
+          end_date={application.end_date}
+          application_type={application.application_type}
+          status={application.status}
+          requestor_remarks={application.requestor_remarks}
+          first_name={application.first_name}
+          last_name={application.last_name}
+          department={application.department}
+          position={application.position}
+          canManage={true}
+        />
+      </Flex>
+    );
+  });
 
   // Details card (from Jon):
   const ApplicationReviewCard = ({
@@ -413,11 +409,12 @@ export default function WithdrawApplicationPage() {
 
   // Function to handle withdraw action
   const handleWithdrawClick = () => {
-    setCurrentAction("withdraw");
-    onOpen(); // Open modal
+    if (!selectedApplicationDetails) {
+      return;
+    }
+    setAppToWithdraw(selectedApplicationDetails); // Set the application to be withdrawn
+    onModalWithdrawOpen(); // Open the modal
   };
-
-
   
 
   return (
@@ -433,29 +430,17 @@ export default function WithdrawApplicationPage() {
             <h1 className="text-2xl font-bold">Find Applications:</h1>
             <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
           </div>
-          <Select
-              onChange={(e) => setSelectedPosition(e.target.value)}
-              value={selectedPosition}
-              borderColor="gray.300"        // Grey border color
-              focusBorderColor="gray.500"   // Grey border color when focused
-              _hover={{ borderColor: "gray.400" }}  // Grey border on hover
-            >
-              <option value="">All Positions</option>
-              {uniquePositions.map((position, index) => (
-                <option key={index} value={position}>
-                  {position}
-                </option>
-              ))}
-            </Select>
           <Box mt={4}>
-          <Checkbox 
+          {!noApprovedApplications ? (
+            <Checkbox 
               label="Select All"
               onChange={(e) => handleSelectAll(e.currentTarget.checked)}
-          />
+            />
+          ) : null}
           </Box>
           <Box py={5} h={"100%"}>
           <VStack spacing={5} h={"100%"}>
-              {approvedApplications.length > 0 ? (
+              {!noApprovedApplications ? (
                 <>
                   {items}
                   <Pagination
@@ -471,13 +456,13 @@ export default function WithdrawApplicationPage() {
             </VStack>
           </Box>
           {appToWithdraw && (
-            <WithdrawalModal
+            <WithdrawApprovedModal
               isOpen={isModalWithdrawOpen}
               onClose={onModalWithdrawClose}
               applicationType={appToWithdraw.application_type}
               startDate={appToWithdraw.start_date}
               endDate={appToWithdraw.end_date}
-              onConfirm={() => handleWithdraw(appToWithdraw.application_id)} // Pass handleWithdraw function to WithdrawalModal
+              onConfirm={() => handleWithdraw(appToWithdraw.application_id)} // Pass handleWithdraw function to WithdrawApprovedModal
             />
           )}
         </div>
@@ -499,14 +484,7 @@ export default function WithdrawApplicationPage() {
                 height="100px"
               />
               <Flex mt={4} justifyContent="flex-start" w="full">
-                <Button 
-                    colorScheme="red"
-                    width="full"
-                    onClick={handleWithdrawMultiple}
-                    isDisabled={!(remarks && String(remarks).trim())}
-                    >
-                  Withdraw All Selected
-                </Button>
+                {/* Withdraw all button */}
               </Flex>
             </div>
           )} 
@@ -550,6 +528,7 @@ export default function WithdrawApplicationPage() {
             </Text>
               <Textarea
                 placeholder="Enter required reason here..."
+                value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 bg="gray.50"
                 borderColor="gray.300"
@@ -563,7 +542,7 @@ export default function WithdrawApplicationPage() {
             <Button 
                 colorScheme="red"
                 width="full"
-                onClick={handleWithdraw}
+                onClick={handleWithdrawClick}
                 isDisabled={!(remarks && String(remarks).trim())}
                 >
               Withdraw Application
