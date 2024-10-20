@@ -4,6 +4,7 @@ import TopHeader from "@/components/TopHeader";
 import PendingApplicationCard from "@/components/PendingApplicationCard";
 import WithdrawalModal from "@/components/WithdrawModal";
 import RefreshButton from "@/components/RefreshButton";
+import EditApplicationCard from "@/components/EditApplicationCard"; // Import EditApplicationCard
 import { useEffect, useState } from "react";
 
 // chakra-ui
@@ -15,6 +16,7 @@ import { Pagination } from "@mantine/core";
 export default function PendingApplicationPage() {
   const [pendingApplications, setPendingApplications] = useState([]);
   const [appToWithdraw, setAppToWithdraw] = useState(null);
+  const [applicationToEdit, setApplicationToEdit] = useState(null); // State for tracking the app being edited
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -90,6 +92,19 @@ export default function PendingApplicationPage() {
     }
   };
 
+  const handleEdit = (application) => {
+    setApplicationToEdit(application); // Set the application to be edited
+  };
+
+  const handleSaveEdit = (updatedData) => {
+    console.log("Updated Application Data:", { ...applicationToEdit, ...updatedData });
+    setApplicationToEdit(null); // Close the edit card after saving
+  };
+
+  const handleCancelEdit = () => {
+    setApplicationToEdit(null); // Close the edit card without saving
+  };
+
   function handlePagination(array, size) {
     if (!array.length) {
       return [];
@@ -122,6 +137,7 @@ export default function PendingApplicationPage() {
         setAppToWithdraw(application);
         onModalWithdrawOpen();
       }}
+      onEdit={() => handleEdit(application)} // Pass the application to be edited
       canManage={false}
     />
   ));
@@ -164,6 +180,17 @@ export default function PendingApplicationPage() {
               startDate={appToWithdraw.start_date}
               endDate={appToWithdraw.end_date}
               onConfirm={() => handleWithdraw(appToWithdraw.application_id)} // Pass handleWithdraw function to WithdrawalModal
+            />
+          )}
+        </div>
+
+        {/* Right-side Edit Card */}
+        <div className="w-1/2">
+          {applicationToEdit && (
+            <EditApplicationCard
+              applicationData={applicationToEdit}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
             />
           )}
         </div>
