@@ -186,7 +186,7 @@ export default function PendingApplicationPage() {
         </div>
 
         {/* Right-side Edit Card */}
-        <div className="w-1/2">
+        <div className="w-1/2 pl-5">
           {applicationToEdit && (
             <EditApplicationCard
               applicationData={{

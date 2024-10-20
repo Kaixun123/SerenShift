@@ -6,6 +6,7 @@ import FileUploader from "@/components/FileUpload";
 
 // chakra-ui
 import {
+  Box,
   FormControl,
   Text,
   FormLabel,
@@ -87,7 +88,7 @@ export default function EditApplicationCard({ applicationData, onSave }) {
     setRecurrenceEndDate(date); // Set date directly
   };
 
-  const updateApplication = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -176,86 +177,33 @@ export default function EditApplicationCard({ applicationData, onSave }) {
       return;
     }
 
-    try {
-      if (type && timeSlot && reason && (!recurrenceError)) {
-        const formatDate = (date) => {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, "0");
-          const day = String(date.getDate()).padStart(2, "0");
-          return `${year}-${month}-${day}`;
-        };
+    // Prepare form data to pass to parent component
+    const formData = {
+      id: applicationData.id, // Assuming applicationData has an id field
+      application_type: type,
+      startDate,
+      endDate,
+      timeSlot,
+      reason,
+      files,
+      recurrence_rule: type === "Regular" ? recurrenceRule : null,
+      recurrence_end_date: type === "Regular" ? recurrenceEndDate : null,
+    };
 
-        let formattedStartDateTime = formatDate(startDate);
-        let formattedEndDateTime = formatDate(endDate);
-        if (timeSlot === "am") {
-          formattedStartDateTime += " 09:00:00";
-          formattedEndDateTime += " 13:00:00";
-        } else if (timeSlot === "pm") {
-          formattedStartDateTime += " 14:00:00";
-          formattedEndDateTime += " 18:00:00";
-        } else if (timeSlot === "fullDay") {
-          formattedStartDateTime += " 09:00:00";
-          formattedEndDateTime += " 18:00:00";
-        }
+    // Pass the collected data back to the parent component
+    onSave(formData);
 
-        const formData = new FormData();
-        formData.append("id", applicationData.id); // Assuming applicationData has an id field
-        formData.append("application_type", type);
-        formData.append("startDate", formattedStartDateTime);
-        formData.append("endDate", formattedEndDateTime);
-        formData.append("requestor_remarks", reason);
-        files.forEach((file) => {
-          formData.append("files", file);
-        });
-
-        // Append only for regular applications 
-        if (type === "Regular") {
-          formData.append("recurrence_rule", recurrenceRule);
-          formData.append("recurrence_end_date", recurrenceEndDate);
-        }
-
-        const response = await fetch("/api/application/updateApplication", {
-          method: "PATCH", // Use PATCH for updating
-          body: formData,
-        });
-
-        if (response.status === 200) {
-          const result = await response.json();
-          toast({
-            title: result.message,
-            position: "top-right",
-            status: "success",
-            duration: 5000,
-            isClosable: true,
-          });
-          onSave(); // Call the onSave callback to refresh or close the card
-        } else {
-          const errorMessage = await response.json();
-          toast({
-            title: errorMessage.message,
-            position: "top-right",
-            status: "error",
-            duration: 5000,
-            isClosable: true,
-          });
-        }
-
-        // Reset form state
-        handleClear();
-        setType("");
-        setTimeSlot("");
-        setReason("");
-        setFiles([]);
-        setClearFiles(true);
-        setTimeout(() => setClearFiles(false), 500);
-        setRecurrenceRule("");
-        setRecurrenceEndDate("");
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error("Error updating application:", error);
-      setLoading(false);
-    }
+    // Reset form state
+    handleClear();
+    setType("");
+    setTimeSlot("");
+    setReason("");
+    setFiles([]);
+    setClearFiles(true);
+    setTimeout(() => setClearFiles(false), 500);
+    setRecurrenceRule("");
+    setRecurrenceEndDate("");
+    setLoading(false);
   };
 
   // Cancel function to reset the form and close the card
@@ -271,11 +219,15 @@ export default function EditApplicationCard({ applicationData, onSave }) {
   };
 
   return (
-    <div className="p-5 border rounded shadow">
+    <Box       
+    p={"20px"} // Adjust padding to reduce overall size
+    borderRadius="16px"
+    overflow="hidden"
+    className="w-full lg:w-[500px] shadow-[0px_3px_10px_rgba(0,0,0,0.12)]">
       <Text fontSize="2xl" mb={4}>
         Edit Application
       </Text>
-      <form onSubmit={updateApplication}>
+      <form onSubmit={handleSubmit}>
         <FormControl mb={4}>
           <FormLabel>Start Date</FormLabel>
           <DateInput 
@@ -298,7 +250,8 @@ export default function EditApplicationCard({ applicationData, onSave }) {
 
         <FormControl mb={4}>
           <FormLabel>Type of Arrangement</FormLabel>
-          <Select value={type} onChange={handleTypeSelect} placeholder="Select type of arrangement" required>
+          <Select value={type} onChange={handleTypeSelect} required>
+            <option value="">Select type</option>
             <option value="Regular">Regular</option>
             <option value="Ad Hoc">Ad Hoc</option>
           </Select>
@@ -306,34 +259,67 @@ export default function EditApplicationCard({ applicationData, onSave }) {
 
         <FormControl mb={4}>
           <FormLabel>Timeslot</FormLabel>
-          <Select value={timeSlot} onChange={handleTimeSlot} placeholder="Select timeslot" required>
+          <Select value={timeSlot} onChange={handleTimeSlot} required>
+            <option value="">Select timeslot</option>
             <option value="am">AM (09:00 - 13:00)</option>
             <option value="pm">PM (14:00 - 18:00)</option>
             <option value="fullDay">Full Day (09:00 - 18:00)</option>
           </Select>
         </FormControl>
 
+        {type === "Regular" && (
+          <>
+            <FormControl mb={4}>
+              <FormLabel>Recurrence Rule</FormLabel>
+              <Textarea
+                value={recurrenceRule}
+                onChange={(e) => setRecurrenceRule(e.target.value)}
+                placeholder="Enter recurrence rule"
+              />
+            </FormControl>
+
+            <FormControl mb={4}>
+              <FormLabel>Recurrence End Date</FormLabel>
+              <DateInput
+                value={recurrenceEndDate}
+                onChange={handleRecurrenceEndDateChange}
+                placeholder="Select recurrence end date"
+                required
+              />
+              {recurrenceError && (
+                <Text color="red.500">{recurrenceError}</Text>
+              )}
+            </FormControl>
+          </>
+        )}
+
         <FormControl mb={4}>
           <FormLabel>Reason</FormLabel>
           <Textarea
             value={reason}
             onChange={handleReasonChange}
-            placeholder="Enter reason for application"
+            placeholder="Enter reason"
             required
           />
         </FormControl>
 
-        <FileUploader onChange={handleFilesChange} clearFiles={clearFiles} />
+        <FormControl mb={4}>
+          <FormLabel>Upload Files</FormLabel>
+          <FileUploader onChange={handleFilesChange} clearFiles={clearFiles} />
+        </FormControl>
 
-        <Button mt={4} colorScheme="teal" isLoading={loading} type="submit">
-          Save Changes
+        <Button
+          colorScheme="blue"
+          mr={4}
+          isLoading={loading}
+          type="submit"
+        >
+          Save
         </Button>
-        
-        {/* Cancel Button */}
-        <Button mt={4} colorScheme="red" onClick={handleCancel} ml={4}>
+        <Button colorScheme="gray" onClick={handleCancel}>
           Cancel
         </Button>
       </form>
-    </div>
+    </Box>
   );
 }
