@@ -1,6 +1,4 @@
 "use client";
-// import components
-import TopHeader from "@/components/TopHeader";
 import { useEffect, useState } from "react";
 import FileUploader from "@/components/FileUpload";
 
@@ -22,8 +20,8 @@ import { DateInput } from "@mantine/dates";
 export default function EditApplicationCard({ applicationData, onSave }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState(null); // Set initial state to null
-  const [endDate, setEndDate] = useState(null); // Set initial state to null
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [type, setType] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [reason, setReason] = useState("");
@@ -31,27 +29,27 @@ export default function EditApplicationCard({ applicationData, onSave }) {
   const [clearFiles, setClearFiles] = useState(false);
   const [recurrenceRule, setRecurrenceRule] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
-  const [recurrenceError, setRecurrenceError] = useState(""); // error handling
+  const [recurrenceError, setRecurrenceError] = useState("");
 
   useEffect(() => {
     // Set initial values from applicationData
     if (applicationData) {
-      setStartDate(new Date(applicationData.startDate)); // Convert to Date object
-      setEndDate(new Date(applicationData.endDate)); // Convert to Date object
-      setType(applicationData.application_type);
-      setTimeSlot(applicationData.timeSlot);
-      setReason(applicationData.requestor_remarks);
+      setStartDate(new Date(applicationData.startDate));
+      setEndDate(new Date(applicationData.endDate));
+      setType(applicationData.application_type || ""); // Set default type
+      setTimeSlot(applicationData.timeSlot || ""); // Set default timeslot
+      setReason(applicationData.requestor_remarks || "");
       setRecurrenceRule(applicationData.recurrence_rule || "");
       setRecurrenceEndDate(applicationData.recurrence_end_date || "");
     }
   }, [applicationData]);
 
   const handleStartDateChange = (date) => {
-    setStartDate(date); // Set date object directly
+    setStartDate(date);
   };
 
   const handleEndDateChange = (date) => {
-    setEndDate(date); // Set date object directly
+    setEndDate(date);
   };
 
   const handleTypeSelect = (e) => {
@@ -85,7 +83,7 @@ export default function EditApplicationCard({ applicationData, onSave }) {
     } else {
       setRecurrenceError("");
     }
-    setRecurrenceEndDate(date); // Set date directly
+    setRecurrenceEndDate(date);
   };
 
   const handleSubmit = (e) => {
@@ -179,7 +177,7 @@ export default function EditApplicationCard({ applicationData, onSave }) {
 
     // Prepare form data to pass to parent component
     const formData = {
-      id: applicationData.id, // Assuming applicationData has an id field
+      id: applicationData.id,
       application_type: type,
       startDate,
       endDate,
@@ -219,18 +217,19 @@ export default function EditApplicationCard({ applicationData, onSave }) {
   };
 
   return (
-    <Box       
-    p={"20px"} // Adjust padding to reduce overall size
-    borderRadius="16px"
-    overflow="hidden"
-    className="w-full lg:w-[500px] shadow-[0px_3px_10px_rgba(0,0,0,0.12)]">
+    <Box
+      p={"20px"}
+      borderRadius="16px"
+      overflow="hidden"
+      className="w-full lg:w-[500px] shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
+    >
       <Text fontSize="2xl" mb={4}>
         Edit Application
       </Text>
       <form onSubmit={handleSubmit}>
         <FormControl mb={4}>
           <FormLabel>Start Date</FormLabel>
-          <DateInput 
+          <DateInput
             value={startDate}
             onChange={handleStartDateChange}
             placeholder="Select start date"
@@ -240,7 +239,7 @@ export default function EditApplicationCard({ applicationData, onSave }) {
 
         <FormControl mb={4}>
           <FormLabel>End Date</FormLabel>
-          <DateInput 
+          <DateInput
             value={endDate}
             onChange={handleEndDateChange}
             placeholder="Select end date"
@@ -310,9 +309,10 @@ export default function EditApplicationCard({ applicationData, onSave }) {
 
         <Button
           colorScheme="blue"
-          mr={4}
           isLoading={loading}
+          loadingText="Saving..."
           type="submit"
+          mr={4}
         >
           Save
         </Button>

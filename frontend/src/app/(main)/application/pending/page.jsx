@@ -93,8 +93,26 @@ export default function PendingApplicationPage() {
   };
 
   const handleEdit = (application) => {
-    setApplicationToEdit(application); // Set the application to be edited
-  };
+    const startDateTime = new Date(application.start_date);
+    const endDateTime = new Date(application.end_date);
+  
+    let timeSlot = "";
+  
+    // Determine the timeSlot based on start and end times
+    if (startDateTime.getHours() === 9 && endDateTime.getHours() === 13) {
+      timeSlot = "am";
+    } else if (startDateTime.getHours() === 14 && endDateTime.getHours() === 18) {
+      timeSlot = "pm";
+    } else if (startDateTime.getHours() === 9 && endDateTime.getHours() === 18) {
+      timeSlot = "fullDay";
+    }
+  
+    // Set the application to be edited along with derived timeSlot
+    setApplicationToEdit({
+      ...application,
+      timeSlot, // Include the derived timeSlot
+    });
+  };  
 
   const handleSaveEdit = (updatedData) => {
     console.log("Updated Application Data:", { ...applicationToEdit, ...updatedData });
@@ -190,8 +208,8 @@ export default function PendingApplicationPage() {
           {applicationToEdit && (
             <EditApplicationCard
               applicationData={{
-                arrangementType: applicationToEdit.application_type || "", // Provide a default value
-                timeslot: applicationToEdit.timeslot || "", // Ensure timeslot is included
+                application_type: applicationToEdit.application_type || "", // Provide a default value
+                timeSlot: applicationToEdit.timeSlot || "", // Timeslot is now included
                 startDate: applicationToEdit.start_date || "", // Provide a default value
                 endDate: applicationToEdit.end_date || "", // Provide a default value
                 reason: applicationToEdit.requestor_remarks || "", // Provide a default value
