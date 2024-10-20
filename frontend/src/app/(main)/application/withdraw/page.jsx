@@ -101,14 +101,14 @@ export default function WithdrawApplicationPage() {
   }, [approvedApplications]);
 
   // Handle withdrawal function
-  const handleWithdraw = async (application_id) => {
+  const handleWithdraw = async (application_id, remarks) => {
     try {
       const response = await fetch("/api/application/withdrawApproved", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ application_id }),
+        body: JSON.stringify({ application_id, remarks }),
       });
 
       if (response.ok) {
@@ -462,7 +462,7 @@ export default function WithdrawApplicationPage() {
               applicationType={appToWithdraw.application_type}
               startDate={appToWithdraw.start_date}
               endDate={appToWithdraw.end_date}
-              onConfirm={() => handleWithdraw(appToWithdraw.application_id)} // Pass handleWithdraw function to WithdrawApprovedModal
+              onConfirm={() => handleWithdraw(appToWithdraw.application_id, remarks)} // Pass handleWithdraw function to WithdrawApprovedModal
             />
           )}
         </div>

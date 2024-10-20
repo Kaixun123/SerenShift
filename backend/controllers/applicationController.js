@@ -386,7 +386,7 @@ const withdrawPendingApplication = async (req, res) => {
 // PUT function - to update approved application status to withdrawn
 const withdrawApprovedApplication = async (req, res) => {
     try {
-        const { application_id } = req.body; 
+        const { application_id, remarks } = req.body;
         const managerId = req.user.id; 
 
         // Find the corresponding application by matching application_id
@@ -426,6 +426,7 @@ const withdrawApprovedApplication = async (req, res) => {
 
         // Update the application status to 'Withdrawn'
         application.status = 'Withdrawn';
+        application.approver_remarks = remarks;
         application.last_update_by = managerId;
         await application.save();
 
