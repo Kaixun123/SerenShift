@@ -191,6 +191,16 @@ export default function EditApplicationCard({ applicationData, onSave }) {
     // Pass the collected data back to the parent component
     onSave(formData);
 
+      // Show success toast message
+    toast({
+        title: "Application updated.",
+        description: "Your application has been successfully updated.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+    });
+
     // Reset form state
     handleClear();
     setType("");

@@ -114,11 +114,42 @@ export default function PendingApplicationPage() {
     });
   };  
 
-  const handleSaveEdit = (updatedData) => {
-    console.log("Updated Application Data:", { ...applicationToEdit, ...updatedData });
-    // Here you could also send the updated data to the backend if necessary.
-    setApplicationToEdit(null); // Close the edit card after saving
+  const handleSaveEdit = async (updatedData) => {
+    const updatedApplication = {
+      application_id: applicationToEdit.application_id,
+      application_type: updatedData.application_type || applicationToEdit.application_type,
+      startDate: updatedData.startDate || applicationToEdit.start_date,
+      endDate: updatedData.endDate || applicationToEdit.end_date,
+      requestor_remarks: updatedData.reason || applicationToEdit.requestor_remarks,
+    };
+  
+    try {
+      const response = await fetch("/api/application/updatePendingApplication", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedApplication),
+      });
+  
+      if (response.ok) {
+        // Update the pending applications state or refetch if needed
+        setPendingApplications((prev) =>
+          prev.map((app) =>
+            app.application_id === updatedApplication.application_id
+              ? { ...app, ...updatedApplication }
+              : app
+          )
+        );
+        setApplicationToEdit(null); // Close the edit card after saving
+      } else {
+        console.error("Failed to update application");
+      }
+    } catch (error) {
+      console.error("Error updating application:", error);
+    }
   };
+  
 
   const handleCancelEdit = () => {
     setApplicationToEdit(null); // Close the edit card without saving
