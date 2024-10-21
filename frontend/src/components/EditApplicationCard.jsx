@@ -31,6 +31,8 @@ export default function EditApplicationCard({ applicationData, onSave }) {
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [recurrenceError, setRecurrenceError] = useState("");
 
+  const today = new Date(); // Get today's date
+
   useEffect(() => {
     // Set initial values from applicationData
     if (applicationData) {
@@ -243,6 +245,7 @@ export default function EditApplicationCard({ applicationData, onSave }) {
             value={startDate}
             onChange={handleStartDateChange}
             placeholder="Select start date"
+            minDate={today} // Disable past dates
             required
           />
         </FormControl>
@@ -253,6 +256,7 @@ export default function EditApplicationCard({ applicationData, onSave }) {
             value={endDate}
             onChange={handleEndDateChange}
             placeholder="Select end date"
+            minDate={today} // Disable past dates
             required
           />
         </FormControl>
@@ -313,20 +317,23 @@ export default function EditApplicationCard({ applicationData, onSave }) {
         </FormControl>
 
         <FormControl mb={4}>
-          <FormLabel>Upload Files</FormLabel>
-          <FileUploader onChange={handleFilesChange} clearFiles={clearFiles} />
+          <FormLabel>Upload Supporting Files</FormLabel>
+          <FileUploader
+            onChange={handleFilesChange}
+            clearFiles={clearFiles}
+            fileList={files}
+          />
         </FormControl>
 
         <Button
+          type="submit"
           colorScheme="blue"
           isLoading={loading}
-          loadingText="Saving..."
-          type="submit"
           mr={4}
         >
           Save
         </Button>
-        <Button colorScheme="gray" onClick={handleCancel}>
+        <Button variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
       </form>
