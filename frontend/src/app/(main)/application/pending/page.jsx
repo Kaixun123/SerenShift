@@ -8,7 +8,7 @@ import EditApplicationCard from "@/components/EditApplicationCard"; // Import Ed
 import { useEffect, useState } from "react";
 
 // chakra-ui
-import { Box, VStack, Text, useDisclosure } from "@chakra-ui/react";
+import { Box, VStack, Text, useDisclosure, useToast } from "@chakra-ui/react";
 
 // mantine
 import { Pagination } from "@mantine/core";
@@ -28,6 +28,8 @@ export default function PendingApplicationPage() {
     onOpen: onModalWithdrawOpen,
     onClose: onModalWithdrawClose,
   } = useDisclosure();
+
+  const toast = useToast();
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -132,7 +134,7 @@ export default function PendingApplicationPage() {
         body: JSON.stringify(updatedApplication),
       });
   
-      if (response.ok) {
+      if (response.status === 200) {
         // Update the pending applications state or refetch if needed
         setPendingApplications((prev) =>
           prev.map((app) =>
@@ -142,14 +144,49 @@ export default function PendingApplicationPage() {
           )
         );
         setApplicationToEdit(null); // Close the edit card after saving
+  
+        // Show success toast message
+        toast({
+          title: "Application updated.",
+          description: "Your application has been successfully updated.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+        });
       } else {
-        console.error("Failed to update application");
+        // Handle different error statuses
+        let errorMessage = "Failed to update application.";
+        if (response.status === 400) {
+          errorMessage = "Bad Request. Please check your input.";
+        } else if (response.status === 404) {
+          errorMessage = "Application not found.";
+        } else if (response.status === 500) {
+          errorMessage = "Internal Server Error. Please try again later.";
+        }
+  
+        console.error(errorMessage);
+        toast({
+          title: "Error",
+          description: errorMessage,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+        });
       }
     } catch (error) {
       console.error("Error updating application:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while updating the application.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
     }
   };
-  
 
   const handleCancelEdit = () => {
     setApplicationToEdit(null); // Close the edit card without saving
