@@ -1,6 +1,4 @@
 import { Box, Flex, Text, VStack, Badge, Button } from "@chakra-ui/react";
-
-// react icon
 import { IoCalendarOutline } from "react-icons/io5";
 import { LuAlarmClock } from "react-icons/lu";
 
@@ -11,13 +9,13 @@ const PendingApplicationCard = ({
   status,
   requestor_remarks,
   onWithdraw,
+  onEdit, // Add an onEdit prop
   first_name,
   last_name,
   position,
   canManage,
   occurence,
 }) => {
-  // Format the date to display as DD-MM-YYYY
   const formatDate = (datetime) => {
     const date = new Date(datetime);
     const day = String(date.getDate()).padStart(2, "0");
@@ -26,12 +24,11 @@ const PendingApplicationCard = ({
     return `${day}/${month}/${year}`;
   };
 
-  // Format the time to display only the time part (e.g., HH:MM AM/PM)
   const formatTime = (datetime) => {
     return new Date(datetime).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-    }); // Format as time
+    });
   };
 
   return (
@@ -186,15 +183,16 @@ const PendingApplicationCard = ({
               </Flex>
             </Flex>
           </Box>
+
           {canManage === false ? (
-            <Button
-              colorScheme="red"
-              variant="outline"
-              size="sm"
-              onClick={() => onWithdraw({ start_date, application_type })}
-            >
-              Withdraw
-            </Button>
+            <Flex>
+              <Button colorScheme="red" variant="outline" size="sm" onClick={() => onWithdraw({ start_date, application_type })}>
+                Withdraw
+              </Button>
+              <Button colorScheme="blue" variant="outline" size="sm" ml={2} onClick={() => onEdit({ start_date, application_type })}>
+                Edit
+              </Button>
+            </Flex>
           ) : (
             ""
           )}
