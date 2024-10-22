@@ -51,7 +51,7 @@ const getBlacklistDates = async (req, res) => {
                 where: {
                     created_by: approver.id,
                     start_date: {
-                        [Op.gte]: new Date()
+                        [Op.gte]: new Date().setHours(0, 0, 0, 0)
                     }
                 }
             });
