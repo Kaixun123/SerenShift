@@ -38,17 +38,20 @@ export default function ManageBlacklistPage() {
             });
         }
     }
+    useEffect(() => {
+        retrieveBlacklists();
+    }, []);
     return (
         <main>
             <TopHeader mainText={`Manage Blacklist`} subText={`Control when your subordinates can submit applications`} />
             <TableContainer>
                 <Table variant='simple'>
-                    <TableCaption>Active Blacklists</TableCaption>
+                    <TableCaption>Current Blacklists</TableCaption>
                     <Thead>
                         <Tr>
-                            <Th>To convert</Th>
-                            <Th>into</Th>
-                            <Th isNumeric>multiply by</Th>
+                            <Th>Start Date</Th>
+                            <Th>End Date</Th>
+                            <Th isNumeric></Th>
                         </Tr>
                     </Thead>
                     <Tbody>
