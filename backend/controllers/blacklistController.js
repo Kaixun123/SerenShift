@@ -70,7 +70,10 @@ const getBlacklistDatesManager = async (req, res) => {
             return res.status(404).json({ message: "Manager Not Found" });
         let blacklistDates = await Blacklist.findAll({
             where: {
-                created_by: manager.id
+                created_by: manager.id,
+                start_date: {
+                    [Op.gte]: new Date().setHours(0, 0, 0, 0)
+                }
             }
         });
         if (!blacklistDates)
@@ -117,7 +120,8 @@ const createBlacklistDate = async (req, res) => {
             start_date: req.body.start_date,
             end_date: req.body.end_date,
             created_by: req.user.id,
-            last_update_by: req.user.id
+            last_update_by: req.user.id,
+            remarks: req.body.remarks
         });
         return res.status(201).json({ message: "Blacklist Date Created Successfully", blacklist_id: blacklistDate.blacklist_id });
     } catch (error) {
@@ -154,6 +158,7 @@ const updateBlacklistDate = async (req, res) => {
         blacklistDate.start_date = req.body.start_date;
         blacklistDate.end_date = req.body.end_date;
         blacklistDate.last_update_by = req.user.id;
+        blacklistDate.remarks = req.body.remarks;
         await blacklistDate.save();
         return res.status(200).json({ message: "Blacklist Date Updated Successfully" });
     } catch (error) {
