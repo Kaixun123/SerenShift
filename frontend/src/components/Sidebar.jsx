@@ -22,6 +22,7 @@ import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager } from "react-icons/gr";
 import { CgList } from "react-icons/cg";
+import { FiHome } from "react-icons/fi";
 import { MdOutlineManageHistory } from "react-icons/md";
 
 export default function SideBar() {
@@ -80,6 +81,12 @@ export default function SideBar() {
       href: "/blacklist/manage",
       icon: MdOutlineManageHistory,
       title: "Manage Blacklist Dates",
+    },
+    {
+      id: 8,
+      href: "/hr",
+      icon: FiHome,
+      title: "Company View",
     }
   ];
 
