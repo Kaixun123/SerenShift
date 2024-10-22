@@ -19,6 +19,10 @@ Blacklist.init(
             type: DataTypes.DATE,
             allowNull: false,
         },
+        remarks: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+        },
         created_by: {
             type: DataTypes.INTEGER(6),
             allowNull: false,
