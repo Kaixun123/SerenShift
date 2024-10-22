@@ -68,7 +68,7 @@ const vaildateParameters = (req, res, next) => {
         errors: errors.array()
     });
 };
-
+    
 router.get("/retrieveApplication", retrieveApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveApplications(req, res));
 router.get("/retrievePendingApplication", ensureManagerAndAbove, (req, res) => applicationController.retrievePendingApplications(req, res));
 router.post("/createNewApplication", createNewApplicationValidationRules(), ensureLoggedIn, upload.array('files'), (req, res) => applicationController.createNewApplication(req, res))
@@ -76,5 +76,6 @@ router.put("/approveApplication", approvePendingApplicationValidationRules(), va
 router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
 router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
 router.put("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.withdrawApprovedApplication(req, res));
+router.patch("/updatePendingApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updatePendingApplication(req, res));
 
 module.exports = router;
