@@ -7,7 +7,7 @@ import { Flex, Accordion, AccordionItem, AccordionButton, AccordionPanel, Accord
 import 'chart.js/auto';
 import TopHeader from "@/components/TopHeader";
 
-const statsPage = () => {
+const StatsPage = () => {
   const [date, setDate] = useState(new Date()); // Default to today's date
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -284,4 +284,4 @@ const statsPage = () => {
   );
 };
 
-export default statsPage;
+export default StatsPage;
