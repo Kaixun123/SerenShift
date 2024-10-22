@@ -1,8 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Bar, Pie } from 'react-chartjs-2';
-import { Group, Container, Text, Title, Input } from '@mantine/core';
-import { Flex, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Box } from '@chakra-ui/react';
+import { Group, Container, Text, Title } from '@mantine/core';
+import { DateInput } from '@mantine/dates';
+import { Flex, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Box, Spinner } from '@chakra-ui/react'; // Import Spinner
 import 'chart.js/auto';
 import TopHeader from "@/components/TopHeader";
 
@@ -121,20 +122,26 @@ const statsPage = () => {
         subText={"View Overall Schedule"}
       />
       <Container style={{ position: 'relative' }}>
-        {/* Date picker moved to the right */}
-        <Group style={{ position: 'absolute', right: 0, top: '10px' }} mb="xl">
-          <Text>Choose Date:</Text>
-          <Input
-            type="date"
-            value={date.toISOString().split('T')[0]}
-            onChange={handleDateChange}
-          />
-        </Group>
+        {/* Conditionally render DateInput only if not loading */}
+        {!loading && (
+          <Group style={{ position: 'absolute', right: 0, top: '0px' }} mb="xl">
+            <DateInput
+              value={date}
+              onChange={setDate}
+              clearable={false} // This removes the clear button
+              label="Pick a date"
+              placeholder="Pick a date"
+            />
+          </Group>
+        )}
 
         {loading ? (
-          <Text align="center">Loading data...</Text>
+          <Flex direction="column" justifyContent="center" alignItems="center" height="200px">
+            <Spinner size="xl" /> {/* Chakra Spinner */}
+            <Text mt={4}>Loading data...</Text> {/* Loading data text below the spinner */}
+          </Flex>
         ) : (
-          <div style={{ marginBottom: '40px' }}>
+          <div style={{ marginBottom: '40px', marginTop: '13px' }}>
             <Bar
               data={createChartData()}
               options={{
@@ -175,7 +182,7 @@ const statsPage = () => {
         )}
 
         {/* Conditionally render pie chart and accordion if a department is clicked */}
-        {selectedDeptData ? (
+        {!loading && selectedDeptData ? (
           <Flex justifyContent="space-between" alignItems="flex-start" mt="40px">
             <div style={{ width: '500px', height: '500px' }}>
               <Title order={4} align="center">Department: {selectedDeptData.department} - WFH Stats</Title>
@@ -211,7 +218,7 @@ const statsPage = () => {
                 <h2>
                   <AccordionButton>
                     <Box flex="1" textAlign="left">
-                      AM WFH
+                      AM WFH ({groupedWfhStaff.am.length} staff)
                     </Box>
                     <AccordionIcon />
                   </AccordionButton>
@@ -231,7 +238,7 @@ const statsPage = () => {
                 <h2>
                   <AccordionButton>
                     <Box flex="1" textAlign="left">
-                      PM WFH
+                      PM WFH ({groupedWfhStaff.pm.length} staff)
                     </Box>
                     <AccordionIcon />
                   </AccordionButton>
@@ -251,7 +258,7 @@ const statsPage = () => {
                 <h2>
                   <AccordionButton>
                     <Box flex="1" textAlign="left">
-                      Full-Day WFH
+                      Full-Day WFH ({groupedWfhStaff.fullDay.length} staff)
                     </Box>
                     <AccordionIcon />
                   </AccordionButton>
@@ -269,8 +276,8 @@ const statsPage = () => {
             </Accordion>
           </Flex>
         ) : (
-          // Placeholder message when no department is clicked
-          <Text align="center" mt="40px">Click a graph to show the breakdown of WFH</Text>
+          // Placeholder message when no department is clicked and no loading
+          !loading && <Text align="center" mt="40px">Click a graph to show the breakdown of WFH</Text>
         )}
       </Container>
     </main>
