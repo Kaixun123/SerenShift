@@ -177,12 +177,22 @@ export default function EditApplicationCard({ applicationData, onSave }) {
       return;
     }
 
+    // Determine the time to append based on the selected time slot
+    const startHour = timeSlot === "am" ? 9 : timeSlot === "pm" ? 14 : 9; // 9 AM for full day
+    const endHour = timeSlot === "am" ? 13 : timeSlot === "pm" ? 18 : 18; // 1 PM for AM and 6 PM for PM/full day
+
+    // Create new Date objects with the correct time
+    const startDateTime = new Date(startDate);
+    const endDateTime = new Date(endDate);
+    startDateTime.setHours(startHour, 0, 0, 0); // Set start time
+    endDateTime.setHours(endHour, 0, 0, 0); // Set end time
+
     // Prepare form data to pass to parent component
     const formData = {
       id: applicationData.id,
       application_type: type,
-      startDate,
-      endDate,
+      startDate: startDateTime.toISOString(), // Format to ISO string if needed
+      endDate: endDateTime.toISOString(), // Format to ISO string if needed
       timeSlot,
       reason,
       files,
@@ -204,7 +214,8 @@ export default function EditApplicationCard({ applicationData, onSave }) {
     setRecurrenceRule("");
     setRecurrenceEndDate("");
     setLoading(false);
-  };
+};
+
 
   // Cancel function to reset the form and close the card
   const handleCancel = () => {
