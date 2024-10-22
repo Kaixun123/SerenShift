@@ -1,11 +1,12 @@
 const { Application, Employee, Schedule } = require('../models');
-const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3 } = require('../services/common/applicationHelper');
+const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3, createRecurringApplications } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
 const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
 
+const { uploadFile } = require('../services/uploads/s3');
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplications = async (req, res, next) => {
@@ -104,32 +105,6 @@ const retrievePendingApplications = async (req, res, next) => {
     }
 }
 
-// Helper Function for recurrence logic for regular applications
-const createRecurringApplications = async (recurrenceRule, startDate, endDate, recurrenceEndDate, requestorRemarks, createdBy) => {
-    let applications = [];
-    let currentStartDate = moment(startDate);
-    let currentEndDate = moment(endDate);
-
-    while (currentStartDate.isBefore(recurrenceEndDate)) {
-        currentStartDate.add(1, recurrenceRule); // E.g., add 1 week or 1 month
-        currentEndDate.add(1, recurrenceRule);
-
-        const application = await Application.create({
-            start_date: currentStartDate.toDate(),
-            end_date: currentEndDate.toDate(),
-            application_type: 'Regular',
-            created_by: createdBy,
-            last_update_by: createdBy,
-            requestor_remarks: requestorRemarks,
-            status: 'Pending',
-        });
-
-        applications.push(application);
-    }
-    return applications;
-};
-
-
 // POST function - to create new application
 const createNewApplication = async (req, res, next) => {
     try {
@@ -178,9 +153,10 @@ const createNewApplication = async (req, res, next) => {
             requestor_remarks: requestor_remarks,
         });
 
+        console.log(newApplication);
         // Upload files using the application ID
         if (files && files.length > 0) {
-            await uploadFilesToS3(files, employeeInfo.id);
+            await uploadFilesToS3(files, newApplication.application_id, employeeInfo.id);
         }
 
         // If it's a regular application, generate recurring child events

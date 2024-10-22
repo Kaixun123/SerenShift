@@ -12,7 +12,8 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname } from 'next/navigation'
+import { useEffect, useState, useMemo } from "react";
 
 
 // react icons
@@ -22,10 +23,12 @@ import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager } from "react-icons/gr";
 import { CgList } from "react-icons/cg";
 import { FiHome } from "react-icons/fi";
+import { MdOutlineManageHistory } from "react-icons/md";
 
 export default function SideBar() {
   const router = useRouter();
   const toast = useToast();
+  const pathname = usePathname();
   const [isValidToken, setIsValidToken] = useState(false);
 
   // For Token Expiry Modal
@@ -50,9 +53,10 @@ export default function SideBar() {
     },
     {
       id: 3,
-      href: "/application/pending",
-      icon: MdOutlinePendingActions,
-      title: "Pending Application",
+
+      href: "/schedule/subordinate",
+      icon: GrUserManager,
+      title: "Subordinate Calendar",
     },
     {
       id: 4,
@@ -62,30 +66,34 @@ export default function SideBar() {
     },
     {
       id: 5,
-      href: "/application/manage",
-      icon: CgList,
-      title: "Manage Application",
+      href: "/application/pending",
+      icon: MdOutlinePendingActions,
+      title: "Pending Applications",
     },
     {
       id: 6,
-
-      href: "/schedule/subordinate",
-      icon: GrUserManager,
-      title: "Subordinate Calendar",
+      href: "/application/manage",
+      icon: CgList,
+      title: "Manage Applications",
     },
     {
       id: 7,
-
+      href: "/blacklist/manage",
+      icon: MdOutlineManageHistory,
+      title: "Manage Blacklist Dates",
+    },
+    {
+      id: 8,
       href: "/hr",
       icon: FiHome,
       title: "Company View",
     }
   ];
 
-  // const activeMenu = useMemo(
-  //   () => menuItems.find((menu) => menu.href === pathname),
-  //   [pathname]
-  // );
+  const activeMenu = useMemo(
+    () => menuItems.find((menu) => menu.href === pathname),
+    [pathname]
+  );
 
   // Function to check token validity by calling the backend
   const checkTokenValidity = async () => {

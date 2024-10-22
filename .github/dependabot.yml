@@ -6,6 +6,8 @@ updates:
       interval: weekly
     commit-message:
       prefix: "[Dev Container]"
+    reviewers:
+      - "hanlim83"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -13,11 +15,13 @@ updates:
     commit-message:
       prefix: "[GitHub Action]"
     reviewers:
-      - "OurCodeLab/technology-department"
+      - "hanlim83"
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
+    reviewers:
+      - "Kaixun123"
     commit-message:
       prefix: "[Husky Pre-Commit Checks]"
       include: "scope"
@@ -25,13 +29,17 @@ updates:
     directory: "/backend"
     schedule:
       interval: "weekly"
+    reviewers:
+      - "hanlim83"
     commit-message:
       prefix: "[Node.JS - Backend]"
-      include: "scope"      
+      include: "scope"
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
       interval: "weekly"
+    reviewers:
+      - "fernfern0011"
     commit-message:
       prefix: "[Next.JS - Frontend]"
-      include: "scope"           
+      include: "scope"

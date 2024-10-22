@@ -62,9 +62,10 @@ app.use(cookieParser());
 
 // App Routes
 app.use("/api/auth", require("./routes/authHandling"));
+app.use("/api/application", require("./routes/applicationHandling"))
+app.use("/api/blacklist", require("./routes/blacklistHandling"));
 app.use("/api/employee", require("./routes/employeeHandling"));
 app.use("/api/schedule", require("./routes/scheduleHandling"));
-app.use("/api/application", require("./routes/applicationHandling"))
 app.use("/api/hr", require("./routes/hrHandling"))
 
 //Error Handling
