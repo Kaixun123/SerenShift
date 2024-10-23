@@ -1,7 +1,7 @@
 "use client";
 // import components
 import TopHeader from "@/components/TopHeader";
-import PendingApplicationCard from "@/components/PendingApplicationCard";
+import ApplicationCard from "@/components/ApplicationCard";
 import WithdrawApprovedModal from "@/components/WithdrawApprovedModal";
 import RefreshButton from "@/components/RefreshButton";
 import { useEffect, useState } from "react";
@@ -248,7 +248,7 @@ export default function WithdrawApplicationPage() {
             }
           }}
         />
-        <PendingApplicationCard
+        <ApplicationCard
           start_date={application.start_date}
           end_date={application.end_date}
           application_type={application.application_type}
@@ -472,7 +472,7 @@ export default function WithdrawApplicationPage() {
         {selectedApplications.length > 1 && (
             <div className="flex flex-col gap-4 mb-4">
               <Text fontWeight="bold" color="gray.600">
-                Reason for Withdrawal (All Selected): <span style={{ color: 'red' }}>*</span>
+                Reason for Withdrawal ({selectedApplications.length} Selected): <span style={{ color: 'red' }}>*</span>
               </Text>
               <Textarea
                 placeholder="Enter required reason here..."
