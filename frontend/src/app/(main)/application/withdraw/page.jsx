@@ -9,7 +9,7 @@ import RefreshButton from "@/components/RefreshButton";
 import { useEffect, useState } from "react";
 
 // chakra-ui
-import { Box, Button, Flex, Input, Link, Textarea, Text, useToast, useDisclosure, VStack } from "@chakra-ui/react";
+import { Box, Button, Flex, Textarea, Text, useToast, useDisclosure, VStack } from "@chakra-ui/react";
 
 // mantine
 import { Pagination, Checkbox, MultiSelect } from "@mantine/core";
@@ -19,12 +19,9 @@ export default function WithdrawApplicationPage() {
   const [appToWithdraw, setAppToWithdraw] = useState(null);
   const [appsToWithdraw, setAppsToWithdraw] = useState([]);
   const [subordinates, setSubordinates] = useState([]); // Holds subordinate data
-  const [scheduleData, setScheduleData] = useState(null);
-  const [currentAction, setCurrentAction] = useState(null); // Track current action
   const [selectedSubIds, setSelectedSubIds] = useState([]);
   const [noApprovedApplications, setNoApprovedApplications] = useState(false);
   const [paginatedApplications, setPaginatedApplications] = useState([]);
-
   
   const [selectedApplications, setSelectedApplications] = useState([])
   const [filteredApplications, setFilteredApplications] = useState([]);
@@ -34,7 +31,6 @@ export default function WithdrawApplicationPage() {
 
   // Toast handling
   const toast = useToast();
-
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -62,7 +58,6 @@ export default function WithdrawApplicationPage() {
   const handleRefresh = () => {
     setRefreshing(true); 
     setRefresh(true); 
-  
     // Reset refreshing and isRefresh after a short delay to mimic loading behavior
     setTimeout(() => {
       setRefreshing(false);  // Reset the refreshing state after the delay
