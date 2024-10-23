@@ -3,6 +3,7 @@
 import TopHeader from "@/components/TopHeader";
 import ApplicationCard from "@/components/ApplicationCard";
 import WithdrawApprovedModal from "@/components/WithdrawApprovedModal";
+import WithdrawMultipleApprovedModal from "@/components/WithdrawMultipleApprovedModal";
 import RefreshButton from "@/components/RefreshButton";
 import { useEffect, useState } from "react";
 
@@ -15,6 +16,7 @@ import { Pagination, Checkbox, MultiSelect } from "@mantine/core";
 export default function WithdrawApplicationPage() {
   const [approvedApplications, setApprovedApplications] = useState([]);
   const [appToWithdraw, setAppToWithdraw] = useState(null);
+  const [appsToWithdraw, setAppsToWithdraw] = useState([]);
   const [subordinates, setSubordinates] = useState([]); // Holds subordinate data
   const [scheduleData, setScheduleData] = useState(null);
   const [currentAction, setCurrentAction] = useState(null); // Track current action
@@ -47,6 +49,13 @@ export default function WithdrawApplicationPage() {
     isOpen: isModalWithdrawOpen,
     onOpen: onModalWithdrawOpen,
     onClose: onModalWithdrawClose,
+  } = useDisclosure();
+
+  // For Withdrawal Multiple Modal
+  const {
+    isOpen: isModalWithdrawMultipleOpen,
+    onOpen: onModalWithdrawMultipleOpen,
+    onClose: onModalWithdrawMultipleClose,
   } = useDisclosure();
 
   const handleRefresh = () => {
@@ -169,6 +178,47 @@ export default function WithdrawApplicationPage() {
     }
   };
 
+  const handleMultipleWithdraw = async (applicationArray, remarks) => {
+    try {
+      const promises = applicationArray.map(async (application) => {
+        const application_id = application.application_id;
+        const response = await fetch("/api/application/withdrawApproved", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ application_id, remarks }),
+        });
+  
+        if (!response.ok) {
+          throw new Error(`Failed to withdraw application ID: ${application_id}`);
+        }
+  
+        // Return the response for further processing if needed
+        return response;
+      });
+  
+      // Wait for all the promises (API calls) to complete
+      await Promise.all(promises);
+  
+      // After all withdrawals are completed
+      setRefresh(true);
+  
+      // Remove withdrawn applications from state
+      setSelectedApplications((prev) =>
+        prev.filter((app) => !applicationArray.some(a => a.application_id === app.application_id))
+      );
+  
+      setRemarks(''); // Clear remarks after the process
+      return { ok: true }; // Return success response to modal
+  
+    } catch (error) {
+      console.error("Error withdrawing applications:", error);
+      return { ok: false }; // Return failure response to modal
+    }
+  };
+  
+
   function handlePagination(array, size) {
     if (!array.length) {
       return [];
@@ -184,7 +234,8 @@ export default function WithdrawApplicationPage() {
       setSelectedApplications(allApplications); // Store the full application objects
     } else {
       setSelectedApplications([]);
-      setRemarks({}); // Reset remarks when all applications are deselected
+      setRemarks(''); // Reset remarks when all applications are deselected
+      setRemarksMultiple('')
     }
   };
 
@@ -193,7 +244,8 @@ export default function WithdrawApplicationPage() {
     setPage(1);
     setSelectedSubIds(selectedIds);
     setSelectedApplications([]); // Reset selected applications when subordinates change
-    setRemarks({}); // Reset remarks when new subordinates are selected
+    setRemarks(''); // Reset remarks when all applications are deselected
+    setRemarksMultiple('')
     fetchSubordinateApplication(selectedIds);
   };
 
@@ -418,7 +470,18 @@ export default function WithdrawApplicationPage() {
     setAppToWithdraw(selectedApplicationDetails); // Set the application to be withdrawn
     onModalWithdrawOpen(); // Open the modal
   };
-  
+
+  // Function to handle withdraw multiple action
+  const handleWithdrawMultipleClick = () => {
+    if (selectedApplications.length > 1) {
+      setAppsToWithdraw(selectedApplications); // Set applications to withdraw (multiple)
+      setAppToWithdraw(null); // Ensure single withdrawal state is null
+      onModalWithdrawMultipleOpen(); // Open the multiple withdrawal modal
+    } else {
+      return;
+    }
+    
+  };
 
   return (
     <main>
@@ -509,13 +572,22 @@ export default function WithdrawApplicationPage() {
               onConfirm={() => handleWithdraw(appToWithdraw.application_id, remarks)} // Pass handleWithdraw function to WithdrawApprovedModal
             />
           )}
+          {/* Show the multiple withdrawal modal only when withdrawing multiple applications */}
+          {appsToWithdraw.length > 1 && (
+            <WithdrawMultipleApprovedModal
+              isOpen={isModalWithdrawMultipleOpen}
+              onClose={onModalWithdrawMultipleClose}
+              selectedApplications={appsToWithdraw}
+              onConfirm={() => handleMultipleWithdraw(appsToWithdraw, remarksMultiple)} // Handle multiple withdraw
+            />
+          )}
         </div>
 
         <div className="w-1/2">
         <Flex alignItems="center" width="100%">
         <Box width="100%">
         {selectedApplications.length > 1 && (
-            <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col gap-4 mb-8">
               <Text fontWeight="bold" color="gray.600">
                 Reason for Withdrawal ({selectedApplications.length} Selected): <span style={{ color: 'red' }}>*</span>
               </Text>
@@ -528,8 +600,15 @@ export default function WithdrawApplicationPage() {
                 resize="none"
                 height="100px"
               />
-              <Flex mt={4} justifyContent="flex-start" w="full">
-                {/* Withdraw all button */}
+              <Flex justifyContent="flex-start" w="full">
+                <Button 
+                  colorScheme="red"
+                  width="full"
+                  onClick={handleWithdrawMultipleClick}
+                  isDisabled={!(remarksMultiple && String(remarksMultiple).trim())}
+                  >
+                Withdraw All Selected
+              </Button>
               </Flex>
             </div>
           )} 
