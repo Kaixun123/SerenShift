@@ -15,6 +15,7 @@ import {
 const WithdrawApprovedModal = ({
   isOpen,
   onClose,
+  applicantName,
   applicationType,
   startDate,
   endDate,
@@ -51,10 +52,11 @@ const WithdrawApprovedModal = ({
         <ModalHeader>Confirm Withdrawal?</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
+          <Text>Applicant Name: {applicantName}</Text>
           <Text>Type: {applicationType}</Text>
           <Text>Start Date: {formatDate(startDate)}</Text>
           <Text>End Date: {formatDate(endDate)}</Text>
-          <Text>Time: {formatTime(startDate)}</Text> {/* New time field */}
+          <Text>Time: {formatTime(startDate)} to {formatTime(endDate)}</Text> 
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="red" mr={3} onClick={handleConfirm}>

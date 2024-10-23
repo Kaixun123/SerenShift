@@ -412,6 +412,7 @@ export default function WithdrawApplicationPage() {
             <WithdrawApprovedModal
               isOpen={isModalWithdrawOpen}
               onClose={onModalWithdrawClose}
+              applicantName={`${appToWithdraw.first_name} ${appToWithdraw.last_name}`}
               applicationType={appToWithdraw.application_type}
               startDate={appToWithdraw.start_date}
               endDate={appToWithdraw.end_date}
