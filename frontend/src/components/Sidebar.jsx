@@ -92,6 +92,30 @@ export default function SideBar() {
       icon: GrChapterAdd,
       title: "New Application",
     },
+    {
+      id: 5,
+      href: "/application/pending",
+      icon: MdOutlinePendingActions,
+      title: "Pending Applications",
+    },
+    // {
+    //   id: 6,
+    //   href: "/application/manage",
+    //   icon: CgList,
+    //   title: "Manage Applications",
+    // },
+    // {
+    //   id: 7,
+    //   href: "/blacklist/manage",
+    //   icon: MdOutlineManageHistory,
+    //   title: "Manage Blacklist Dates",
+    // },
+    // {
+    //   id: 8,
+    //   href: "/hr",
+    //   icon: FiHome,
+    //   title: "Company View",
+    // }
   ];
 
   const renderManagerItems = () => {
