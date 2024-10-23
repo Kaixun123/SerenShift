@@ -18,9 +18,9 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
       },
-      blacklist_type: {
-        type: Sequelize.ENUM('Regular', 'Ad Hoc'),
-        allowNull: false,
+      remarks: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
       },
       created_by: {
         type: Sequelize.INTEGER(6),

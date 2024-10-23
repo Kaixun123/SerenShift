@@ -1,10 +1,12 @@
 const { Application, Employee, Schedule } = require('../models');
-const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3 } = require('../services/common/applicationHelper');
+const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3, createRecurringApplications } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay, scheduleIsCurrentDayAndAfter } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
 const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
+
+const { uploadFile } = require('../services/uploads/s3');
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplications = async (req, res, next) => {
@@ -236,9 +238,10 @@ const createNewApplication = async (req, res, next) => {
             requestor_remarks: requestor_remarks,
         });
 
+        console.log(newApplication);
         // Upload files using the application ID
         if (files && files.length > 0) {
-            await uploadFilesToS3(files, employeeInfo.id);
+            await uploadFilesToS3(files, newApplication.application_id, employeeInfo.id);
         }
 
         // If it's a regular application, generate recurring child events
@@ -442,6 +445,92 @@ const withdrawApprovedApplication = async (req, res) => {
     }
 };
 
+// PATCH function - to update an existing pending application
+const updatePendingApplication = async (req, res, next) => {
+    try {
+        console.log(req.body);
+        let { application_id, application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
+
+        const files = req.files;
+        let employeeInfo = await Employee.findByPk(req.user.id);
+
+        // Check if employee exists
+        if (!employeeInfo) {
+            return res.status(404).json({ message: "Employee not found." });
+        }
+
+        // Check if reporting manager exists
+        let reportingManager = employeeInfo.reporting_manager;
+        if (!reportingManager) {
+            return res.status(404).json({ message: "Reporting Manager not found." });
+        }
+
+        // Validate application_id
+        if (!application_id) {
+            return res.status(400).json({ message: "Application ID is required for updates." });
+        }
+
+        // Find the pending application by application_id
+        let application = await Application.findOne({
+            where: { application_id: application_id, status: 'Pending' }
+        });
+
+        // Check if the application exists
+        if (!application) {
+            return res.status(404).json({ message: "Pending application not found." });
+        }
+
+        // Retrieve existing pending applications for overlap check, excluding the current one
+        let existingPending = await Application.findAll({
+            where: {
+                created_by: req.user.id,
+                status: 'Pending',
+                application_id: { [Op.ne]: application_id } // Exclude the current application
+            }
+        });
+
+        // Retrieve approved applications based on user id
+        let approvedApplications = await Schedule.findAll({
+            where: { created_by: req.user.id }
+        });
+
+        // Check for overlaps in existing pending and approved applications
+        let existingPendingRes = await checkforOverlap(startDate, endDate, existingPending, 'existing');
+        let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedApplications, 'approved');
+        
+        // Return error if overlaps found
+        if (existingPendingRes || approvedApplicationRes) {
+            return res.status(400).json({ message: "Invalid application period. Updated application cannot overlap with existing or approved applications." });
+        }
+
+        // Update the existing pending application
+        application.start_date = startDate;
+        application.end_date = endDate;
+        application.application_type = application_type;
+        application.last_update_by = employeeInfo.id;
+        application.requestor_remarks = requestor_remarks;
+
+        await application.save();
+
+        // Upload files if provided
+        if (files && files.length > 0) {
+            await uploadFilesToS3(files, employeeInfo.id);
+        }
+
+        // Handle recurring applications for regular type
+        if (application_type === "Regular" && recurrence_rule && recurrence_end_date) {
+            await createRecurringApplications(recurrence_rule, startDate, endDate, recurrence_end_date, requestor_remarks, req.user.id);
+        }
+
+        console.log("Updated Application:", application);
+
+        return res.status(200).json({ message: "Pending application successfully updated.", result: application });
+    } catch (error) {
+        console.error("Error updating pending application:", error);
+        return res.status(500).json({ error: "An error occurred while updating the application." });
+    }
+};
+
 
 module.exports = {
     retrieveApplications,
@@ -452,4 +541,5 @@ module.exports = {
     rejectPendingApplication,
     withdrawPendingApplication,
     withdrawApprovedApplication,
+    updatePendingApplication,
 }

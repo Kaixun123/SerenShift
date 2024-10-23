@@ -16,6 +16,10 @@ const s3 = new S3Client({
 
 // Upload a file to S3
 const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = false, user) => {
+
+    console.log(relatedEntityID);
+    console.log(user);
+    
     if (!file) {
         throw new Error('No file provided');
     } else if (!relatedEntityType || !relatedEntityID) {
@@ -35,6 +39,13 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
 
     const fileName = file.originalname.split('.').shift();
     const fileExtension = file.originalname.split('.').pop();
+
+    //rename the file before sending to s3 bucket
+    const userId = user.id;
+    const currentDateTime = new Date().toISOString().replace(/[:.-]/g, '');
+
+    const newFileName = `${fileName}_${userId}_${currentDateTime}`;
+
     let foundFile = await File.findOne({
         where: {
             file_name: fileName,
@@ -49,21 +60,21 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
     try {
         const command = new PutObjectCommand({
             Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
-            Key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
+            Key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${newFileName}.${fileExtension}`.toLowerCase(),
             Body: file.buffer,
             ContentType: file.mimetype,
         });
         await s3.send(command);
         if (foundFile) {
             await foundFile.update({
-                s3_key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
+                s3_key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${newFileName}.${fileExtension}`.toLowerCase(),
                 last_update_by: user.id,
             });
         } else {
             await File.create({
-                file_name: fileName,
+                file_name: newFileName,
                 file_extension: fileExtension,
-                s3_key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${fileName}.${fileExtension}`.toLowerCase(),
+                s3_key: `${process.env.NODE_ENV}/${relatedEntityType}/${relatedEntityID}/${newFileName}.${fileExtension}`.toLowerCase(),
                 related_entity: relatedEntityType,
                 related_entity_id: relatedEntityID,
                 created_by: user.id,
@@ -73,7 +84,7 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
 
         return foundFile || await File.findOne({
             where: {
-                file_name: fileName,
+                file_name: newFileName,
                 file_extension: fileExtension,
                 related_entity: relatedEntityType,
                 related_entity_id: relatedEntityID,

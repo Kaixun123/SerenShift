@@ -12,7 +12,8 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname } from 'next/navigation'
+import { useEffect, useState, useMemo } from "react";
 
 
 // react icons
@@ -21,10 +22,13 @@ import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager, GrDocumentMissing } from "react-icons/gr";
 import { CgFileDocument, CgList } from "react-icons/cg";
+import { FiHome } from "react-icons/fi";
+import { MdOutlineManageHistory } from "react-icons/md";
 
 export default function SideBar() {
   const router = useRouter();
   const toast = useToast();
+  const pathname = usePathname();
   const [isValidToken, setIsValidToken] = useState(false);
   const [userRole, setUserRole] = useState(null);
 
@@ -77,9 +81,10 @@ export default function SideBar() {
     },
     {
       id: 3,
-      href: "/application/pending",
-      icon: MdOutlinePendingActions,
-      title: "Pending Application",
+
+      href: "/schedule/subordinate",
+      icon: GrUserManager,
+      title: "Subordinate Calendar",
     },
     {
       id: 4,
@@ -117,10 +122,10 @@ export default function SideBar() {
     );
   };
 
-  // const activeMenu = useMemo(
-  //   () => menuItems.find((menu) => menu.href === pathname),
-  //   [pathname]
-  // );
+  const activeMenu = useMemo(
+    () => menuItems.find((menu) => menu.href === pathname),
+    [pathname]
+  );
 
   // Function to check token validity by calling the backend
   const checkTokenValidity = async () => {
