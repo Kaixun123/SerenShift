@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { Box, Button, Flex, Input, Link, Textarea, Text, useToast, useDisclosure, VStack } from "@chakra-ui/react";
 
 // mantine
-import { Pagination, Checkbox } from "@mantine/core";
+import { Pagination, Checkbox, MultiSelect } from "@mantine/core";
 
 export default function WithdrawApplicationPage() {
   const [approvedApplications, setApprovedApplications] = useState([]);
@@ -18,6 +18,7 @@ export default function WithdrawApplicationPage() {
   const [subordinates, setSubordinates] = useState([]); // Holds subordinate data
   const [scheduleData, setScheduleData] = useState(null);
   const [currentAction, setCurrentAction] = useState(null); // Track current action
+  const [selectedSubIds, setSelectedSubIds] = useState([]);
   const [noApprovedApplications, setNoApprovedApplications] = useState(false);
   const [paginatedApplications, setPaginatedApplications] = useState([]);
 
@@ -188,13 +189,15 @@ export default function WithdrawApplicationPage() {
   };
 
   // Handle individual application selection
-  const handleSelectApplication = (applicationId, checked) => {
-    if (checked) {
-      setSelectedApplications((prev) => [...prev, applicationId]);
-    } else {
-      setSelectedApplications((prev) => prev.filter((id) => id !== applicationId));
-    }
+  const handleSubordinateSelect = (selectedIds) => {
+    setPage(1);
+    setSelectedSubIds(selectedIds);
+    setSelectedApplications([]); // Reset selected applications when subordinates change
+    setRemarks({}); // Reset remarks when new subordinates are selected
+    fetchSubordinateApplication(selectedIds);
   };
+
+
 
   // Pagination state
   const [activePage, setPage] = useState(1);
@@ -223,7 +226,7 @@ export default function WithdrawApplicationPage() {
 
   const items = paginatedApplications[activePage - 1]?.map((application) => {
     return (
-      <Flex key={application.application_id} alignItems="center">
+      <Flex key={application.application_id} alignItems="center" width="100%">
         <Checkbox
           className="mr-3"
           checked={selectedApplications.some(
@@ -304,7 +307,7 @@ export default function WithdrawApplicationPage() {
           border="1px solid #E2E8F0"
           borderRadius="md"
           boxShadow="sm"
-          maxW="400px"
+          maxW="auto"
           bg="white"
         >
           <Text textAlign="center" fontWeight="bold" color="gray.500">
@@ -424,36 +427,77 @@ export default function WithdrawApplicationPage() {
         subText={"Withdraw approved WFH arrangements"}
       />
 
-      <div className="flex p-[30px]">
+      <div className="flex p-[30px] gap-[30px]">
         <div className="w-1/2">
-          <div className="flex justify-between">
-            <h1 className="text-2xl font-bold">Find Applications:</h1>
-            <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
-          </div>
-          <Box mt={4}>
-          {!noApprovedApplications ? (
-            <Checkbox 
-              label="Select All"
-              onChange={(e) => handleSelectAll(e.currentTarget.checked)}
-            />
-          ) : null}
-          </Box>
+        <Flex gap={"10px"} direction={"column"}>
+            <Flex justifyContent={"space-between"}>
+              <h1 className="w-full text-2xl font-bold">
+                Applications for Review
+              </h1>
+              <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
+            </Flex>
+            <Flex
+              gap={"5px"}
+              flexWrap={"wrap"}
+              alignItems={"center"}
+              justifyContent={"space-between"}
+            >
+              <Checkbox
+                className="flex"
+                label="Select All"
+                onChange={(e) => handleSelectAll(e.currentTarget.checked)}
+              />
+              <Flex gap={"5px"} flexWrap={"wrap"} justifyContent={"flex-end"}>
+                <MultiSelect
+                  placeholder={
+                    selectedSubIds.length === 0 ? "Select Subordinate" : ""
+                  }
+                  data={approvedApplications
+                    .sort((a, b) => a.first_name.localeCompare(b.first_name))
+                    .map((sub) => ({
+                      value: String(sub.user_id),
+                      label: `${sub.first_name} ${sub.last_name}`,
+                    }))}
+                  value={selectedSubIds.map(String)}
+                  onChange={handleSubordinateSelect}
+                  clearable
+                  styles={{
+                    pillsList: {
+                      display: "flex",
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: "5px",
+                    },
+                    input: {
+                      width: "270px",
+                      height: "30px",
+                      maxHeight: "30px",
+                      overflowY: "auto",
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                    },
+                  }}
+                />
+              </Flex>
+            </Flex>
+          </Flex>
+
           <Box py={5} h={"100%"}>
-          <VStack spacing={5} h={"100%"}>
-              {!noApprovedApplications ? (
-                <>
-                  {items}
-                  <Pagination
-                    total={paginatedApplications.length}
-                    value={activePage}
-                    onChange={setPage}
-                    className="flex mt-5 justify-center"
-                  />
-                </>
-              ) : (
-                <Text>No subordinate approved applications found</Text>
-              )}
-            </VStack>
+            <VStack spacing={5} h={"100%"}>
+                {!noApprovedApplications ? (
+                  <>
+                    {items}
+                    <Pagination
+                      total={paginatedApplications.length}
+                      value={activePage}
+                      onChange={setPage}
+                      className="flex mt-5 justify-center"
+                    />
+                  </>
+                ) : (
+                  <Text>No subordinate approved applications found</Text>
+                )}
+              </VStack>
           </Box>
           {appToWithdraw && (
             <WithdrawApprovedModal
@@ -468,7 +512,8 @@ export default function WithdrawApplicationPage() {
         </div>
 
         <div className="w-1/2">
-        <Box w="1/2" maxW="400px" ml={10}>
+        <Flex alignItems="center" width="100%">
+        <Box width="100%">
         {selectedApplications.length > 1 && (
             <div className="flex flex-col gap-4 mb-4">
               <Text fontWeight="bold" color="gray.600">
@@ -549,6 +594,7 @@ export default function WithdrawApplicationPage() {
             </Button>
           </Flex>
         </Box>
+        </Flex>
         </div>
       </div>
     </main>
