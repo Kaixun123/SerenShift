@@ -1,7 +1,7 @@
 const { Blacklist, Employee } = require('../models');
 
 
-// GET -  Retrieve Blacklist Dates For Individual Employee
+// GET -  Retrieve Blacklist Dates When Indivdual Employee Is Applying
 const getBlacklistDates = async (req, res) => {
     try {
         let requestor = await Employee.findByPk(req.user.id);
@@ -17,46 +17,59 @@ const getBlacklistDates = async (req, res) => {
         }
         let blacklistDates = [];
         if (req.body.start_date && req.body.end_date) {
+            let normalisedStartDate = new Date(req.body.start_date);
+            normalisedStartDate.setHours(0, 0, 0, 0);
+            let normalisedEndDate = new Date(req.body.end_date);
+            normalisedEndDate.setHours(23, 59, 59, 999);
             blacklistDates = await Blacklist.findAll({
                 where: {
                     created_by: approver.id,
                     start_date: {
-                        [Op.between]: [req.body.start_date, req.body.end_date]
+                        [Op.between]: [normalisedStartDate, normalisedEndDate]
                     },
                     end_date: {
-                        [Op.between]: [req.body.start_date, req.body.end_date]
+                        [Op.between]: [normalisedStartDate, normalisedEndDate]
                     }
                 }
             });
         } else if (req.body.start_date) {
+            let normalisedStartDate = new Date(req.body.start_date);
+            normalisedStartDate.setHours(0, 0, 0, 0);
             blacklistDates = await Blacklist.findAll({
                 where: {
                     created_by: approver.id,
                     start_date: {
-                        [Op.gte]: req.body.start_date
+                        [Op.gte]: normalisedStartDate
                     }
                 }
             });
         } else if (req.body.end_date) {
+            let normalisedEndDate = new Date(req.body.end_date);
+            normalisedEndDate.setHours(23, 59, 59, 999);
             blacklistDates = await Blacklist.findAll({
                 where: {
                     created_by: approver.id,
                     end_date: {
-                        [Op.lte]: req.body.end_date
+                        [Op.lte]: normalisedEndDate
                     }
                 }
             });
         } else {
+            let normalisedStartDate = new Date();
+            normalisedStartDate.setHours(0, 0, 0, 0);
             blacklistDates = await Blacklist.findAll({
                 where: {
                     created_by: approver.id,
                     start_date: {
-                        [Op.gte]: new Date().setHours(0, 0, 0, 0)
+                        [Op.gte]: normalisedStartDate
                     }
                 }
             });
         }
-        return res.status(200).json(blacklistDates);
+        if (!blacklistDates)
+            return res.status(404).json({ message: "No Blacklist Dates Found" });
+        else
+            return res.status(200).json(blacklistDates);
     } catch (error) {
         return res.status(500).json({ message: "Internal Server Error" });
     }

@@ -126,7 +126,7 @@ export default function NewApplicationPage() {
           reporting_manager: managerName,
         });
 
-        const blacklistRes = await fetch(`/api/application/retrieveBlacklist`, {
+        const blacklistRes = await fetch(`/api/blacklist/getBlockedDates`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
