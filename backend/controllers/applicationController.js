@@ -180,7 +180,7 @@ const createNewApplication = async (req, res, next) => {
 
         console.log("New Application:", newApplication);
 
-        return res.status(201).json({ message: "New application successfully created.", result: newApplication })
+        return res.status(201).json({ message: "New application successfully created.", result: newApplication });
     } catch (error) {
         console.error("Error creating new application:", error);
         return res.status(500).json({ error: "An error occurred while creating new application." });

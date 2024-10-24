@@ -1,6 +1,9 @@
 const { Schedule } = require('../models');
-const moment = require('moment'); // Install moment.js to easily handle dates
-const { splitScheduleByDate } = require('../services/common/scheduleHelper')
+const moment = require('moment');
+const { splitScheduleByDate } = require('../services/common/scheduleHelper');
+const { checkforOverlap  } = require('../services/common/applicationHelper');
+const { createNewApplication } = require('../controllers/applicationController');
+const { Application, Employee } = require('../models');
 const { fetchColleagues, fetchSubordinates } = require('../services/common/employeeHelper');
 
 // Function to fetch own schedule
@@ -197,13 +200,118 @@ const retrieveOwnSchedule = async (req, res) => {
 
         return res.status(200).json(calendarEvents);
     } catch (error) {
+        console.error("Error updating own schedule:", error);
+        return res.status(500).json({ error: "An error occurred while updating the schedule." });
+    }
+};
+
+//PATCH function - to update an existing approved application
+const updateOwnSchedule = async(req, res, next) => {
+    try{
+
+        //get request from frontend on user changes.
+        console.log(req.body);
+        let { application_id, application_type, startDate, endDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
+
+        // Validate application_id
+        if (!application_id) {
+            return res.status(400).json({ message: "Application ID is required for updates." });
+        }
+
+        const files = req.files;
+        let employeeInfo = await Employee.findByPk(req.user.id);
+
+        // Check if employee exists
+        if (!employeeInfo) {
+            return res.status(404).json({ message: "Employee not found." });
+        }
+
+        // Check if reporting manager exists
+        let reportingManager = employeeInfo.reporting_manager;
+        if (!reportingManager) {
+            return res.status(404).json({ message: "Reporting Manager not found." });
+        }
+
+        // Find the pending application by application_id
+        let application = await Application.findOne({
+            where: { application_id: application_id, status: 'Pending' }
+        });
+
+        // Check if the application exists
+        if (!application) {
+            return res.status(404).json({ message: "Pending application not found." });
+        }
+
+        // Find schedule by employee ID and start & end dates
+        let schedule = await Schedule.findOne({
+            where: { created_by: employeeInfo.id, startDate: startDate, endDate: endDate }
+        });
+
+        // Check if the application exists
+        if (!schedule) {
+            return res.status(404).json({ message: "Pending application not found." });
+        }
+
+        // system check if arrangement start or end date has passed
+        // Retrieve existing pending applications for overlap check, excluding the current one
+        let existingPending = await Application.findAll({
+            where: {
+                created_by: req.user.id,
+                status: 'Approved',
+                application_id: { [Op.ne]: application_id } // Exclude the current application
+            }
+        });
+
+        // Retrieve approved applications based on user id
+        let approvedApplications = await Application.findAll({
+            where: { created_by: req.user.id }
+        });
+
+        // Check for overlaps in existing pending and approved applications
+        let existingPendingRes = await checkforOverlap(startDate, endDate, existingPending, 'existing');
+        let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedApplications, 'approved');
+
+        //system does a check to see if there is a clash with other approved arrangements.
+        // Return error if overlaps found
+        if (existingPendingRes || approvedApplicationRes) {
+            return res.status(400).json({ message: "Invalid application period. Updated application cannot overlap with existing or approved applications." });
+        }
+
+        //system updates schedule in db
+        //steps: update application row -> delete schedule rows
+
+        //update old application to the status of deleted
+        application.status = "Deleted";
+        application.last_name  = employeeInfo.id;
+    
+        const updatedApplication = await application.save();
+        if (!updatedApplication) {
+            return res.status(404).json({ message: "Old Application was not updated due to an error." });
+        }
+
+        //delete schedule row
+        const deleteSchedule = await schedule.destroy();
+        if (!deleteSchedule) {
+            return res.status(404).json({ message: "Schedule was not deleted due to an error." });
+        }
+
+        //create new application
+        const newApplication = await createNewApplication(application_type, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date, files)
+        if (!newApplication) {
+            return res.status(404).json({ message: "New Application was not created due to an error." });
+        }
+        
+        return res.status(201).json({message: "Application has been updated for manager approval", result: newApplication});
+
+    }catch(error) {
         console.error("Error retrieving own schedule:", error);
         return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
     }
-};
+}
 
 module.exports = {
     retrieveTeamSchedule,
     retrieveSubordinateSchedule,
-    retrieveOwnSchedule
+    retrieveOwnSchedule,
+    updateOwnSchedule,
 };
