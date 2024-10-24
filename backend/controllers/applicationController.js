@@ -1,4 +1,4 @@
-const { Application, Employee, Schedule } = require('../models');
+const { Application, Employee, Schedule, Blacklist } = require('../models');
 const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3, createRecurringApplications } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay } = require('../services/common/scheduleHelper');
@@ -391,7 +391,7 @@ const updatePendingApplication = async (req, res, next) => {
         // Check for overlaps in existing pending and approved applications
         let existingPendingRes = await checkforOverlap(startDate, endDate, existingPending, 'existing');
         let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedApplications, 'approved');
-        
+
         // Return error if overlaps found
         if (existingPendingRes || approvedApplicationRes) {
             return res.status(400).json({ message: "Invalid application period. Updated application cannot overlap with existing or approved applications." });
@@ -426,6 +426,58 @@ const updatePendingApplication = async (req, res, next) => {
 };
 
 
+const retrieveBlacklist = async (req, res) => {
+    try {
+
+        const requestor = await Employee.findByPk(req.user.id);
+        if (requestor.reporting_manager == null) {
+            return res.status(404).json({ message: "Unable to determine Blacklisted Dates Due To No Reporitng Manager." });
+        }
+
+        const approver = await Employee.findByPk(requestor.reporting_manager);
+        if (!approver) {
+            return res.status(404).json({ message: "Reporting Manager not found." });
+        }
+
+        const blacklist = await Blacklist.findAll({
+            where: {
+                created_by: approver.id
+            }
+        })
+
+        if (!blacklist || blacklist.length === 0) {
+            return res.status(404).json({ message: `No Blacklist.` });
+        };
+
+        let response = [];
+        const today = new Date();
+        blacklist.forEach(data => {
+            const startDate = new Date(data.start_date);
+            if (startDate > today) {
+                response.push({
+                    blacklist_id: data.blacklist_id,
+                    start_date: data.start_date,
+                    end_date: data.end_date,
+                    remarks: data.remarks,
+                    created_by: data.created_by,
+                    last_update_by: data.last_update_by,
+                    created_timestamp: data.created_timestamp,
+                    last_update_timestamp: data.last_update_timestamp
+                })
+            }
+        });
+
+        if (response.length === 0) {
+            return res.status(404).json({ message: `No Blacklist entries starting after today.` });
+        }
+
+        return res.status(200).json(response);
+    } catch (error) {
+        console.error("Error fetching blacklist:", error);
+        return res.status(500).json({ error: "An error occurred while fetching blacklist." });
+    }
+}
+
 module.exports = {
     retrieveApplications,
     retrievePendingApplications,
@@ -435,4 +487,5 @@ module.exports = {
     withdrawPendingApplication,
     withdrawApprovedApplication,
     updatePendingApplication,
+    retrieveBlacklist
 }

@@ -77,5 +77,6 @@ router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vail
 router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
 router.put("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.withdrawApprovedApplication(req, res));
 router.patch("/updatePendingApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updatePendingApplication(req, res));
+router.get("/retrieveBlacklist", ensureLoggedIn, (req, res) => applicationController.retrieveBlacklist(req, res));
 
 module.exports = router;
