@@ -2,7 +2,7 @@ import { Box, Flex, Text, VStack, Badge, Button } from "@chakra-ui/react";
 import { IoCalendarOutline } from "react-icons/io5";
 import { LuAlarmClock } from "react-icons/lu";
 
-const PendingApplicationCard = ({
+const ApplicationCard = ({
   start_date,
   end_date, // New prop for end date
   application_type,
@@ -36,7 +36,7 @@ const PendingApplicationCard = ({
       p={"20px"} // Adjust padding to reduce overall size
       borderRadius="16px"
       overflow="hidden"
-      className="w-full lg:w-[570px] shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
+      className="w-full shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
     >
       <Flex
         gap={"15px"}
@@ -186,10 +186,23 @@ const PendingApplicationCard = ({
 
           {canManage === false ? (
             <Flex>
-              <Button colorScheme="red" variant="outline" size="sm" onClick={() => onWithdraw({ start_date, application_type })}>
+              <Button
+                width={"100%"}
+                colorScheme="red"
+                variant="outline"
+                size="sm"
+                onClick={() => onWithdraw({ start_date, application_type })}
+              >
                 Withdraw
               </Button>
-              <Button colorScheme="blue" variant="outline" size="sm" ml={2} onClick={() => onEdit({ start_date, application_type })}>
+              <Button
+                width={"100%"}
+                colorScheme="blue"
+                variant="outline"
+                size="sm"
+                ml={2}
+                onClick={() => onEdit({ start_date, application_type })}
+              >
                 Edit
               </Button>
             </Flex>
@@ -202,4 +215,4 @@ const PendingApplicationCard = ({
   );
 };
 
-export default PendingApplicationCard;
+export default ApplicationCard;
