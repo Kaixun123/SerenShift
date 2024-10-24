@@ -12,9 +12,8 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { usePathname } from 'next/navigation'
+import { usePathname } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-
 
 // react icons
 import { IoCalendarOutline } from "react-icons/io5";
@@ -22,7 +21,9 @@ import { BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager } from "react-icons/gr";
 import { CgList } from "react-icons/cg";
+import { FiHome } from "react-icons/fi";
 import { MdOutlineManageHistory } from "react-icons/md";
+import { AiOutlineSchedule } from "react-icons/ai";
 
 export default function SideBar() {
   const router = useRouter();
@@ -65,9 +66,9 @@ export default function SideBar() {
     },
     {
       id: 5,
-      href: "/application/pending",
+      href: "/application/own",
       icon: MdOutlinePendingActions,
-      title: "Pending Applications",
+      title: "Own Applications",
     },
     {
       id: 6,
@@ -80,7 +81,13 @@ export default function SideBar() {
       href: "/blacklist/manage",
       icon: MdOutlineManageHistory,
       title: "Manage Blacklist Dates",
-    }
+    },
+    {
+      id: 8,
+      href: "/hr",
+      icon: FiHome,
+      title: "Company View",
+    },
   ];
 
   const activeMenu = useMemo(
@@ -125,7 +132,6 @@ export default function SideBar() {
         status: "success",
         isClosable: true,
         position: "top-right",
-        position: "top-right",
       });
       router.push("/auth/login");
     } else {
@@ -136,7 +142,6 @@ export default function SideBar() {
         description: "An error has occured. Please try again later",
         status: "error",
         isClosable: true,
-        position: "top-right",
         position: "top-right",
       });
     }
@@ -169,7 +174,6 @@ export default function SideBar() {
         <ModalContent>
           <ModalHeader>Session expired</ModalHeader>
           <ModalBody>
-            Your session has expired. You will be redirected to the login page.
             Your session has expired. You will be redirected to the login page.
           </ModalBody>
         </ModalContent>

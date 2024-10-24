@@ -1,23 +1,21 @@
 import { Box, Flex, Text, VStack, Badge, Button } from "@chakra-ui/react";
-
-// react icon
 import { IoCalendarOutline } from "react-icons/io5";
 import { LuAlarmClock } from "react-icons/lu";
 
-const PendingApplicationCard = ({
+const ApplicationCard = ({
   start_date,
   end_date, // New prop for end date
   application_type,
   status,
   requestor_remarks,
   onWithdraw,
+  onEdit, // Add an onEdit prop
   first_name,
   last_name,
   position,
   canManage,
   occurence,
 }) => {
-  // Format the date to display as DD-MM-YYYY
   const formatDate = (datetime) => {
     const date = new Date(datetime);
     const day = String(date.getDate()).padStart(2, "0");
@@ -26,12 +24,11 @@ const PendingApplicationCard = ({
     return `${day}/${month}/${year}`;
   };
 
-  // Format the time to display only the time part (e.g., HH:MM AM/PM)
   const formatTime = (datetime) => {
     return new Date(datetime).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-    }); // Format as time
+    });
   };
 
   return (
@@ -39,7 +36,7 @@ const PendingApplicationCard = ({
       p={"20px"} // Adjust padding to reduce overall size
       borderRadius="16px"
       overflow="hidden"
-      className="w-full lg:w-[570px] shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
+      className="w-full shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
     >
       <Flex
         gap={"15px"}
@@ -186,15 +183,29 @@ const PendingApplicationCard = ({
               </Flex>
             </Flex>
           </Box>
+
           {canManage === false ? (
-            <Button
-              colorScheme="red"
-              variant="outline"
-              size="sm"
-              onClick={() => onWithdraw({ start_date, application_type })}
-            >
-              Withdraw
-            </Button>
+            <Flex>
+              <Button
+                width={"100%"}
+                colorScheme="red"
+                variant="outline"
+                size="sm"
+                onClick={() => onWithdraw({ start_date, application_type })}
+              >
+                Withdraw
+              </Button>
+              <Button
+                width={"100%"}
+                colorScheme="blue"
+                variant="outline"
+                size="sm"
+                ml={2}
+                onClick={() => onEdit({ start_date, application_type })}
+              >
+                Edit
+              </Button>
+            </Flex>
           ) : (
             ""
           )}
@@ -204,4 +215,4 @@ const PendingApplicationCard = ({
   );
 };
 
-export default PendingApplicationCard;
+export default ApplicationCard;
