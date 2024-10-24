@@ -43,6 +43,54 @@ describe('Schedule Controller', () => {
             });
         });
 
+        it('should return 404 if period is partial day', async () => {
+            const req = { user: { id: 1 }, query: {} };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchColleagues.mockResolvedValue([{ user_id: 2, first_name: 'John', last_name: 'Doe' }]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Partial Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-10', end_date: '2024-10-10' }]);
+
+            await retrieveTeamSchedule(req, res, next);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ message: "No WFH schedules found for this team." });
+        });
+
+        it('should return 404 if date is before start date', async () => {
+            const req = { user: { id: 1 }, query: { start_date: '2024-10-12 09:00:00', end_date: '2024-10-13 13:00:00' } };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchColleagues.mockResolvedValue([{ user_id: 2, first_name: 'John', last_name: 'Doe' }]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Full Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-10', end_date: '2024-10-10' }]);
+
+            await retrieveTeamSchedule(req, res, next);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ message: "No WFH schedules found for this team." });
+        });
+
+        it('should return 404 if date is after end date', async () => {
+            const req = { user: { id: 1 }, query: { start_date: '2024-10-01 09:00:00', end_date: '2024-10-05 13:00:00' } };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchColleagues.mockResolvedValue([{ user_id: 2, first_name: 'John', last_name: 'Doe' }]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Full Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-10', end_date: '2024-10-10' }]);
+
+            await retrieveTeamSchedule(req, res, next);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ message: "No WFH schedules found for this team." });
+        });
+
         it('should return 404 if no schedules found', async () => {
             const req = { user: { id: 1 }, query: {} };
             const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
@@ -69,6 +117,87 @@ describe('Schedule Controller', () => {
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.json).toHaveBeenCalledWith({ error: "An error occurred while retrieving the team schedule." });
         });
+
+        it('should return WFH schedules for multiple colleagues', async () => {
+            const req = { user: { id: 1 }, query: {} };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchColleagues.mockResolvedValue([
+                { user_id: 2, first_name: 'John', last_name: 'Doe' },
+                { user_id: 3, first_name: 'Jane', last_name: 'Smith' }
+            ]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Full Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-10', end_date: '2024-10-10' }]);
+
+            await retrieveTeamSchedule(req, res, next);
+
+            expect(fetchColleagues).toHaveBeenCalledWith(1);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                '2024-10-10': {
+                    'Full Day': ['John Doe', 'Jane Smith'],
+                }
+            });
+        });
+
+        it('should return WFH schedules for multiple colleagues with same wfh date', async () => {
+            const req = { user: { id: 1 }, query: {} };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            // Mock fetchColleagues to return two colleagues
+            fetchColleagues.mockResolvedValue([
+                { user_id: 2, first_name: 'John', last_name: 'Doe' },
+                { user_id: 3, first_name: 'Jane', last_name: 'Smith' }
+            ]);
+
+            // Mock splitScheduleByDate for both colleagues with the same date
+            splitScheduleByDate
+                .mockResolvedValueOnce([{ date: '2024-10-10', period: 'Full Day' }])  // John's schedule
+                .mockResolvedValueOnce([{ date: '2024-10-10', period: 'Full Day' }]); // Jane's schedule
+
+            // Mock Schedule.findAll to return different start and end dates for each colleague
+            Schedule.findAll.mockResolvedValue([
+                { start_date: '2024-10-10', end_date: '2024-10-10' },
+                { start_date: '2024-10-10', end_date: '2024-10-10' }
+            ]);
+
+            await retrieveTeamSchedule(req, res, next);
+
+            expect(fetchColleagues).toHaveBeenCalledWith(1);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                '2024-10-10': {
+                    'Full Day': ['John Doe', 'Jane Smith'],
+                },
+            });
+        });
+
+        it('should filter colleagues by the specified colleague_id and return WFH schedules', async () => {
+            const req = { user: { id: 1 }, query: { colleague_id: '2' } };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchColleagues.mockResolvedValue([
+                { user_id: 2, first_name: 'John', last_name: 'Doe' },
+                { user_id: 3, first_name: 'Jane', last_name: 'Smith' }
+            ]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Full Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-10', end_date: '2024-10-10' }]);
+
+            await retrieveTeamSchedule(req, res, next);
+
+            expect(fetchColleagues).toHaveBeenCalledWith(1);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                '2024-10-10': {
+                    'Full Day': ['John Doe'],
+                }
+            });
+        });
     });
 
     describe('retrieveSubordinateSchedule', () => {
@@ -93,6 +222,63 @@ describe('Schedule Controller', () => {
             });
         });
 
+        it('should return WFH schedules for multiple subordinates', async () => {
+            const req = { user: { id: 1 }, query: {} };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchSubordinates.mockResolvedValue([
+                { user_id: 2, first_name: 'John', last_name: 'Doe' },
+                { user_id: 3, first_name: 'Jane', last_name: 'Smith' }
+            ]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-11', period: 'Full Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-11', end_date: '2024-10-11' }]);
+
+            await retrieveSubordinateSchedule(req, res, next);
+
+            expect(fetchSubordinates).toHaveBeenCalledWith(1);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                '2024-10-11': {
+                    'Full Day': ['John Doe', 'Jane Smith']
+                }
+            });
+        });
+
+        it('should return WFH schedules for multiple subordinates with same wfh date', async () => {
+            const req = { user: { id: 1 }, query: {} };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            // Mock fetchColleagues to return two colleagues
+            fetchSubordinates.mockResolvedValue([
+                { user_id: 2, first_name: 'John', last_name: 'Doe' },
+                { user_id: 3, first_name: 'Jane', last_name: 'Smith' }
+            ]);
+
+            // Mock splitScheduleByDate for both colleagues with the same date
+            splitScheduleByDate
+                .mockResolvedValueOnce([{ date: '2024-10-10', period: 'Full Day' }])  // John's schedule
+                .mockResolvedValueOnce([{ date: '2024-10-10', period: 'Full Day' }]); // Jane's schedule
+
+            // Mock Schedule.findAll to return different start and end dates for each colleague
+            Schedule.findAll.mockResolvedValue([
+                { start_date: '2024-10-10', end_date: '2024-10-10' },
+                { start_date: '2024-10-10', end_date: '2024-10-10' }
+            ]);
+
+            await retrieveSubordinateSchedule(req, res, next);
+
+            expect(fetchSubordinates).toHaveBeenCalledWith(1);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                '2024-10-10': {
+                    'Full Day': ['John Doe', 'Jane Smith'],
+                },
+            });
+        });
+        
         it('should return 404 if no schedules found for subordinates', async () => {
             const req = { user: { id: 1 }, query: {} };
             const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
@@ -118,6 +304,79 @@ describe('Schedule Controller', () => {
 
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.json).toHaveBeenCalledWith({ error: "An error occurred while retrieving the team schedule." });
+        });
+
+        it('should return 404 if period is partial day for subordinate', async () => {
+            const req = { user: { id: 1 }, query: {} };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchSubordinates.mockResolvedValue([{ user_id: 2, first_name: 'John', last_name: 'Doe' }]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Partial Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-10', end_date: '2024-10-10' }]);
+
+            await retrieveSubordinateSchedule(req, res, next);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ message: "No WFH schedules found for this team." });
+        });
+
+
+        it('should filter subordinate by the specified subordinate_id and return WFH schedules', async () => {
+            const req = { user: { id: 1 }, query: { colleague_id: "3" } };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchSubordinates.mockResolvedValue([
+                { user_id: 2, first_name: 'John', last_name: 'Doe' },
+                { user_id: 3, first_name: 'Jane', last_name: 'Smith' }
+            ]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-11', period: 'Full Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-11', end_date: '2024-10-11' }]);
+
+            await retrieveSubordinateSchedule(req, res, next);
+
+            expect(fetchSubordinates).toHaveBeenCalledWith(1);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                '2024-10-11': {
+                    'Full Day': ['Jane Smith']
+                }
+            });
+        });
+
+        it('should return 404 if date is before start date for subordinate', async () => {
+            const req = { user: { id: 1 }, query: { start_date: '2024-10-12 09:00:00', end_date: '2024-10-13 13:00:00' } };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchSubordinates.mockResolvedValue([{ user_id: 2, first_name: 'John', last_name: 'Doe' }]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Full Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-10', end_date: '2024-10-10' }]);
+
+            await retrieveSubordinateSchedule(req, res, next);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ message: "No WFH schedules found for this team." });
+        });
+
+        it('should return 404 if date is after end date for subordinate', async () => {
+            const req = { user: { id: 1 }, query: { start_date: '2024-10-01 09:00:00', end_date: '2024-10-05 13:00:00' } };
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const next = jest.fn();
+
+            fetchSubordinates.mockResolvedValue([{ user_id: 2, first_name: 'John', last_name: 'Doe' }]);
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Full Day' }]);
+
+            Schedule.findAll.mockResolvedValue([{ start_date: '2024-10-10', end_date: '2024-10-10' }]);
+
+            await retrieveSubordinateSchedule(req, res, next);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith({ message: "No WFH schedules found for this team." });
         });
     });
 
