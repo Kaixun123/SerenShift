@@ -1,7 +1,7 @@
 "use client";
 // Import components
 import TopHeader from "@/components/TopHeader";
-import PendingApplicationCard from "@/components/PendingApplicationCard";
+import ApplicationCard from "@/components/ApplicationCard";
 import RefreshButton from "@/components/RefreshButton";
 import ApplicationReviewCard from "@/components/ReviewApplicationCard";
 import ApproverRemarks from "@/components/RemarksCard";
@@ -69,7 +69,7 @@ export default function ManageApplicationPage() {
   const fetchSubordinateApplication = async (subordinateIds = []) => {
     try {
       const applicationResponse = await fetch(
-        `/api/application/retrievePendingApplication?id=${userId}`,
+        `/api/application/retrievePendingApplications?id=${userId}`,
         {
           method: "GET",
           headers: {
@@ -150,7 +150,7 @@ export default function ManageApplicationPage() {
           }
         }}
       />
-      <PendingApplicationCard
+      <ApplicationCard
         start_date={application.start_date}
         end_date={application.end_date}
         application_type={application.application_type}

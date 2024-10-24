@@ -6,6 +6,8 @@ import FileUploader from "@/components/FileUpload";
 
 // chakra-ui
 import {
+  Heading,
+  Flex,
   FormControl,
   Text,
   FormLabel,
@@ -16,10 +18,18 @@ import {
   useToast,
   Tooltip,
   Box,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  TableContainer,
 } from "@chakra-ui/react";
 import { AiOutlineInfoCircle } from "react-icons/ai";
 
 // mantine
+import { Indicator } from "@mantine/core";
 import { DatePicker, DatesProvider } from "@mantine/dates";
 
 export default function NewApplicationPage() {
@@ -42,6 +52,7 @@ export default function NewApplicationPage() {
   const [recurrenceRule, setRecurrenceRule] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [recurrenceError, setRecurrenceError] = useState(""); // error handling
+  const [blacklist, setBlacklist] = useState([]);
 
   // Tooltip messages based on application type
   const startDateTooltipMessage =
@@ -114,6 +125,15 @@ export default function NewApplicationPage() {
           id: data.id,
           reporting_manager: managerName,
         });
+
+        const blacklistRes = await fetch(`/api/blacklist/getBlockedDates`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const blacklistData = await blacklistRes.json();
+        setBlacklist(blacklistData);
       } catch (error) {
         console.error("Error fetching employee data:", error);
       }
@@ -121,6 +141,8 @@ export default function NewApplicationPage() {
 
     fetchEmployeeData();
   }, []);
+
+  console.log(blacklist);
 
   const createNewApplication = async (e) => {
     e.preventDefault();
@@ -303,8 +325,31 @@ export default function NewApplicationPage() {
 
   // Calculate the maximum date for recurrence end date (1 year from today)
   const today = new Date();
-  const nextYear = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
-  const maxRecurrenceEndDate = nextYear.toISOString().split('T')[0];
+  const nextYear = new Date(
+    today.getFullYear() + 1,
+    today.getMonth(),
+    today.getDate()
+  );
+  const maxRecurrenceEndDate = nextYear.toISOString().split("T")[0];
+
+  const dayRenderer = (date) => {
+    const blacklistedDates = blacklist.map((item) =>
+      new Date(item.start_date).toDateString()
+    );
+    const day = date.getDate();
+    const isBlacklisted = blacklistedDates.includes(date.toDateString());
+
+    return (
+      <Indicator
+        size={6}
+        color="red"
+        offset={-5}
+        disabled={!isBlacklisted} // Show indicator for day 16 or blacklisted dates
+      >
+        <div>{day}</div>
+      </Indicator>
+    );
+  };
 
   return (
     <main>
@@ -329,6 +374,12 @@ export default function NewApplicationPage() {
                 maxDate={
                   new Date(new Date().setFullYear(new Date().getFullYear() + 1))
                 }
+                excludeDate={(date) =>
+                  blacklist
+                    .map((item) => new Date(item.start_date).toDateString())
+                    .includes(date.toDateString())
+                }
+                renderDay={dayRenderer}
                 onChange={handleCalendarChange}
               />
             </DatesProvider>
@@ -381,6 +432,66 @@ export default function NewApplicationPage() {
               />
             </div>
           </div>
+
+          {/* Blacklist */}
+          <Flex mt={5} gap={2} flexDirection={"column"}>
+            <Box display="inline-flex" alignItems="center">
+              <Heading as="h2" size="md">
+                Block Date List
+              </Heading>
+              <Tooltip
+                label="Date with color indicator has been blocked by the manager"
+                fontSize="md"
+              >
+                <span>
+                  <AiOutlineInfoCircle
+                    size={18}
+                    color="grey"
+                    style={{ marginLeft: "5px" }}
+                  />
+                </span>
+              </Tooltip>
+            </Box>
+            <TableContainer maxHeight={200} overflowY={"auto"}>
+              <Table variant="simple">
+                <Thead>
+                  <Tr>
+                    <Th>Start Date</Th>
+                    <Th>End Date</Th>
+                    <Th>Remarks</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {blacklist && blacklist.length > 0 ? (
+                    blacklist
+                      .sort(
+                        (a, b) =>
+                          new Date(a.start_date) - new Date(b.start_date)
+                      )
+                      .map((data) => (
+                        <Tr key={data.blacklist_id}>
+                          <Td>
+                            {new Date(data.start_date).toLocaleDateString(
+                              "en-GB"
+                            )}
+                          </Td>
+                          <Td>
+                            {new Date(data.end_date).toLocaleDateString(
+                              "en-GB"
+                            )}
+                          </Td>
+                          <Td>{data.remarks ? data.remarks : "No Remarks"}</Td>
+                        </Tr>
+                      ))
+                  ) : (
+                    <Tr>
+                      <Td colSpan="3">No data available</Td>
+                    </Tr>
+                  )}
+                </Tbody>
+              </Table>
+            </TableContainer>
+          </Flex>
         </div>
 
         {/* Section: Form */}
