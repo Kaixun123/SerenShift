@@ -42,7 +42,7 @@ Application.init(
     },
     status: {
       type: DataTypes.ENUM,
-      values: ['Pending', 'Approved', 'Rejected', 'Withdrawn'],
+      values: ['Pending', 'Approved', 'Rejected', 'Withdrawn', 'Deleted'],
       allowNull: false,
     },
     requestor_remarks: {
