@@ -43,7 +43,7 @@ const ApplicationReviewCard = ({
           bg="white"
         >
           <Text textAlign="center" fontWeight="bold" color="gray.500">
-            No WFH applications to review
+            No WFH applications selected
           </Text>
         </Box>
       );

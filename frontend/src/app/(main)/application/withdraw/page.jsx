@@ -2,7 +2,7 @@
 // import components
 import TopHeader from "@/components/TopHeader";
 import ApplicationCard from "@/components/ApplicationCard";
-import ApplicationReviewCard from "@/components/ApplicationReviewCard";
+import ApplicationReviewCard from "@/components/ApplicationDetailsCard";
 import WithdrawApprovedModal from "@/components/WithdrawApprovedModal";
 import WithdrawMultipleApprovedModal from "@/components/WithdrawMultipleApprovedModal";
 import RefreshButton from "@/components/RefreshButton";
