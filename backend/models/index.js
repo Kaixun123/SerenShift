@@ -61,16 +61,6 @@ Application.belongsTo(Employee, {
     as: 'verifier',
 });
 
-Application.belongsTo(Application, {
-    foreignKey: 'linked_application',
-    as: 'linked',
-});
-
-Application.hasMany(Application, {
-    foreignKey: 'linked_application',
-    as: 'linked_applications',
-});
-
 Employee.hasMany(Schedule, {
     foreignKey: 'created_by',
     as: 'schedules',
@@ -99,16 +89,6 @@ Employee.hasMany(Schedule, {
 Schedule.belongsTo(Employee, {
     foreignKey: 'verify_by',
     as: 'verifier',
-});
-
-Schedule.belongsTo(Schedule, {
-    foreignKey: 'linked_schedule',
-    as: 'linked',
-});
-
-Schedule.hasMany(Schedule, {
-    foreignKey: 'linked_schedule',
-    as: 'linked_schedules',
 });
 
 Employee.hasMany(Blacklist, {
