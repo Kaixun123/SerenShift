@@ -136,7 +136,7 @@ export default function PendingApplicationPage() {
     });
   };
 
-  const handleSaveEdit = async (updatedData) => {
+  const handleSaveEdit = async (updatedData, applicationStatus) => {
     const updatedApplication = {
       application_id: applicationToEdit.application_id,
       application_type:
@@ -147,9 +147,16 @@ export default function PendingApplicationPage() {
         updatedData.reason || applicationToEdit.requestor_remarks,
     };
 
+    const apiEndpoint =
+      applicationStatus === "Pending"
+        ? "/api/application/updatePendingApplication"
+        : applicationStatus === "Approved"
+        ? "/api/schedule/updateSchedule"
+        : null;
+
     try {
       const response = await fetch(
-        "/api/application/updatePendingApplication",
+        apiEndpoint,
         {
           method: "PATCH",
           headers: {
@@ -313,7 +320,10 @@ export default function PendingApplicationPage() {
                 endDate: applicationToEdit.end_date || "", // Provide a default value
                 reason: applicationToEdit.requestor_remarks || "", // Provide a default value
               }}
-              onSave={handleSaveEdit}
+              onSave={() => handleSaveEdit(
+                applicationToEdit.application_id,
+                applicationToEdit.status
+              )}
               onCancel={handleCancelEdit}
             />
           )}

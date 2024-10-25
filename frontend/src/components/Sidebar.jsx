@@ -152,6 +152,12 @@ export default function SideBar() {
         icon: MdOutlinePendingActions,
         title: "Own Applications",
       },
+      {
+        id: 4,
+        href: "/schedule/team",
+        icon: BsPeople,
+        title: "Team Calendar",
+      },
     ],
   };
 

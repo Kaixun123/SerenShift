@@ -5,6 +5,7 @@ const { checkforOverlap  } = require('../services/common/applicationHelper');
 const { createNewApplication } = require('../controllers/applicationController');
 const { Application, Employee } = require('../models');
 const { fetchColleagues, fetchSubordinates } = require('../services/common/employeeHelper');
+const { Op } = require('sequelize');
 
 // Function to fetch own schedule
 const fetchTeamIndividualSchedule = async (userId) => {
@@ -208,7 +209,7 @@ const retrieveOwnSchedule = async (req, res) => {
 //PATCH function - to update an existing approved application
 const updateOwnSchedule = async(req, res, next) => {
     try{
-
+        console.log("in update approved application function")
         //get request from frontend on user changes.
         console.log(req.body);
         let { application_id, application_type, startDate, endDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
@@ -234,8 +235,10 @@ const updateOwnSchedule = async(req, res, next) => {
 
         // Find the pending application by application_id
         let application = await Application.findOne({
-            where: { application_id: application_id, status: 'Pending' }
+            where: { application_id: application_id, status: 'Approved' }
         });
+
+        console.log(application);
 
         // Check if the application exists
         if (!application) {
@@ -244,12 +247,12 @@ const updateOwnSchedule = async(req, res, next) => {
 
         // Find schedule by employee ID and start & end dates
         let schedule = await Schedule.findOne({
-            where: { created_by: employeeInfo.id, startDate: startDate, endDate: endDate }
+            where: { created_by: employeeInfo.id, start_date: startDate, end_date: endDate }
         });
 
         // Check if the application exists
         if (!schedule) {
-            return res.status(404).json({ message: "Pending application not found." });
+            return res.status(404).json({ message: "Pending schedule not found." });
         }
 
         // system check if arrangement start or end date has passed
