@@ -250,26 +250,29 @@ describe('Schedule Controller', () => {
             const req = { user: { id: 1 }, query: {} };
             const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
             const next = jest.fn();
-
-            // Mock fetchColleagues to return two colleagues
+        
+            // Clear any existing mocks to avoid contamination from previous tests
+            jest.clearAllMocks();
+        
+            // Mock fetchSubordinates to return two subordinates
             fetchSubordinates.mockResolvedValue([
                 { user_id: 2, first_name: 'John', last_name: 'Doe' },
                 { user_id: 3, first_name: 'Jane', last_name: 'Smith' }
             ]);
-
-            // Mock splitScheduleByDate for both colleagues with the same date
-            splitScheduleByDate
-                .mockResolvedValueOnce([{ date: '2024-10-10', period: 'Full Day' }])  // John's schedule
-                .mockResolvedValueOnce([{ date: '2024-10-10', period: 'Full Day' }]); // Jane's schedule
-
-            // Mock Schedule.findAll to return different start and end dates for each colleague
+        
+            // Return the same date and period for both colleagues in splitScheduleByDate
+            splitScheduleByDate.mockResolvedValue([{ date: '2024-10-10', period: 'Full Day' }]);
+        
+            // Mock Schedule.findAll to return identical schedules for both subordinates
             Schedule.findAll.mockResolvedValue([
                 { start_date: '2024-10-10', end_date: '2024-10-10' },
                 { start_date: '2024-10-10', end_date: '2024-10-10' }
             ]);
-
+        
+            // Execute the function
             await retrieveSubordinateSchedule(req, res, next);
-
+        
+            // Verify expectations
             expect(fetchSubordinates).toHaveBeenCalledWith(1);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
