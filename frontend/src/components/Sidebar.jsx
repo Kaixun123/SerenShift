@@ -3,12 +3,14 @@ import Link from "next/link";
 import {
   Image,
   Button,
+  Divider,
   useToast,
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
   ModalBody,
+  Text, 
   useDisclosure,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
@@ -62,11 +64,8 @@ export default function SideBar() {
     }
     fetchUserDetails();
   }, []);
-  
-  
-  
 
-  const menuItems = [
+  let calendarItems = [
     {
       id: 1,
       href: "/schedule/own",
@@ -79,13 +78,9 @@ export default function SideBar() {
       icon: BsPeople,
       title: "Team Calendar",
     },
-    {
-      id: 3,
+  ];
 
-      href: "/schedule/subordinate",
-      icon: GrUserManager,
-      title: "Subordinate Calendar",
-    },
+  const ownAppItems = [
     {
       id: 4,
       href: "/application/create",
@@ -98,58 +93,82 @@ export default function SideBar() {
       icon: MdOutlinePendingActions,
       title: "Own Applications",
     },
-    // {
-    //   id: 6,
-    //   href: "/application/manage",
-    //   icon: CgList,
-    //   title: "Manage Applications",
-    // },
-    // {
-    //   id: 7,
-    //   href: "/blacklist/manage",
-    //   icon: MdOutlineManageHistory,
-    //   title: "Manage Blacklist Dates",
-    // },
-    // {
-    //   id: 8,
-    //   href: "/hr",
-    //   icon: FiHome,
-    //   title: "Company View",
-    // }
   ];
 
+  const manageAppItems = [
+    {
+      id: 6,
+      href: "/application/manage",
+      icon: CgList,
+      title: "Manage Applications",
+    },
+    {
+      id: 7,
+      href: "/application/withdraw",
+      icon: GrDocumentMissing,
+      title: "Withdraw Applications",
+    },
+    {
+      id: 8,
+      href: "/blacklist/manage",
+      icon: MdOutlineManageHistory,
+      title: "Manage Blacklist Dates",
+    },
+  ];
+
+  // Handling conditional rendering of extra menu items based on user role
+  if (userRole === "Manager" || userRole === "HR") {
+    calendarItems.push(
+      {
+        id: 3,
+        href: "/schedule/subordinate",
+        icon: GrUserManager,
+        title: "Subordinate Calendar",
+      },
+    );
+    if (userRole === "HR") {
+      calendarItems.splice(0, 0, {
+        id: 0,
+        href: "/hr",
+        icon: FiHome,
+        title: "Company View",
+      });
+    };
+  };
+
   const renderManagerItems = () => {
-    if (userRole !== "Manager") return null;
-  
+    if (userRole == "Staff") {
+      return null;
+    };
+
     return (
       <>
-        <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
-          <Link href="/schedule/subordinate" className="flex gap-3 items-center w-[400px]">
-            <GrUserManager className="w-5 h-5" />
-            Subordinate Calendar
-          </Link>
-        </div>
-        <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
-          <Link href="/application/manage" className="flex gap-3 items-center w-[400px]">
-            <CgList className="w-5 h-5" />
-            Manage Application
-          </Link>
-        </div>
-        <div className="p-5 cursor-pointer w-full hover:bg-light-secondary">
-          <Link href="/application/withdraw" className="flex gap-3 items-center w-[400px]">
-            <GrDocumentMissing className="w-5 h-5" />
-            Withdraw Applications
-          </Link>
-        </div>
-        {/* Add more manager-only elements here */}
-      </>
+      <Divider borderColor="gray.500" width="80%" alignSelf="center" mt={3}/>
+      <Text fontSize="sm" color="gray.500" mt={1} textAlign="center">Team Applications</Text>
+
+      {manageAppItems.map(({ icon: Icon, ...menu }) => {
+        //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
+        return (
+          <div
+            className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap`}
+            //className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
+            key={menu.title}
+          >
+            <Link href={menu.href} className="flex gap-3 items-center">
+              <Icon className="w-5 h-5" />
+              {menu.title}
+            </Link>
+          </div>
+        );
+      })}
+        </>
     );
   };
 
-  const activeMenu = useMemo(
-    () => menuItems.find((menu) => menu.href === pathname),
-    [pathname]
-  );
+  // const activeMenu = useMemo(
+  //   () => menuItems.find((menu) => menu.href === pathname),
+  //   [pathname]
+  // );
 
   // Function to check token validity by calling the backend
   const checkTokenValidity = async () => {
@@ -245,7 +264,7 @@ export default function SideBar() {
         />
       </div>
       <div className="flex flex-col">
-        {menuItems.map(({ icon: Icon, ...menu }) => {
+        {calendarItems.map(({ icon: Icon, ...menu }) => {
           //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
           return (
             <div
@@ -261,7 +280,25 @@ export default function SideBar() {
           );
         })}
 
-      {/* Conditionally render Manager sidebar tabs */}
+        <Divider borderColor="gray.500" width="80%" alignSelf="center" mt={3}/>
+        <Text fontSize="sm" color="gray.500" mt={1} textAlign="center">My Applications</Text>
+        
+        {ownAppItems.map(({ icon: Icon, ...menu }) => {
+          //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
+          return (
+            <div
+              className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap`}
+              //className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
+              key={menu.title}
+            >
+              <Link href={menu.href} className="flex gap-3 items-center">
+                <Icon className="w-5 h-5" />
+                {menu.title}
+              </Link>
+            </div>
+          );
+        })}
+
       {renderManagerItems()}
       </div>
       {/* Logout Button */}
