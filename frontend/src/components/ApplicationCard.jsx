@@ -36,7 +36,7 @@ const ApplicationCard = ({
       p={"20px"} // Adjust padding to reduce overall size
       borderRadius="16px"
       overflow="hidden"
-      className="w-full lg:w-[570px] shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
+      className="w-full shadow-[0px_3px_10px_rgba(0,0,0,0.12)]"
     >
       <Flex
         gap={"15px"}
@@ -196,10 +196,23 @@ const ApplicationCard = ({
 
           {canManage === false ? (
             <Flex>
-              <Button colorScheme="red" variant="outline" size="sm" onClick={() => onWithdraw({ start_date, application_type })}>
+              <Button
+                width={"100%"}
+                colorScheme="red"
+                variant="outline"
+                size="sm"
+                onClick={() => onWithdraw({ start_date, application_type })}
+              >
                 Withdraw
               </Button>
-              <Button colorScheme="blue" variant="outline" size="sm" ml={2} onClick={() => onEdit({ start_date, application_type })}>
+              <Button
+                width={"100%"}
+                colorScheme="blue"
+                variant="outline"
+                size="sm"
+                ml={2}
+                onClick={() => onEdit({ start_date, application_type })}
+              >
                 Edit
               </Button>
             </Flex>

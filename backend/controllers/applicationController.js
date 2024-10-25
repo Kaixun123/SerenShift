@@ -1,4 +1,4 @@
-const { Application, Employee, Schedule } = require('../models');
+const { Application, Employee, Schedule, Blacklist } = require('../models');
 const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3, createRecurringApplications } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay, scheduleIsCurrentDayAndAfter } = require('../services/common/scheduleHelper');
@@ -9,36 +9,47 @@ const { sequelize } = require('../services/database/mysql');
 const { uploadFile } = require('../services/uploads/s3');
 
 // GET function - to retrieve application data based on userId and status
-const retrieveApplications = async (req, res, next) => {
+const retrieveApplications = async (req, res) => {
     try {
-        let { id, status } = req.query;
+        const userId = await Employee.findByPk(req.user.id);
+
+        if (!userId) {
+            return res.status(404).json({ message: "Employee not found." });
+        }
+
         let ownApplication = await Application.findAll({
             where: {
-                created_by: id,
-                status: status
+                created_by: userId.id,
+                status: {
+                    [Op.or]: ["Pending", "Approved"]
+                }
             }
         });
         if (!ownApplication || ownApplication.length === 0) {
-            return res.status(404).json({ message: `No ${status} application.` });
+            return res.status(404).json({ message: `Application not found.` });
         };
 
         let response = [];
+        const today = new Date();
         ownApplication.forEach(application => {
-            response.push({
-                application_id: application.application_id,
-                start_date: application.start_date,
-                end_date: application.end_date,
-                application_type: application.application_type,
-                created_by: application.created_by,
-                last_update_by: application.last_update_by,
-                verify_by: application.verify_by,
-                verify_timestamp: application.verify_timestamp,
-                status: application.status,
-                requestor_remarks: application.requestor_remarks,
-                approver_remarks: application.requestor_remarks,
-                created_timestamp: application.created_timestamp,
-                last_update_timestamp: application.last_update_timestamp
-            });
+            const startDate = new Date(application.start_date);
+            if (startDate > today) {
+                response.push({
+                    application_id: application.application_id,
+                    start_date: application.start_date,
+                    end_date: application.end_date,
+                    application_type: application.application_type,
+                    created_by: application.created_by,
+                    last_update_by: application.last_update_by,
+                    verify_by: application.verify_by,
+                    verify_timestamp: application.verify_timestamp,
+                    status: application.status,
+                    requestor_remarks: application.requestor_remarks,
+                    approver_remarks: application.requestor_remarks,
+                    created_timestamp: application.created_timestamp,
+                    last_update_timestamp: application.last_update_timestamp
+                })
+            }
         });
 
         return res.status(200).json(response);
@@ -74,22 +85,25 @@ const retrievePendingApplications = async (req, res, next) => {
                     email: sub.email,
                 }
 
+                const today = new Date();
                 if (subApplicationRes && subApplicationRes.length > 0) {
-                    subResponse.pendingApplications = subApplicationRes.map(application => ({
-                        application_id: application.application_id,
-                        start_date: application.start_date,
-                        end_date: application.end_date,
-                        application_type: application.application_type,
-                        created_by: application.created_by,
-                        last_update_by: application.last_update_by,
-                        verify_by: application.verify_by,
-                        verify_timestamp: application.verify_timestamp,
-                        status: application.status,
-                        requestor_remarks: application.requestor_remarks,
-                        approver_remarks: application.requestor_remarks,
-                        created_timestamp: application.created_timestamp,
-                        last_update_timestamp: application.last_update_timestamp
-                    }))
+                    subResponse.pendingApplications = subApplicationRes
+                        .filter(application => new Date(application.start_date) > today)
+                        .map(application => ({
+                            application_id: application.application_id,
+                            start_date: application.start_date,
+                            end_date: application.end_date,
+                            application_type: application.application_type,
+                            created_by: application.created_by,
+                            last_update_by: application.last_update_by,
+                            verify_by: application.verify_by,
+                            verify_timestamp: application.verify_timestamp,
+                            status: application.status,
+                            requestor_remarks: application.requestor_remarks,
+                            approver_remarks: application.requestor_remarks,
+                            created_timestamp: application.created_timestamp,
+                            last_update_timestamp: application.last_update_timestamp
+                        }))
                 } else {
                     subResponse.pendingApplications = []; // No pending applications
                 }
@@ -419,6 +433,49 @@ const withdrawApprovedApplication = async (req, res) => {
     }
 };
 
+
+// DELETE - to delete approved application from Application table
+const withdrawApprovedApplicationByEmployee = async (req, res) => {
+    try {
+        let { application_id } = req.body;
+        let applicationInfo = await Application.findByPk(application_id);
+        const transaction = await sequelize.transaction();
+
+        if (!applicationInfo) {
+            return res.status(404).json({ message: "Approved application not found." });
+        } else if (applicationInfo.status !== "Approved") {
+            return res.status(400).json({ message: "Application is not in Approved status" })
+        } else if (scheduleHasNotPassedCurrentDay(applicationInfo.start_date)) {
+            return res.status(404).json({ message: "Cannot withdraw application which has started" });
+        }
+
+        let linkedSchedule = await Schedule.findOne({
+            where: {
+                start_date: applicationInfo.start_date,
+                end_date: applicationInfo.end_date,
+                created_by: applicationInfo.created_by,
+                schedule_type: applicationInfo.application_type,
+            }
+        })
+
+        if (!linkedSchedule) {
+            return res.status(404).json({ message: "Linked application not found." });
+        }
+
+        applicationInfo.status = "Withdrawn";
+        applicationInfo.last_update_by = req.user.id;
+        await applicationInfo.save({ transaction })
+        await linkedSchedule.destroy({ transaction })
+        await transaction.commit();
+
+        return res.status(200).json({ message: "Approved application withdrawn successfully" });
+    } catch (error) {
+        console.error("Error withdrawing application:", error);
+        return res.status(500).json({ error: "An error occurred while withdrawing application." });
+    }
+}
+
+
 // PATCH function - to update an existing pending application
 const updatePendingApplication = async (req, res, next) => {
     try {
@@ -471,7 +528,7 @@ const updatePendingApplication = async (req, res, next) => {
         // Check for overlaps in existing pending and approved applications
         let existingPendingRes = await checkforOverlap(startDate, endDate, existingPending, 'existing');
         let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedApplications, 'approved');
-        
+
         // Return error if overlaps found
         if (existingPendingRes || approvedApplicationRes) {
             return res.status(400).json({ message: "Invalid application period. Updated application cannot overlap with existing or approved applications." });
@@ -505,7 +562,6 @@ const updatePendingApplication = async (req, res, next) => {
     }
 };
 
-
 module.exports = {
     retrieveApplications,
     retrievePendingApplications,
@@ -515,5 +571,6 @@ module.exports = {
     rejectPendingApplication,
     withdrawPendingApplication,
     withdrawApprovedApplication,
-    updatePendingApplication,
+    withdrawApprovedApplicationByEmployee,
+    updatePendingApplication
 }
