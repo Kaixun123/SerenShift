@@ -1,7 +1,7 @@
 const { Application, Employee, Schedule, Blacklist } = require('../models');
 const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3, createRecurringApplications } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
-const { scheduleHasNotPassedCurrentDay, scheduleIsCurrentDayAndAfter } = require('../services/common/scheduleHelper');
+const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
 const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
@@ -147,7 +147,7 @@ const retrieveApprovedApplications = async (req, res, next) => {
 
                 if (subApplicationRes && subApplicationRes.length > 0) {
                     subResponse.approvedApplications = subApplicationRes
-                    .filter(application => scheduleIsCurrentDayAndAfter(application.start_date))
+                    .filter(application => scheduleIsAfterCurrentTime(application.start_date))
                     .map(application => ({
                         application_id: application.application_id,
                         start_date: application.start_date,

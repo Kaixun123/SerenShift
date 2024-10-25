@@ -115,18 +115,20 @@ function scheduleHasNotPassedCurrentDay(date) {
     return dateOnly <= today;
 }
 
-function scheduleIsCurrentDayAndAfter(date) {
-    // Strip the time part by setting the hours, minutes, seconds, and milliseconds to zero
-    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    // Get today's date and strip the time part
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    // Compare the dates
-    return dateOnly >= today;
+function scheduleIsAfterCurrentTime(dateString) {
+    // Append the GMT+8 offset to the date string
+    const dateWithTimezone = new Date(dateString + ' GMT+0800');
+    
+    // Get the current date and time
+    const now = new Date();
+    
+    // Compare the given date with the current date and time
+    return dateWithTimezone >= now;
 }
+
 
 module.exports = {
     splitScheduleByDate,
     scheduleHasNotPassedCurrentDay,
-    scheduleIsCurrentDayAndAfter
+    scheduleIsAfterCurrentTime
 };
