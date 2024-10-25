@@ -50,7 +50,6 @@ export default function SideBar() {
         });
   
         const data = await response.json();
-        console.log("DEBUG:", data);
   
         if (data && data.role) {
           setUserRole(data.role);
