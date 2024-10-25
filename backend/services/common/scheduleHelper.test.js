@@ -96,9 +96,9 @@ describe('Schedule Helper', () => {
             ]);
         });
 
-        it('should correctly split a partial day schedule', async () => {
-            const startDate = '2024-10-01T07:00:00';
-            const endDate = '2024-10-01T12:00:00';
+        it('should correctly split a partial day schedule pm', async () => {
+            const startDate = '2024-10-01T15:00:00';
+            const endDate = '2024-10-01T20:00:00';
 
             const result = await splitScheduleByDate(startDate, endDate);
 
@@ -106,8 +106,8 @@ describe('Schedule Helper', () => {
                 {
                     date: '2024-10-01',
                     period: 'Partial Day',
-                    start_time: '07:00:00',
-                    end_time: '12:00:00'
+                    start_time: '15:00:00',
+                    end_time: '20:00:00'
                 }
             ]);
         });
