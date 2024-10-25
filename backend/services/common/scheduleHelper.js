@@ -116,14 +116,11 @@ function scheduleHasNotPassedCurrentDay(date) {
 }
 
 function scheduleIsAfterCurrentTime(dateString) {
-    // Append the GMT+8 offset to the date string
-    const dateWithTimezone = new Date(dateString + ' GMT+0800');
-    
+    const date = new Date(dateString);
     // Get the current date and time
     const now = new Date();
-    
     // Compare the given date with the current date and time
-    return dateWithTimezone >= now;
+    return date >= now;
 }
 
 
