@@ -18,7 +18,7 @@ export default function WithdrawApplicationPage() {
   const [approvedApplications, setApprovedApplications] = useState([]);
   const [appToWithdraw, setAppToWithdraw] = useState(null);
   const [appsToWithdraw, setAppsToWithdraw] = useState([]);
-  const [subordinates, setSubordinates] = useState([]); // Holds subordinate data
+  const [subsWithApproved, setSubsWithApproved] = useState([]); // Holds subordinate data
   const [selectedSubIds, setSelectedSubIds] = useState([]);
   const [noApprovedApplications, setNoApprovedApplications] = useState(false);
   const [paginatedApplications, setPaginatedApplications] = useState([]);
@@ -68,13 +68,6 @@ export default function WithdrawApplicationPage() {
   useEffect(() => {
     async function fetchApprovedAppData() {
       try {
-        // Fetch the subordinates of the current user
-        const subordinatesResponse = await fetch("/api/employee/subordinates");
-        const subordinatesData = await subordinatesResponse.json();
-  
-        // Save the fetched subordinates into the state
-        setSubordinates(subordinatesData); // Saving the subordinates data
-    
         // Fetch approved applications for each subordinate sequentially
         const applicationResponse = await fetch(
           `/api/application/retrieveApprovedApplication`,
@@ -93,6 +86,20 @@ export default function WithdrawApplicationPage() {
         const allApprovedApps = await applicationResponse.json();
         setApprovedApplications(allApprovedApps);
         setFilteredApplications(allApprovedApps);
+
+        const employeesWithApprovedApps = allApprovedApps.filter((employee) => {
+          // Log the employee object for debugging
+          console.log("Checking Employee:", employee.first_name, employee.last_name);
+          console.log("Employee Approved Applications:", employee.approvedApplications);
+        
+          // Return true if the employee has non-empty approvedApplications
+          return employee.approvedApplications && employee.approvedApplications.length > 0;
+        });
+        
+        // Log the result after filtering
+        console.log("DEBUG APPROVED", employeesWithApprovedApps);
+        
+        setSubsWithApproved(employeesWithApprovedApps); // Saving the subordinates data
 
       } catch (error) {
         console.error("Error fetching approved application data:", error); // Log errors
@@ -147,6 +154,7 @@ export default function WithdrawApplicationPage() {
         }
 
         setRemarks('');
+        setSelectedSubIds([]); // Clear selected subordinates after the process
         onModalWithdrawClose(); // Close modal after successful withdrawal
 
       } else {
@@ -203,6 +211,7 @@ export default function WithdrawApplicationPage() {
         prev.filter((app) => !applicationArray.some(a => a.application_id === app.application_id))
       );
       setRemarks(''); // Clear remarks after the process
+      setSelectedSubIds([]); // Clear selected subordinates after the process
       return { ok: true }; // Return success response to modal
   
     } catch (error) {
@@ -376,7 +385,7 @@ export default function WithdrawApplicationPage() {
                   placeholder={
                     selectedSubIds.length === 0 ? "Select Subordinate" : ""
                   }
-                  data={approvedApplications
+                  data={subsWithApproved
                     .sort((a, b) => a.first_name.localeCompare(b.first_name))
                     .map((sub) => ({
                       value: String(sub.user_id),
