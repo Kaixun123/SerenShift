@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { check, validationResult } = require("express-validator");
-const { ensureLoggedIn, ensureManager, ensureHR } = require("../middlewares/authMiddleware");
+const { ensureLoggedIn, ensureManagerAndAbove } = require("../middlewares/authMiddleware");
 const scheduleController = require("../controllers/scheduleController");
 
 // Validation Middleware
@@ -18,7 +18,7 @@ const vaildateParameters = (req, res, next) => {
 
 router.get("/ownSchedule", ensureLoggedIn, (req, res) => scheduleController.retrieveOwnSchedule(req, res));
 router.get("/teamSchedule", ensureLoggedIn, (req, res) => scheduleController.retrieveTeamSchedule(req, res));
-router.get("/subordinateSchedule", ensureManager, (req, res) => scheduleController.retrieveSubordinateSchedule(req, res));
+router.get("/subordinateSchedule", ensureManagerAndAbove, (req, res) => scheduleController.retrieveSubordinateSchedule(req, res));
 router.patch("/updateSchedule", ensureLoggedIn, (req, res) => scheduleController.updateOwnSchedule(req, res));
 
 module.exports = router;

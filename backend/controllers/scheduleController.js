@@ -29,7 +29,6 @@ const fetchTeamIndividualSchedule = async (userId) => {
                 last_update_by: schedule.last_update_by,
                 verify_by: schedule.verify_by,
                 verify_timestamp: schedule.verify_timestamp,
-                linked_schedule: schedule.linked_schedule,
                 created_timestamp: schedule.created_timestamp,
                 last_update_timestamp: schedule.last_update_timestamp
             });
@@ -176,7 +175,7 @@ const retrieveOwnSchedule = async (req, res) => {
         if (schedule.length === 0) {
             return res.status(404).json({ message: "No schedules found for this user." });
         }
-        
+
         let calendarEvents = [];
         for (const block of schedule) {
             const dateBlocks = await splitScheduleByDate(block.start_date, block.end_date);
