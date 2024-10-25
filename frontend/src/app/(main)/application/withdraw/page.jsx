@@ -92,6 +92,7 @@ export default function WithdrawApplicationPage() {
 
         const allApprovedApps = await applicationResponse.json();
         setApprovedApplications(allApprovedApps);
+        setFilteredApplications(allApprovedApps);
 
       } catch (error) {
         console.error("Error fetching approved application data:", error); // Log errors
@@ -230,6 +231,16 @@ export default function WithdrawApplicationPage() {
     }
   };
 
+  // Handle filtering of selected applications
+  function handleFilterApplications(employeeIds) {
+    const filteredApps = approvedApplications.filter((app) => {
+      // Check if the created_by (employee ID) exists in the employeeIds array
+      return employeeIds.includes(String(app.user_id));
+    });
+    // Update the state with filtered applications
+    setFilteredApplications(filteredApps);
+  }
+
   // Handle individual application selection
   const handleSubordinateSelect = (selectedIds) => {
     setPage(1);
@@ -237,7 +248,7 @@ export default function WithdrawApplicationPage() {
     setSelectedApplications([]); // Reset selected applications when subordinates change
     setRemarks(''); // Reset remarks when all applications are deselected
     setRemarksMultiple('')
-    fetchSubordinateApplication(selectedIds);
+    handleFilterApplications(selectedIds);
   };
 
   // Pagination state
@@ -247,8 +258,12 @@ export default function WithdrawApplicationPage() {
   const applicationsPerPage = 2;
   
   useEffect(() => {
+    // Use filteredApplications if it's not empty, otherwise fallback to approvedApplications
+    const applicationsToUse = filteredApplications.length > 0 ? filteredApplications : approvedApplications;
+    console.log("DEBUG APPS", applicationsToUse, "filtered", filteredApplications, "total", approvedApplications);
+  
     const updatedPaginatedApplications = handlePagination(
-      approvedApplications
+      applicationsToUse
         .sort((a, b) => a.first_name.localeCompare(b.first_name))
         .flatMap((sub) =>
           sub.approvedApplications.map((application) => ({
@@ -260,11 +275,11 @@ export default function WithdrawApplicationPage() {
           }))
         ),
       applicationsPerPage
-    );    
+    );
 
     setPaginatedApplications(updatedPaginatedApplications);
-  }, [approvedApplications, applicationsPerPage]); // Dependency array includes both
-
+  }, [approvedApplications, filteredApplications, applicationsPerPage]); // Add filteredApplications to the dependency array
+  
   const items = paginatedApplications[activePage - 1]?.map((application) => {
     return (
       <Flex key={application.application_id} alignItems="center" width="100%">
@@ -357,7 +372,7 @@ export default function WithdrawApplicationPage() {
                 onChange={(e) => handleSelectAll(e.currentTarget.checked)}
               />
               <Flex gap={"5px"} flexWrap={"wrap"} justifyContent={"flex-end"}>
-                <MultiSelect
+              <MultiSelect
                   placeholder={
                     selectedSubIds.length === 0 ? "Select Subordinate" : ""
                   }
