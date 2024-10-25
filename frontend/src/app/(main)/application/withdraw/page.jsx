@@ -2,7 +2,7 @@
 // import components
 import TopHeader from "@/components/TopHeader";
 import ApplicationCard from "@/components/ApplicationCard";
-import ApplicationReviewCard from "@/components/ApplicationDetailsCard";
+import ApplicationDetailsCard from "@/components/ApplicationDetailsCard";
 import WithdrawApprovedModal from "@/components/WithdrawApprovedModal";
 import WithdrawMultipleApprovedModal from "@/components/WithdrawMultipleApprovedModal";
 import RefreshButton from "@/components/RefreshButton";
@@ -485,7 +485,7 @@ export default function WithdrawApplicationPage() {
           )} 
           {selectedApplicationDetails ? (
             <>
-              <ApplicationReviewCard
+              <ApplicationDetailsCard
                 startDate={selectedApplicationDetails.start_date}
                 endDate={selectedApplicationDetails.end_date}
                 applicationType={selectedApplicationDetails.application_type}
@@ -505,7 +505,7 @@ export default function WithdrawApplicationPage() {
               )}
             </>
           ) : (
-            <ApplicationReviewCard
+            <ApplicationDetailsCard
               startDate=""
               endDate=""
               applicationType=""

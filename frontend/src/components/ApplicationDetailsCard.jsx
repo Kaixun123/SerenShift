@@ -1,6 +1,6 @@
 import { Box, Flex, Text, Link, Input } from "@chakra-ui/react";
 
-const ApplicationReviewCard = ({
+const ApplicationDetailsCard = ({
     startDate = "",
     endDate = "",
     applicationType = "",
@@ -142,4 +142,4 @@ const ApplicationReviewCard = ({
     );
   };
 
-export default ApplicationReviewCard;
+export default ApplicationDetailsCard;
