@@ -41,11 +41,6 @@ const generateFixedTimes = () => {
   startTime.setFullYear(randomDate.getFullYear(), randomDate.getMonth(), randomDate.getDate());
   endTime.setFullYear(randomDate.getFullYear(), randomDate.getMonth(), randomDate.getDate());
 
-  // Ensure startTime is before endTime
-  if (startTime >= endTime) {
-    endTime.setHours(startTime.getHours() + 1);  // Fix end time to be after start time
-  }
-
   return { startDate: startTime, endDate: endTime };
 };
 
@@ -55,27 +50,31 @@ const getRandomInt = (min, max) => {
 };
 
 // Helper function to generate repeated "Regular" applications for the next few weeks
-const generateWeeklyRegularApplications = (employee, startDate, weeks = 4) => {
+const generateWeeklyRegularApplications = (startDate, weeks = 4) => {
   let applications = [];
   const { startDate: baseStart, endDate: baseEnd } = generateFixedTimes();
+
   for (let i = 0; i < weeks; i++) {
     const regularStartDate = new Date(baseStart);
     regularStartDate.setDate(regularStartDate.getDate() + (i * 7));  // Increment by 7 days for each week
+
     const regularEndDate = new Date(baseEnd);
     regularEndDate.setDate(regularEndDate.getDate() + (i * 7));  // Increment by 7 days for each week
+
     applications.push({
       start_date: regularStartDate,
       end_date: regularEndDate,
       application_type: 'Regular',
       status: 'Pending',
-      created_by: employee.id,
-      last_update_by: employee.id,
+      created_by: null,
+      last_update_by: null,
       verify_by: null,
       verify_timestamp: null,
       created_timestamp: new Date(),
       last_update_timestamp: new Date(),
     });
   }
+
   return applications;
 };
 
@@ -104,36 +103,20 @@ module.exports = {
     let schedules = [];
     let applications = [];
 
-    for (const employee of employees) {
-      // Step 2: Fetch the blacklist for the employee's reporting manager
-      const reportingManagerId = employee.reporting_manager;
-
-      // Fetch blacklist entries related to the reporting manager
-      const blacklistEntries = await queryInterface.sequelize.query(
-        `SELECT * FROM Blacklist WHERE created_by = ${reportingManagerId}`,
-        { type: Sequelize.QueryTypes.SELECT }
-      );
-
-      // Step 3: Create schedules for each employee, ensuring no conflicts with blacklist
+    employees.forEach(employee => {
+      // Step 3: Create schedules for each employee
       const scheduleCount = getRandomInt(1, 5); // Generate between 1 and 5 schedules per employee
       for (let i = 0; i < scheduleCount; i++) {
-        let scheduleEntry, startDate, endDate;
+        const { startDate, endDate } = generateFixedTimes(); // Generate fixed start and end times with random dates
+        const isRegularSchedule = Math.random() < 0.2;  // 20% chance of generating a Regular schedule
 
-        // Keep generating new start and end dates until no conflict with the blacklist
-        do {
-          const fixedTimes = generateFixedTimes(); // Generate fixed start and end times with random dates
-          startDate = fixedTimes.startDate;
-          endDate = fixedTimes.endDate;
-        } while (isConflictWithBlacklist(startDate, endDate, blacklistEntries));
-
-        const isRegularSchedule = Math.random() < 0.25;  // 25% chance of generating a Regular schedule
-        scheduleEntry = {
+        const scheduleEntry = {
           start_date: startDate,
           end_date: endDate,
           schedule_type: isRegularSchedule ? 'Regular' : 'Ad Hoc',
           created_by: employee.id,
           last_update_by: employee.id,
-          verify_by: reportingManagerId,
+          verify_by: employee.reporting_manager,
           verify_timestamp: new Date(),
           created_timestamp: new Date(),
           last_update_timestamp: new Date(),
@@ -143,28 +126,21 @@ module.exports = {
         schedules.push(scheduleEntry);
       }
 
-      // Step 4: Create applications for each employee, ensuring no conflicts with blacklist
+      // Step 4: Create applications for each employee
       const applicationCount = getRandomInt(1, 5); // Generate between 1 and 5 applications per employee
       for (let i = 0; i < applicationCount; i++) {
-        let applicationEntry, startDate, endDate;
-
-        // Keep generating new start and end dates until no conflict with the blacklist
-        do {
-          const fixedTimes = generateFixedTimes(); // Generate fixed start and end times with random dates
-          startDate = fixedTimes.startDate;
-          endDate = fixedTimes.endDate;
-        } while (isConflictWithBlacklist(startDate, endDate, blacklistEntries));
-
+        const { startDate, endDate } = generateFixedTimes(); // Generate fixed start and end times with random dates
         const isRegularApplication = Math.random() < 0.2;  // 20% chance of generating a Regular application
+
         if (isRegularApplication) {
-          const regularApplications = generateWeeklyRegularApplications(employee, startDate, 4); // Repeat for 4 weeks
+          const regularApplications = generateWeeklyRegularApplications(startDate, 4); // Repeat for 4 weeks
           regularApplications.forEach(regular => {
             regular.created_by = employee.id;
             regular.last_update_by = employee.id;
             applications.push(regular);
           });
         } else {
-          applicationEntry = {
+          applications.push({
             start_date: startDate,
             end_date: endDate,
             application_type: 'Ad Hoc',
@@ -175,21 +151,65 @@ module.exports = {
             verify_timestamp: null,
             created_timestamp: new Date(),
             last_update_timestamp: new Date(),
-          };
-
-          // Push to the applications array
-          applications.push(applicationEntry);
+          });
         }
       }
-    }
+    });
 
     // Step 5: Insert all schedules and applications
     await queryInterface.bulkInsert('Schedules', schedules);
     await queryInterface.bulkInsert('Applications', applications);
+
+    // Step 6: Retrieve inserted regular schedules and applications with their IDs for each employee
+    const insertedSchedules = await queryInterface.sequelize.query(
+      `SELECT schedule_id, created_by 
+       FROM Schedules 
+       WHERE schedule_type = "Regular" 
+       ORDER BY created_by, created_timestamp`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    const insertedApplications = await queryInterface.sequelize.query(
+      `SELECT application_id, created_by 
+       FROM Applications 
+       WHERE application_type = "Regular" 
+       ORDER BY created_by, created_timestamp`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    // Step 7: Update linked_application and linked_schedule fields
+    let lastApplicationForEmployee = {};
+    let lastScheduleForEmployee = {};
+
+    // Iterate through the regular applications
+    for (let i = 0; i < insertedApplications.length - 1; i++) {
+      const currentApplication = insertedApplications[i];
+      const nextApplication = insertedApplications[i + 1];
+
+      // If the next application belongs to the same employee, link them
+      if (currentApplication.created_by === nextApplication.created_by) {
+        await queryInterface.bulkUpdate('Applications',
+          { application_id: currentApplication.application_id }
+        );
+      }
+    }
+
+    // Iterate through the regular schedules
+    for (let i = 0; i < insertedSchedules.length - 1; i++) {
+      const currentSchedule = insertedSchedules[i];
+      const nextSchedule = insertedSchedules[i + 1];
+
+      // If the next schedule belongs to the same employee, link them
+      if (currentSchedule.created_by === nextSchedule.created_by) {
+        await queryInterface.bulkUpdate('Schedules',
+          { schedule_id: currentSchedule.schedule_id }
+        );
+      }
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Step 6: Delete the inserted schedule and application entries
+    // Step 8: Delete the inserted schedule and application entries
     await queryInterface.bulkDelete('Schedules', null, {});
     await queryInterface.bulkDelete('Applications', null, {});
   }
