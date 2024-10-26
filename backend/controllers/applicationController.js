@@ -1,5 +1,5 @@
 const { Application, Employee, Schedule, Blacklist } = require('../models');
-const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3, createRecurringApplications } = require('../services/common/applicationHelper');
+const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3 } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
@@ -147,22 +147,22 @@ const retrieveApprovedApplications = async (req, res, next) => {
 
                 if (subApplicationRes && subApplicationRes.length > 0) {
                     subResponse.approvedApplications = subApplicationRes
-                    .filter(application => scheduleIsAfterCurrentTime(application.start_date))
-                    .map(application => ({
-                        application_id: application.application_id,
-                        start_date: application.start_date,
-                        end_date: application.end_date,
-                        application_type: application.application_type,
-                        created_by: application.created_by,
-                        last_update_by: application.last_update_by,
-                        verify_by: application.verify_by,
-                        verify_timestamp: application.verify_timestamp,
-                        status: application.status,
-                        requestor_remarks: application.requestor_remarks,
-                        approver_remarks: application.requestor_remarks,
-                        created_timestamp: application.created_timestamp,
-                        last_update_timestamp: application.last_update_timestamp
-                    }))
+                        .filter(application => scheduleIsAfterCurrentTime(application.start_date))
+                        .map(application => ({
+                            application_id: application.application_id,
+                            start_date: application.start_date,
+                            end_date: application.end_date,
+                            application_type: application.application_type,
+                            created_by: application.created_by,
+                            last_update_by: application.last_update_by,
+                            verify_by: application.verify_by,
+                            verify_timestamp: application.verify_timestamp,
+                            status: application.status,
+                            requestor_remarks: application.requestor_remarks,
+                            approver_remarks: application.requestor_remarks,
+                            created_timestamp: application.created_timestamp,
+                            last_update_timestamp: application.last_update_timestamp
+                        }))
                 } else {
                     subResponse.approvedApplications = []; // No pending applications
                 }
@@ -280,7 +280,7 @@ const createNewApplication = async (req, res, next) => {
                     return res.status(400).json({ message: "Application period overlaps with blacklist period." });
                 }
 
-               await Application.create({
+                await Application.create({
                     start_date: currentStartDate.toDate(),
                     end_date: currentEndDate.toDate(),
                     application_type: 'Regular',
@@ -433,7 +433,7 @@ const withdrawPendingApplication = async (req, res) => {
 const withdrawApprovedApplication = async (req, res) => {
     try {
         const { application_id, remarks } = req.body;
-        const managerId = req.user.id; 
+        const managerId = req.user.id;
 
         // Find the corresponding application by matching application_id
         const application = await Application.findByPk(application_id);
@@ -448,7 +448,7 @@ const withdrawApprovedApplication = async (req, res) => {
         // Find the requestor and approver
         let requestor = await Employee.findByPk(application.created_by);
         let approver = await Employee.findByPk(managerId);
-        
+
         if (!requestor || !approver) {
             return res.status(404).json({ message: 'Requestor or Approver not found' });
         }
@@ -460,9 +460,9 @@ const withdrawApprovedApplication = async (req, res) => {
 
         // Find the schedule by schedule_id
         const schedule = await Schedule.findOne({
-            where: { 
+            where: {
                 created_by: application.created_by,
-                start_date: application.start_date, 
+                start_date: application.start_date,
                 end_date: application.end_date,
             }
         });
@@ -478,7 +478,7 @@ const withdrawApprovedApplication = async (req, res) => {
         await application.save();
 
         // Delete the corresponding schedule
-        await schedule.destroy(); 
+        await schedule.destroy();
 
         res.status(200).json({
             message: 'Application updated to withdrawn and schedule deleted successfully',
@@ -534,20 +534,9 @@ const withdrawApprovedApplicationByEmployee = async (req, res) => {
 
 // PATCH function - to update an existing pending application
 const updatePendingApplication = async (req, res, next) => {
+    let { application_id, application_type, originalStartDate, originalEndDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
+    const transaction = await sequelize.transaction();
     try {
-        console.log(req.body);
-        const {
-            application_id,
-            application_type,
-            originalStartDate,
-            originalEndDate,
-            newStartDate,
-            newEndDate,
-            requestor_remarks,
-            recurrence_rule,
-            recurrence_end_date
-        } = req.body || {};
-
         const files = req.files;
         let employeeInfo = await Employee.findByPk(req.user.id);
 
@@ -607,7 +596,7 @@ const updatePendingApplication = async (req, res, next) => {
         application.last_update_by = employeeInfo.id;
         application.requestor_remarks = requestor_remarks;
 
-        const updateApplication = await application.save();
+        const updateApplication = await application.save({ transaction });
 
         // Upload files if provided
         if (files && files.length > 0) {
@@ -616,23 +605,65 @@ const updatePendingApplication = async (req, res, next) => {
 
         // Handle recurring applications for regular type
         if (application_type === "Regular" && recurrence_rule && recurrence_end_date) {
-            await createRecurringApplications(recurrence_rule, newStartDate, newEndDate, recurrence_end_date, requestor_remarks, req.user.id);
+            let currentStartDate = moment(newStartDate);
+            let currentEndDate = moment(newEndDate);
+            while (currentStartDate.isBefore(recurrence_end_date)) {
+                currentStartDate.add(1, recurrence_rule); // E.g., add 1 week or 1 month
+                currentEndDate.add(1, recurrence_rule);
+
+                // Conduct check for overlapping schedules
+                existingPendingRes = await checkforOverlap(currentStartDate.toDate(), currentEndDate.toDate(), existingPending, 'existing');
+                approvedApplicationRes = await checkforOverlap(currentStartDate.toDate(), currentEndDate.toDate(), approvedApplications, 'approved')
+                // Roll back transaction if overlaps found
+                if (existingPendingRes || approvedApplicationRes) {
+                    await transaction.rollback();
+                    return res.status(400).json({ message: `Invalid application period. New application cannot overlap with the existing or approved application.` });
+                }
+                // Conduct check for overlapping blacklist dates
+                matchingBlacklists = await Blacklist.findAll({
+                    where: {
+                        start_date: {
+                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                        },
+                        end_date: {
+                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                        },
+                        created_by: employeeInfo.reporting_manager
+                    }
+                });
+
+                // Roll back transaction if overlaps found
+                if (matchingBlacklists.length > 0) {
+                    await transaction.rollback();
+                    return res.status(400).json({ message: "Application period overlaps with blacklist period." });
+                }
+
+                await Application.create({
+                    start_date: currentStartDate.toDate(),
+                    end_date: currentEndDate.toDate(),
+                    application_type: 'Regular',
+                    created_by: employeeInfo.id,
+                    last_update_by: employeeInfo.id,
+                    requestor_remarks: requestor_remarks,
+                    status: 'Pending',
+                }, { transaction });
+            }
         }
-
+        await transaction.commit();
         console.log("Updated Application:", application);
-
         return res.status(200).json({ message: "Pending application successfully updated.", result: application });
     } catch (error) {
+        await transaction.rollback();
         console.error("Error updating pending application:", error);
         return res.status(500).json({ error: "An error occurred while updating the application." });
     }
 };
 
 //PATCH function - to update an existing approved application
-const updateApprovedApplication = async(req, res, next) => {
-    let { application_id, application_type, originalStartDate, originalEndDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date} = req.body;
+const updateApprovedApplication = async (req, res, next) => {
+    let { application_id, application_type, originalStartDate, originalEndDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
     const transaction = await sequelize.transaction();
-    try{
+    try {
 
         if (!application_id) {
             return res.status(400).json({ message: "Application ID is required for updates." });
@@ -710,8 +741,8 @@ const updateApprovedApplication = async(req, res, next) => {
 
         //update old application to the status of deleted
         application.status = "Deleted";
-        application.last_name  = employeeInfo.id;
-    
+        application.last_name = employeeInfo.id;
+
         const updatedApplication = await application.save();
         if (!updatedApplication) {
             return res.status(404).json({ message: "Old Application was not updated due to an error." });
@@ -778,7 +809,7 @@ const updateApprovedApplication = async(req, res, next) => {
                     return res.status(400).json({ message: "Application period overlaps with blacklist period." });
                 }
 
-               await Application.create({
+                await Application.create({
                     start_date: currentStartDate.toDate(),
                     end_date: currentEndDate.toDate(),
                     application_type: 'Regular',
@@ -791,8 +822,8 @@ const updateApprovedApplication = async(req, res, next) => {
         }
         await transaction.commit();
 
-        return res.status(201).json({message: "Application has been updated for manager approval"});
-    }catch(error) {
+        return res.status(201).json({ message: "Application has been updated for manager approval" });
+    } catch (error) {
         console.error("Error retrieving own schedule:", error);
         return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
     }
