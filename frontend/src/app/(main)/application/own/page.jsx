@@ -178,7 +178,6 @@ export default function PendingApplicationPage() {
       );
 
       if (response.status === 200 || response.status === 201  ) {
-        const result = await response.json();
 
         // Show success toast message
         toast({
@@ -192,16 +191,11 @@ export default function PendingApplicationPage() {
         handleRefresh();
       } else {
         // Handle different error statuses
-        let errorMessage = "Failed to update application.";
-        if (response.status === 400) {
-          errorMessage = "Bad Request. Please check your input.";
-        } else if (response.status === 404) {
-          errorMessage = "Application not found.";
-        } else if (response.status === 500) {
-          errorMessage = "Internal Server Error. Please try again later.";
-        }
+        const errorData = await response.json();
+        const errorMessage = errorData.message || "Failed to update application.";
+        
+        console.error(`Error (${response.status}): ${errorMessage}`);
 
-        console.error(errorMessage);
         toast({
           title: "Error",
           description: errorMessage,

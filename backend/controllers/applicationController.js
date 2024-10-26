@@ -472,18 +472,18 @@ const updatePendingApplication = async (req, res, next) => {
 
         // Check if employee exists
         if (!employeeInfo) {
-            return res.status(404).json({ message: "Employee not found." });
+            return res.status(404).json({ message: "Employee not found. Please refresh and submit your application again" });
         }
 
         // Check if reporting manager exists
         let reportingManager = employeeInfo.reporting_manager;
         if (!reportingManager) {
-            return res.status(404).json({ message: "Reporting Manager not found." });
+            return res.status(404).json({ message: "Reporting Manager not found. Please refresh and submit your application again" });
         }
 
         // Validate application_id
         if (!application_id) {
-            return res.status(400).json({ message: "Application ID is required for updates." });
+            return res.status(400).json({ message: "Application ID is required for updates. Please refresh and submit your application again" });
         }
 
         // Find the pending application by application_id
@@ -557,7 +557,7 @@ const updateApprovedApplication = async(req, res, next) => {
         
 
         if (!application_id) {
-            return res.status(400).json({ message: "Application ID is required for updates." });
+            return res.status(400).json({ message: "Application ID is required for updates. Please refresh and submit your application again" });
         }
 
         console.log("first 400 status passed");
@@ -567,13 +567,13 @@ const updateApprovedApplication = async(req, res, next) => {
 
         // Check if employee exists
         if (!employeeInfo) {
-            return res.status(404).json({ message: "Employee not found." });
+            return res.status(404).json({ message: "Employee not found. Please refresh and submit your application again" });
         }
 
         // Check if reporting manager exists
         let reportingManager = employeeInfo.reporting_manager;
         if (!reportingManager) {
-            return res.status(404).json({ message: "Reporting Manager not found." });
+            return res.status(404).json({ message: "Reporting Manager not found. Please refresh and submit your application again" });
         }
 
         // Find the pending application by application_id
@@ -581,7 +581,6 @@ const updateApprovedApplication = async(req, res, next) => {
             where: { application_id: application_id, status: 'Approved' }
         });
 
-        console.log(application);
 
         // Check if the application exists
         if (!application) {
