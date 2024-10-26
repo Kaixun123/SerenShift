@@ -472,18 +472,18 @@ const updatePendingApplication = async (req, res, next) => {
 
         // Check if employee exists
         if (!employeeInfo) {
-            return res.status(404).json({ message: "Employee not found. Please refresh and submit your application again" });
+            return res.status(404).json({ message: "Employee not found." });
         }
 
         // Check if reporting manager exists
         let reportingManager = employeeInfo.reporting_manager;
         if (!reportingManager) {
-            return res.status(404).json({ message: "Reporting Manager not found. Please refresh and submit your application again" });
+            return res.status(404).json({ message: "Reporting Manager not found." });
         }
 
         // Validate application_id
         if (!application_id) {
-            return res.status(400).json({ message: "Application ID is required for updates. Please refresh and submit your application again" });
+            return res.status(400).json({ message: "Application ID is required for updates." });
         }
 
         // Find the pending application by application_id
