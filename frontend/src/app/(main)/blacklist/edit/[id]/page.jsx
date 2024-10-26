@@ -170,6 +170,16 @@ export default function EditBlacklistPage({ params }) {
         if (response.ok) {
             let data = await response.json();
             setExistingBlacklists(data);
+        } else if (response.status == 401 || response.status == 403) {
+            toast({
+                title: "Unauthorized",
+                description: "You are not authorized to view this page",
+                status: "error",
+                duration: 9000,
+                isClosable: true,
+                position: "top-right"
+            });
+            router.push("/");
         } else {
             toast({
                 title: "Error",
@@ -205,7 +215,7 @@ export default function EditBlacklistPage({ params }) {
     }, []);
     return (
         <main>
-            <TopHeader mainText={"Update Blacklist Date"} />
+            <TopHeader mainText={"Update Blacklisted Date"} />
             <div className="flex p-[40px] gap-[60px] justify-between ">
                 <div className="flex flex-col w-1/2 gap-[5px]">
                     <div className="flex h-[350px] justify-center">

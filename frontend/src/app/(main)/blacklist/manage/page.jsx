@@ -11,6 +11,9 @@ export default function ManageBlacklistPage() {
     const [blacklists, setBlacklists] = useState([]);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedBlacklistID, setSelectedBlacklistID] = useState(0);
+    const [selectedBlacklistStartDate, setSelectedBlacklistStartDate] = useState("");
+    const [selectedBlacklistEndDate, setSelectedBlacklistEndDate] = useState("");
+    const [selectedBlacklistTimeSlot, setSelectedBlacklistTimeSlot] = useState("");
 
     const determineDisplayTimeSlot = (startDateTime, endDateTime) => {
         let startDateObject = new Date(startDateTime);
@@ -61,8 +64,11 @@ export default function ManageBlacklistPage() {
             });
         }
     };
-    const handleDeleteBlacklist = (id) => {
+    const handleDeleteBlacklist = (id, startDate, EndDate, timeSlot) => {
         setSelectedBlacklistID(id);
+        setSelectedBlacklistStartDate(startDate);
+        setSelectedBlacklistEndDate(EndDate);
+        setSelectedBlacklistTimeSlot(timeSlot);
         setIsDeleteModalOpen(true);
     };
     const deleteBlacklist = async () => {
@@ -84,6 +90,7 @@ export default function ManageBlacklistPage() {
                 position: "top-right"
             });
             router.refresh();
+            retrieveBlacklists();
         } else {
             toast({
                 title: "Error",
@@ -106,7 +113,7 @@ export default function ManageBlacklistPage() {
     }, []);
     return (
         <main>
-            <TopHeader mainText={`Manage Blacklist`} subText={`Control when your subordinates can submit applications`} />
+            <TopHeader mainText={`Manage Blacklisted Dates`} subText={`Control when your subordinates can submit applications`} />
             <Flex justifyContent='flex-end' p={4}>
                 <Button colorScheme='green' onClick={() => handleAddBlacklist()}>Add Blacklist Date</Button>
             </Flex>
@@ -132,7 +139,7 @@ export default function ManageBlacklistPage() {
                                 <Td>
                                     <ButtonGroup>
                                         <Button colorScheme='blue' size='sm' onClick={() => handleEditBlacklist(blacklist.blacklist_id)}>Edit</Button>
-                                        <Button colorScheme='red' size='sm' onClick={() => handleDeleteBlacklist(blacklist.blacklist_id)}>Delete</Button>
+                                        <Button colorScheme='red' size='sm' onClick={() => handleDeleteBlacklist(blacklist.blacklist_id, new Date(blacklist.start_date).toLocaleDateString('en-SG'), new Date(blacklist.end_date).toLocaleDateString('en-SG'), blacklist.timeSlot)}>Delete</Button>
                                     </ButtonGroup>
                                 </Td>
                             </Tr>
@@ -155,8 +162,9 @@ export default function ManageBlacklistPage() {
                     <ModalHeader>Delete Blacklist Date</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
-                        Start Date: {blacklists.find(blacklist => blacklist._id === selectedBlacklistID)?.startDate}<br />
-                        End Date: {blacklists.find(blacklist => blacklist._id === selectedBlacklistID)?.endDate}<br />
+                        <strong>Start Date:</strong>  {selectedBlacklistStartDate}<br />
+                        <strong>End Date:</strong> {selectedBlacklistEndDate}<br />
+                        <strong>Time Slot:</strong> {selectedBlacklistTimeSlot}<br />
                         Are you sure you want to delete this blacklist date?
                     </ModalBody>
                     <ModalFooter>
