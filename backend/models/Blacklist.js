@@ -21,7 +21,7 @@ Blacklist.init(
         },
         remarks: {
             type: DataTypes.STRING(255),
-            allowNull: true,
+            allowNull: false,
         },
         created_by: {
             type: DataTypes.INTEGER(6),

@@ -36,7 +36,6 @@
         "passport-jwt": "^4.0.1",
         "passport-local": "^1.0.0",
         "sequelize": "^6.37.3",
-        "SerenShift": "file:",
         "serenshift-backend": "file:",
         "serve-favicon": "^2.5.0"
     },

@@ -57,7 +57,7 @@ module.exports = {
         allowNull: true,
       },
       status: {
-        type: Sequelize.ENUM('Pending', 'Approved', 'Rejected', 'Withdrawn', 'Deleted'),
+        type: Sequelize.ENUM('Pending', 'Approved', 'Rejected', 'Withdrawn'),
         allowNull: false,
       },
       requestor_remarks: {
