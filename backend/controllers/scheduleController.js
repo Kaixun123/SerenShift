@@ -1,11 +1,7 @@
 const { Schedule } = require('../models');
 const moment = require('moment');
 const { splitScheduleByDate } = require('../services/common/scheduleHelper');
-const { checkforOverlap  } = require('../services/common/applicationHelper');
-const { createNewApplication } = require('../controllers/applicationController');
-const { Application, Employee } = require('../models');
 const { fetchColleagues, fetchSubordinates } = require('../services/common/employeeHelper');
-const { Op } = require('sequelize');
 
 // Function to fetch own schedule
 const fetchTeamIndividualSchedule = async (userId) => {
@@ -200,8 +196,8 @@ const retrieveOwnSchedule = async (req, res) => {
 
         return res.status(200).json(calendarEvents);
     } catch (error) {
-        console.error("Error updating own schedule:", error);
-        return res.status(500).json({ error: "An error occurred while updating the schedule." });
+        console.error("Error retrieving own schedule:", error);
+        return res.status(500).json({ error: "An error occurred while  retrieving the schedule." });
     }
 };
 

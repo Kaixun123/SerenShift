@@ -1,10 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const multer = require('multer');
 const { check, validationResult } = require("express-validator");
 const { ensureLoggedIn, ensureManagerAndAbove } = require("../middlewares/authMiddleware");
 const scheduleController = require("../controllers/scheduleController");
-const upload = multer({ storage: multer.memoryStorage() });
 
 
 // Validation Middleware
