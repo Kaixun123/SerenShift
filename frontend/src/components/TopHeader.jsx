@@ -21,21 +21,55 @@ import { useRouter } from "next/navigation";
 export default function TopHeader({ mainText, subText }) {
   const [employee, setEmployee] = useState({ name: "", position: "" });
   const router = useRouter();
-  useEffect(() => {
-    async function fetchEmployeeData() {
-      try {
-        const response = await fetch("/api/auth/me");
-        if (!response.ok)
-          router.push("/auth/login");
-        const data = await response.json();
-        setEmployee({
-          name: `${data.first_name} ${data.last_name}`, // Assuming first_name and last_name from API
-          position: data.position, // Assuming position is part of the data
-        });
-      } catch (error) {
-        console.error("Error fetching employee data:", error);
-      }
+  const toast = useToast();
+
+  const handleLogout = async () => {
+    console.log("Logout clicked");
+    let response = await fetch("/api/auth/logout", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    if (response.ok) {
+      toast({
+        title: "Logout Success",
+        description: "Thank you and have a nice day!",
+        status: "success",
+        isClosable: true,
+        position: "top-right",
+      });
+      router.push("/auth/login");
+    } else {
+      console.error("Login failed");
+      // Handle login failure here (e.g., show an error message)
+      toast({
+        title: "Logout Failed",
+        description: "An error has occured. Please try again later",
+        status: "error",
+        isClosable: true,
+        position: "top-right",
+      });
     }
+  };
+
+  const fetchEmployeeData = async () => {
+    try {
+      const response = await fetch("/api/auth/me");
+      if (!response.ok)
+        router.push("/auth/login");
+      const data = await response.json();
+      setEmployee({
+        name: `${data.first_name} ${data.last_name}`, // Assuming first_name and last_name from API
+        position: data.position, // Assuming position is part of the data
+      });
+    } catch (error) {
+      console.error("Error fetching employee data:", error);
+    }
+  }
+
+  useEffect(() => {
     fetchEmployeeData();
   }, []);
 
@@ -93,7 +127,7 @@ export default function TopHeader({ mainText, subText }) {
             <MenuItem as='a' href='/profile'>Profile</MenuItem>
             <MenuItem>Settings</MenuItem>
             <MenuDivider />
-            <MenuItem>Logout</MenuItem>
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </MenuList>
         </Menu>
       </HStack>
