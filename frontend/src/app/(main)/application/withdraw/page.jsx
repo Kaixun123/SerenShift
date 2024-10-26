@@ -334,7 +334,15 @@ export default function WithdrawApplicationPage() {
 
   // Function to handle withdraw action
   const handleWithdrawClick = () => {
-    if (!selectedApplicationDetails) {
+    if (!selectedApplicationDetails || !remarks || !String(remarks).trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a reason for withdrawal.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right"
+      });
       return;
     }
     setAppToWithdraw(selectedApplicationDetails); // Set the application to be withdrawn
@@ -343,11 +351,19 @@ export default function WithdrawApplicationPage() {
 
   // Function to handle withdraw multiple action
   const handleWithdrawMultipleClick = () => {
-    if (selectedApplications.length > 1) {
+    if (selectedApplications.length > 1 && remarksMultiple && String(remarksMultiple).trim()) {
       setAppsToWithdraw(selectedApplications); // Set applications to withdraw (multiple)
       setAppToWithdraw(null); // Ensure single withdrawal state is null
       onModalWithdrawMultipleOpen(); // Open the multiple withdrawal modal
     } else {
+      toast({
+        title: "Error",
+        description: "Please provide a reason for withdrawal.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right"
+      });
       return;
     }
     
