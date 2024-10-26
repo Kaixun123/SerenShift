@@ -73,7 +73,5 @@ router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vail
 router.patch("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManager, (req, res) => applicationController.withdrawApprovedApplication(req, res));
 router.patch("/updatePendingApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updatePendingApplication(req, res));
 router.delete("/withdrawApprovedApplicationByEmployee", ensureLoggedIn, (req, res) => applicationController.withdrawApprovedApplicationByEmployee(req, res));
-router.patch("/updateApprovedApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updateApprovedApplication(req, res));
-
 
 module.exports = router;
