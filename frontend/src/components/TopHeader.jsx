@@ -35,7 +35,7 @@ export default function TopHeader({ mainText, subText }) {
     if (response.ok) {
       toast({
         title: "Logout Success",
-        description: "Thank you for using our service",
+        description: "Thank you and have a nice day!",
         status: "success",
         isClosable: true,
         position: "top-right",
@@ -54,22 +54,22 @@ export default function TopHeader({ mainText, subText }) {
     }
   };
 
-  useEffect(() => {
-    async function fetchEmployeeData() {
-      try {
-        const response = await fetch("/api/auth/me");
-        if (!response.ok)
-          router.push("/auth/login");
-        const data = await response.json();
-        setEmployee({
-          name: `${data.first_name} ${data.last_name}`, // Assuming first_name and last_name from API
-          position: data.position, // Assuming position is part of the data
-        });
-        
-      } catch (error) {
-        console.error("Error fetching employee data:", error);
-      }
+  const fetchEmployeeData = async () => {
+    try {
+      const response = await fetch("/api/auth/me");
+      if (!response.ok)
+        router.push("/auth/login");
+      const data = await response.json();
+      setEmployee({
+        name: `${data.first_name} ${data.last_name}`, // Assuming first_name and last_name from API
+        position: data.position, // Assuming position is part of the data
+      });
+    } catch (error) {
+      console.error("Error fetching employee data:", error);
     }
+  }
+
+  useEffect(() => {
     fetchEmployeeData();
   }, []);
 

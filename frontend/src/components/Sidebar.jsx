@@ -199,7 +199,7 @@ export default function SideBar() {
     if (response.ok) {
       toast({
         title: "Logout Success",
-        description: "Thank you for using our service",
+        description: "Thank you and have a nice day!",
         status: "success",
         isClosable: true,
         position: "top-right",

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [employee, setEmployee] = useState({ name: "" });
+  const [greeting, setGreeting] = useState("");
 
   useEffect(() => {
     async function fetchEmployeeData() {
@@ -15,6 +16,16 @@ export default function Home() {
         });
       } catch (error) {
         console.error("Error fetching employee data:", error);
+      } finally {
+        let date = new Date();
+        if (date.getHours() >= 12 && date.getHours() < 18) {
+          setGreeting("Good Afternoon");
+        }
+        else if (date.getHours() >= 18) {
+          setGreeting("Good Evening");
+        } else {
+          setGreeting("Good Morning");
+        }
       }
     }
     fetchEmployeeData();
@@ -23,7 +34,7 @@ export default function Home() {
   return (
     <main>
       <TopHeader
-        mainText={`Good Morning, ${employee.name}!`} // Dynamically render employee name
+        mainText={`${greeting}, ${employee.name}!`} // Dynamically render employee name
         subText={`Glad to see you back in the office`} // Dynamically render position
       />
       <div className="p-[30px]">content</div>
