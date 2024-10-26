@@ -552,28 +552,23 @@ const updateApprovedApplication = async(req, res, next) => {
     let { application_id, application_type, originalStartDate, originalEndDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date} = req.body;
     const transaction = await sequelize.transaction();
     try{
-        //get request from frontend on user changes.
-        console.log(req.body);
-        
 
         if (!application_id) {
-            return res.status(400).json({ message: "Application ID is required for updates. Please refresh and submit your application again" });
+            return res.status(400).json({ message: "Application ID is required for updates." });
         }
-
-        console.log("first 400 status passed");
 
         const files = req.files;
         let employeeInfo = await Employee.findByPk(req.user.id);
 
         // Check if employee exists
         if (!employeeInfo) {
-            return res.status(404).json({ message: "Employee not found. Please refresh and submit your application again" });
+            return res.status(404).json({ message: "Employee not found." });
         }
 
         // Check if reporting manager exists
         let reportingManager = employeeInfo.reporting_manager;
         if (!reportingManager) {
-            return res.status(404).json({ message: "Reporting Manager not found. Please refresh and submit your application again" });
+            return res.status(404).json({ message: "Reporting Manager not found." });
         }
 
         // Find the pending application by application_id
@@ -611,8 +606,6 @@ const updateApprovedApplication = async(req, res, next) => {
             }
         });
 
-        console.log("existingPending:", JSON.stringify(existingPending, null, 2));
-
         // Retrieve approved applications based on user id
         let approvedApplications = await Schedule.findAll({
             where: {
@@ -620,14 +613,10 @@ const updateApprovedApplication = async(req, res, next) => {
             }
         });
 
-        console.log("approvedApplications:", approvedApplications);
 
         // Check for overlaps in existing pending and approved applications
         let existingPendingRes = await checkforOverlap(newStartDate, newEndDate, existingPending, 'existing');
-        console.log("existing: ", existingPendingRes);
-
         let approvedApplicationRes = await checkforOverlap(newStartDate, newEndDate, approvedApplications, 'approved');
-        console.log("approved: ", approvedApplicationRes);
 
         //system does a check to see if there is a clash with other approved arrangements.
         // Return error if overlaps found
@@ -652,8 +641,6 @@ const updateApprovedApplication = async(req, res, next) => {
         if (!deleteSchedule) {
             return res.status(404).json({ message: "Schedule was not deleted due to an error." });
         }
-
-        console.log("application: ", application_type);
 
         //create new application
         const newApplication = await Application.create({
