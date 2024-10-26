@@ -6,7 +6,7 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     // Get all employees with the role of either "Manager" or "HR"
     const employees = await queryInterface.sequelize.query(
-      'SELECT id FROM Employees WHERE role IN (:roles)',
+      'SELECT id, first_name, last_name FROM Employees WHERE role IN (:roles)',
       {
         replacements: { roles: ['Manager', 'HR'] },
         type: Sequelize.QueryTypes.SELECT
@@ -67,7 +67,8 @@ module.exports = {
           created_by: employee.id,
           last_update_by: employee.id,
           created_timestamp: new Date(),
-          last_update_timestamp: new Date()
+          last_update_timestamp: new Date(),
+          remarks: `Blacklist entry for ${employee.first_name} ${employee.last_name}`
         });
       }
     });
