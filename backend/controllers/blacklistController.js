@@ -142,6 +142,21 @@ const createBlacklistDate = async (req, res) => {
             let currentStartDate = moment(startDateTime);
             let currentEndDate = moment(endDateTime);
             while (currentStartDate.isBefore(recurrenceEndDate)) {
+                let conflictingDates = await Blacklist.findAll({
+                    where: {
+                        start_date: {
+                            [Op.between]: [currentStartDate, currentEndDate]
+                        },
+                        end_date: {
+                            [Op.between]: [currentEndDate, currentEndDate]
+                        },
+                        created_by: req.user.id
+                    }
+                });
+                if (conflictingDates.length > 0) {
+                    await transaction.rollback();
+                    return res.status(400).json({ message: "A Conflicting Blacklist Date Entry Already Exists" });
+                }
                 await Blacklist.create({
                     start_date: currentStartDate.toDate(),
                     end_date: currentEndDate.toDate(),
@@ -166,8 +181,10 @@ const createBlacklistDate = async (req, res) => {
                     created_by: req.user.id
                 }
             });
-            if (conflictingDates.length > 0)
+            if (conflictingDates.length > 0) {
+                await transaction.rollback();
                 return res.status(400).json({ message: "A Conflicting Blacklist Date Entry Already Exists" });
+            }
             let blacklistDate = await Blacklist.create({
                 start_date: startDateTime,
                 end_date: endDateTime,
