@@ -3,12 +3,14 @@ import Link from "next/link";
 import {
   Image,
   Button,
+  Divider,
   useToast,
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
   ModalBody,
+  Text,
   useDisclosure,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
@@ -19,8 +21,8 @@ import { useEffect, useState, useMemo } from "react";
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsFileEarmarkPlay, BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
-import { GrChapterAdd, GrUserManager } from "react-icons/gr";
-import { CgList } from "react-icons/cg";
+import { GrChapterAdd, GrUserManager, GrDocumentMissing } from "react-icons/gr";
+import { CgFileDocument, CgList } from "react-icons/cg";
 import { FiHome } from "react-icons/fi";
 import { MdOutlineManageHistory } from "react-icons/md";
 import { AiOutlineSchedule } from "react-icons/ai";
@@ -43,128 +45,133 @@ export default function SideBar() {
     onClose: onTokenExpiryModalClose,
   } = useDisclosure();
 
-  // Define role-based menu items
-  const menuItems = {
-    HR: [
-      {
-        id: 1,
-        href: "/schedule/own",
-        icon: IoCalendarOutline,
-        title: "My Calendar",
-      },
-      {
-        id: 2,
-        href: "/schedule/team",
-        icon: BsPeople,
-        title: "Team Calendar",
-      },
+  useEffect(() => {
+    async function fetchUserDetails() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await response.json();
+
+        if (data && data.role) {
+          setUserRole(data.role);
+          console.log("User Role:", data.role);
+        } else {
+          console.log("No role found in response");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user details:", error);
+      }
+    }
+    fetchUserDetails();
+  }, []);
+
+  let calendarItems = [
+    {
+      id: 1,
+      href: "/schedule/own",
+      icon: IoCalendarOutline,
+      title: "My Calendar",
+    },
+    {
+      id: 2,
+      href: "/schedule/team",
+      icon: BsPeople,
+      title: "Team Calendar",
+    },
+  ];
+
+  const ownAppItems = [
+    {
+      id: 4,
+      href: "/application/create",
+      icon: GrChapterAdd,
+      title: "New Application",
+    },
+    {
+      id: 5,
+      href: "/application/own",
+      icon: MdOutlinePendingActions,
+      title: "Own Applications",
+    },
+  ];
+
+  const manageAppItems = [
+    {
+      id: 6,
+      href: "/application/manage",
+      icon: CgList,
+      title: "Manage Applications",
+    },
+    {
+      id: 7,
+      href: "/application/withdraw",
+      icon: GrDocumentMissing,
+      title: "Withdraw Applications",
+    },
+    {
+      id: 8,
+      href: "/blacklist/manage",
+      icon: MdOutlineManageHistory,
+      title: "Manage Blacklist Dates",
+    },
+  ];
+
+  // Handling conditional rendering of extra menu items based on user role
+  if (userRole === "Manager" || userRole === "HR") {
+    calendarItems.push(
       {
         id: 3,
         href: "/schedule/subordinate",
         icon: GrUserManager,
         title: "Subordinate Calendar",
       },
-      {
-        id: 4,
-        href: "/application/create",
-        icon: GrChapterAdd,
-        title: "New Application",
-      },
-      {
-        id: 5,
-        href: "/application/own",
-        icon: MdOutlinePendingActions,
-        title: "Own Applications",
-      },
-      {
-        id: 6,
-        href: "/application/manage",
-        icon: CgList,
-        title: "Manage Applications",
-      },
-      {
-        id: 7,
-        href: "/blacklist/manage",
-        icon: MdOutlineManageHistory,
-        title: "Manage Blacklist Dates",
-      },
-      {
-        id: 8,
-        href: "/hr",
+    );
+    if (userRole === "HR") {
+      calendarItems.splice(0, 0, {
+        id: 0,
+        href: "/schedule/company",
         icon: FiHome,
         title: "Company View",
-      },
-    ],
-    Manager: [
-      {
-        id: 1,
-        href: "/schedule/own",
-        icon: IoCalendarOutline,
-        title: "My Calendar",
-      },
-      {
-        id: 2,
-        href: "/schedule/team",
-        icon: BsPeople,
-        title: "Team Calendar",
-      },
-      {
-        id: 3,
-        href: "/schedule/subordinate",
-        icon: GrUserManager,
-        title: "Subordinate Calendar",
-      },
-      {
-        id: 4,
-        href: "/application/create",
-        icon: GrChapterAdd,
-        title: "New Application",
-      },
-      {
-        id: 5,
-        href: "/application/own",
-        icon: MdOutlinePendingActions,
-        title: "Own Applications",
-      },
-      {
-        id: 6,
-        href: "/application/manage",
-        icon: CgList,
-        title: "Manage Applications",
-      },
-    ],
-    Staff: [
-      {
-        id: 1,
-        href: "/schedule/own",
-        icon: IoCalendarOutline,
-        title: "My Calendar",
-      },
-      {
-        id: 2,
-        href: "/application/create",
-        icon: GrChapterAdd,
-        title: "New Application",
-      },
-      {
-        id: 3,
-        href: "/application/own",
-        icon: MdOutlinePendingActions,
-        title: "Own Applications",
-      },
-      {
-        id: 4,
-        href: "/schedule/team",
-        icon: BsPeople,
-        title: "Team Calendar",
-      },
-    ],
+      });
+    };
   };
 
-  const activeMenu = useMemo(
-    () => menuItems[userRole]?.find((menu) => menu.href === pathname),
-    [pathname, userRole]
-  );
+  const renderManagerItems = () => {
+    if (userRole == "Staff") {
+      return null;
+    };
+
+    return (
+      <>
+        <Divider borderColor="gray.500" width="80%" alignSelf="center" mt={3} />
+        <Text fontSize="sm" color="gray.500" mt={1} textAlign="center">Team Applications</Text>
+
+        {manageAppItems.map(({ icon: Icon, ...menu }) => {
+          //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
+          return (
+            <div
+              className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap`}
+              //className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
+              key={menu.title}
+            >
+              <Link href={menu.href} className="flex gap-3 items-center">
+                <Icon className="w-5 h-5" />
+                {menu.title}
+              </Link>
+            </div>
+          );
+        })}
+      </>
+    );
+  };
+
+  // const activeMenu = useMemo(
+  //   () => menuItems.find((menu) => menu.href === pathname),
+  //   [pathname]
+  // );
 
   // Function to check token validity by calling the backend
   const checkTokenValidity = async () => {
@@ -220,22 +227,22 @@ export default function SideBar() {
 
   const retrieveOwnProfile = async () => {
     let response = await fetch('/api/auth/me', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
     });
     if (response.ok) {
-        let data = await response.json();
-        console.log(data.role);
-        setEmployeeInfo({
-          id: data.id,
-          role: data.role
-        })
-        console.log(employeeInfo.role);
+      let data = await response.json();
+      console.log(data.role);
+      setEmployeeInfo({
+        id: data.id,
+        role: data.role
+      })
+      console.log(employeeInfo.role);
     } else {
-        console.error('Profile retrieval failed');
+      console.error('Profile retrieval failed');
     }
   }
 
@@ -255,11 +262,11 @@ export default function SideBar() {
     }
   }, [router]);
 
-    // Update userRole when employeeInfo.role changes
-    useEffect(() => {
-      setUserRole(employeeInfo.role);
-    }, [employeeInfo.role]);
-  
+  // Update userRole when employeeInfo.role changes
+  useEffect(() => {
+    setUserRole(employeeInfo.role);
+  }, [employeeInfo.role]);
+
 
   return (
     <div className="min-h-screen w-[250px] flex flex-col border-r border-r-gray-secondary ">
@@ -289,7 +296,7 @@ export default function SideBar() {
         />
       </div>
       <div className="flex flex-col">
-        {menuItems[userRole]?.map(({ icon: Icon, ...menu }) => {
+        {calendarItems.map(({ icon: Icon, ...menu }) => {
           //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
           return (
             <div
@@ -304,6 +311,26 @@ export default function SideBar() {
             </div>
           );
         })}
+
+        <Divider borderColor="gray.500" width="80%" alignSelf="center" mt={3} />
+        <Text fontSize="sm" color="gray.500" mt={1} textAlign="center">My Applications</Text>
+
+        {ownAppItems.map(({ icon: Icon, ...menu }) => {
+          //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
+          return (
+            <div
+              className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap`}
+              //className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
+              key={menu.title}
+            >
+              <Link href={menu.href} className="flex gap-3 items-center">
+                <Icon className="w-5 h-5" />
+                {menu.title}
+              </Link>
+            </div>
+          );
+        })}
+        {renderManagerItems()}
       </div>
       {/* Logout Button */}
       <div className="mt-auto px-5 py-7">

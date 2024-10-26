@@ -219,6 +219,11 @@ export default function CreateBlacklistPage() {
                                 }
                                 renderDay={dayRenderer}
                                 onChange={handleCalendarChange}
+                                excludeDate={(date) =>
+                                    Existingblacklists
+                                        .map((item) => new Date(item.start_date).toDateString())
+                                        .includes(date.toDateString())
+                                }
                             />
                         </DatesProvider>
                         <div className="relative">

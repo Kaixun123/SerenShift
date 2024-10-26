@@ -7,7 +7,7 @@ import { Flex, Accordion, AccordionItem, AccordionButton, AccordionPanel, Accord
 import 'chart.js/auto';
 import TopHeader from "@/components/TopHeader";
 
-const StatsPage = () => {
+const CompanyDashboardPage = () => {
   const [date, setDate] = useState(new Date()); // Default to today's date
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,7 @@ const StatsPage = () => {
     setLoading(true);
     const formattedDate = selectedDate.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
     try {
-      const response = await fetch(`/api/hr/totalStaffStat?date=${formattedDate}`);
+      const response = await fetch(`/api/schedule/companySchedule?date=${formattedDate}`);
       const data = await response.json(); // Parse the JSON response
       setStats(data);
       setLoading(false);
@@ -44,7 +44,7 @@ const StatsPage = () => {
   const fetchDeptStats = async (department) => {
     try {
       const formattedDate = date.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
-      const response = await fetch(`/api/hr/DeptStaffStat?date=${formattedDate}&department=${department}`);
+      const response = await fetch(`/api/schedule/departmentSchedule?date=${formattedDate}&department=${department}`);
       const data = await response.json();
       setSelectedDeptData(data.wfhStats); // Store the department-specific WFH stats
       setWfhStaff(data.wfhStaff); // Store the WFH staff data
@@ -284,4 +284,4 @@ const StatsPage = () => {
   );
 };
 
-export default StatsPage;
+export default CompanyDashboardPage;
