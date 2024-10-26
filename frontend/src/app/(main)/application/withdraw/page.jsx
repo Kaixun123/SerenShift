@@ -136,6 +136,7 @@ export default function WithdrawApplicationPage() {
           status: "success",
           duration: 3000,
           isClosable: true,
+          position: "top-right"
         });
 
         // Update approvedApplications state
