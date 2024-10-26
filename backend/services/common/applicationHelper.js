@@ -34,6 +34,7 @@ const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationT
                 }
             }
         }
+        return false;
     } catch (error) {
         console.error(`Error fetching ${applicationType} application:`, error);
         throw new Error(`Error fetching ${applicationType} application.`);

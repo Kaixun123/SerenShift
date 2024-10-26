@@ -1,6 +1,6 @@
 const { Schedule } = require('../models');
-const moment = require('moment'); // Install moment.js to easily handle dates
-const { splitScheduleByDate } = require('../services/common/scheduleHelper')
+const moment = require('moment');
+const { splitScheduleByDate } = require('../services/common/scheduleHelper');
 const { fetchColleagues, fetchSubordinates } = require('../services/common/employeeHelper');
 
 // Function to fetch own schedule
@@ -197,7 +197,7 @@ const retrieveOwnSchedule = async (req, res) => {
         return res.status(200).json(calendarEvents);
     } catch (error) {
         console.error("Error retrieving own schedule:", error);
-        return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
+        return res.status(500).json({ error: "An error occurred while  retrieving the schedule." });
     }
 };
 

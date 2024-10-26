@@ -10,7 +10,7 @@ const ProfilePage = () => {
     const [lastName, setLastName] = useState('');
     const [department, setDepartment] = useState('');
     const [position, setPosition] = useState('');
-    const [securityRole, setSecurityRole] = useState('Staff');
+    const [securityRole, setSecurityRole] = useState('');
 
     const retrieveOwnProfile = async () => {
         let response = await fetch('/api/auth/me', {
@@ -28,7 +28,7 @@ const ProfilePage = () => {
             setLastName(data.last_name);
             setDepartment(data.department);
             setPosition(data.position);
-            setSecurityRole(data.securityRole);
+            setSecurityRole(data.role);
         } else {
             console.error('Profile retrieval failed');
         }

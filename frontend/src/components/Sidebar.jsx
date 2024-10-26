@@ -10,7 +10,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
-  Text, 
+  Text,
   useDisclosure,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ import { useEffect, useState, useMemo } from "react";
 
 // react icons
 import { IoCalendarOutline } from "react-icons/io5";
-import { BsPeople } from "react-icons/bs";
+import { BsFileEarmarkPlay, BsPeople } from "react-icons/bs";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GrChapterAdd, GrUserManager, GrDocumentMissing } from "react-icons/gr";
 import { CgFileDocument, CgList } from "react-icons/cg";
@@ -32,7 +32,11 @@ export default function SideBar() {
   const toast = useToast();
   const pathname = usePathname();
   const [isValidToken, setIsValidToken] = useState(false);
-  const [userRole, setUserRole] = useState(null);
+  const [employeeInfo, setEmployeeInfo] = useState({
+    id: 0,
+    role: "",
+  })
+  const [userRole, setUserRole] = useState(null); // State to store user role
 
   // For Token Expiry Modal
   const {
@@ -48,9 +52,9 @@ export default function SideBar() {
           method: "GET",
           credentials: "include",
         });
-  
+
         const data = await response.json();
-  
+
         if (data && data.role) {
           setUserRole(data.role);
           console.log("User Role:", data.role);
@@ -128,7 +132,7 @@ export default function SideBar() {
     if (userRole === "HR") {
       calendarItems.splice(0, 0, {
         id: 0,
-        href: "/hr",
+        href: "/schedule/company",
         icon: FiHome,
         title: "Company View",
       });
@@ -142,25 +146,25 @@ export default function SideBar() {
 
     return (
       <>
-      <Divider borderColor="gray.500" width="80%" alignSelf="center" mt={3}/>
-      <Text fontSize="sm" color="gray.500" mt={1} textAlign="center">Team Applications</Text>
+        <Divider borderColor="gray.500" width="80%" alignSelf="center" mt={3} />
+        <Text fontSize="sm" color="gray.500" mt={1} textAlign="center">Team Applications</Text>
 
-      {manageAppItems.map(({ icon: Icon, ...menu }) => {
-        //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
-        return (
-          <div
-            className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap`}
-            //className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
-            key={menu.title}
-          >
-            <Link href={menu.href} className="flex gap-3 items-center">
-              <Icon className="w-5 h-5" />
-              {menu.title}
-            </Link>
-          </div>
-        );
-      })}
-        </>
+        {manageAppItems.map(({ icon: Icon, ...menu }) => {
+          //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
+          return (
+            <div
+              className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap`}
+              //className={`p-5 cursor-pointer w-full hover:bg-light-secondary overflow-hidden whitespace-nowrap ${extraClass}`}
+              key={menu.title}
+            >
+              <Link href={menu.href} className="flex gap-3 items-center">
+                <Icon className="w-5 h-5" />
+                {menu.title}
+              </Link>
+            </div>
+          );
+        })}
+      </>
     );
   };
 
@@ -202,7 +206,7 @@ export default function SideBar() {
     if (response.ok) {
       toast({
         title: "Logout Success",
-        description: "Thank you for using our service",
+        description: "Thank you and have a nice day!",
         status: "success",
         isClosable: true,
         position: "top-right",
@@ -221,6 +225,27 @@ export default function SideBar() {
     }
   };
 
+  const retrieveOwnProfile = async () => {
+    let response = await fetch('/api/auth/me', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+    if (response.ok) {
+      let data = await response.json();
+      console.log(data.role);
+      setEmployeeInfo({
+        id: data.id,
+        role: data.role
+      })
+      console.log(employeeInfo.role);
+    } else {
+      console.error('Profile retrieval failed');
+    }
+  }
+
   useEffect(() => {
     // Check for the token in cookies
     let token = sessionStorage.getItem("jwt"); // Retrieve the token from cookies
@@ -232,8 +257,16 @@ export default function SideBar() {
       setInterval(() => {
         checkTokenValidity();
       }, 500000);
+
+      retrieveOwnProfile();
     }
   }, [router]);
+
+  // Update userRole when employeeInfo.role changes
+  useEffect(() => {
+    setUserRole(employeeInfo.role);
+  }, [employeeInfo.role]);
+
 
   return (
     <div className="min-h-screen w-[250px] flex flex-col border-r border-r-gray-secondary ">
@@ -279,9 +312,9 @@ export default function SideBar() {
           );
         })}
 
-        <Divider borderColor="gray.500" width="80%" alignSelf="center" mt={3}/>
+        <Divider borderColor="gray.500" width="80%" alignSelf="center" mt={3} />
         <Text fontSize="sm" color="gray.500" mt={1} textAlign="center">My Applications</Text>
-        
+
         {ownAppItems.map(({ icon: Icon, ...menu }) => {
           //const extraClass = activeMenu.id === menu.id ? "text-blue-primary bg-blue-100" : "";
           return (
@@ -297,8 +330,7 @@ export default function SideBar() {
             </div>
           );
         })}
-
-      {renderManagerItems()}
+        {renderManagerItems()}
       </div>
       {/* Logout Button */}
       <div className="mt-auto px-5 py-7">
