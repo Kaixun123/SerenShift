@@ -1,6 +1,7 @@
 const moment = require('moment'); // Ensure moment.js is installed
 const { splitScheduleByDate } = require('./scheduleHelper');
 const { uploadFile } = require('../uploads/s3');
+const { Application } = require('../../models');
 
 const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationType) => {
     try {
@@ -33,6 +34,7 @@ const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationT
                 }
             }
         }
+        return false;
     } catch (error) {
         console.error(`Error fetching ${applicationType} application:`, error);
         throw new Error(`Error fetching ${applicationType} application.`);

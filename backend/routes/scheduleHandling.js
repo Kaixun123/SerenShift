@@ -4,6 +4,7 @@ const { check, validationResult } = require("express-validator");
 const { ensureLoggedIn, ensureManagerAndAbove } = require("../middlewares/authMiddleware");
 const scheduleController = require("../controllers/scheduleController");
 
+
 // Validation Middleware
 const vaildateParameters = (req, res, next) => {
     const errors = validationResult(req);

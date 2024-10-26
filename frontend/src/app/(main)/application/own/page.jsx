@@ -137,38 +137,47 @@ export default function PendingApplicationPage() {
   };
 
   const handleSaveEdit = async (updatedData) => {
-    const updatedApplication = {
-      application_id: applicationToEdit.application_id,
-      application_type:
-        updatedData.application_type || applicationToEdit.application_type,
-      startDate: updatedData.startDate || applicationToEdit.start_date,
-      endDate: updatedData.endDate || applicationToEdit.end_date,
-      requestor_remarks:
-        updatedData.reason || applicationToEdit.requestor_remarks,
-    };
+
+    const formData = new FormData();
+    formData.append('application_id', applicationToEdit.application_id);
+    formData.append('application_type', updatedData.application_type || applicationToEdit.application_type);
+    formData.append('originalStartDate', applicationToEdit.start_date);
+    formData.append('originalEndDate', applicationToEdit.end_date);
+    formData.append('newStartDate', updatedData.startDate || applicationToEdit.start_date);
+    formData.append('newEndDate', updatedData.endDate || applicationToEdit.end_date);
+    formData.append('requestor_remarks', updatedData.reason || applicationToEdit.requestor_remarks);
+
+    //append only for regular applications
+    if (updatedData.application_type == "Regular") {
+      formData.append("recurrence_rule", updatedData.recurrenceRule || applicationToEdit.recurrenceRule);
+      formData.append("recurrence_end_date", updatedData.recurrenceEndDate || applicationToEdit.recurrenceEndDate);
+    }
+
+
+    // Append each file to FormData if files are provided
+    if (updatedData.files && updatedData.files.length > 0) {
+      updatedData.files.forEach((file) => {
+          formData.append('files', file);
+      });
+    }
+
+    const apiEndpoint =
+      applicationToEdit.status === "Pending"
+        ? "/api/application/updatePendingApplication"
+        : applicationToEdit.status === "Approved"
+        ? "/api/application/updateApprovedApplication"
+        : null;
 
     try {
       const response = await fetch(
-        "/api/application/updatePendingApplication",
+        apiEndpoint,
         {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedApplication),
+          body: formData,
         }
       );
 
-      if (response.status === 200) {
-        // Update the pending applications state or refetch if needed
-        setApplications((prev) =>
-          prev.map((app) =>
-            app.application_id === updatedApplication.application_id
-              ? { ...app, ...updatedApplication }
-              : app
-          )
-        );
-        setApplicationToEdit(null); // Close the edit card after saving
+      if (response.status === 200 || response.status === 201  ) {
 
         // Show success toast message
         toast({
@@ -179,13 +188,14 @@ export default function PendingApplicationPage() {
           isClosable: true,
           position: "top-right",
         });
+        handleRefresh();
       } else {
         // Handle different error statuses
         let errorMessage = "Failed to update application.";
         if (response.status === 400) {
           errorMessage = "Bad Request. Please check your input.";
         } else if (response.status === 404) {
-          errorMessage = "Application not found.";
+          errorMessage = "Application not found. Please try again later.";
         } else if (response.status === 500) {
           errorMessage = "Internal Server Error. Please try again later.";
         }
@@ -312,8 +322,9 @@ export default function PendingApplicationPage() {
                 startDate: applicationToEdit.start_date || "", // Provide a default value
                 endDate: applicationToEdit.end_date || "", // Provide a default value
                 reason: applicationToEdit.requestor_remarks || "", // Provide a default value
+                files: applicationToEdit.file || [],
               }}
-              onSave={handleSaveEdit}
+              onSave={(updatedData) => handleSaveEdit(updatedData)}
               onCancel={handleCancelEdit}
             />
           )}
