@@ -462,7 +462,8 @@ const withdrawApprovedApplication = async (req, res) => {
         const schedule = await Schedule.findOne({
             where: { 
                 created_by: application.created_by,
-                start_date: application.start_date
+                start_date: application.start_date, 
+                end_date: application.end_date,
             }
         });
 
