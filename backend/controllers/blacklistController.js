@@ -1,5 +1,7 @@
 const { Blacklist, Employee } = require('../models');
-
+const { Op } = require('sequelize');
+const { sequelize } = require('../services/database/mysql');
+const moment = require('moment');
 
 // GET -  Retrieve Blacklist Dates When Indivdual Employee Is Applying
 const getBlacklistDates = async (req, res) => {
@@ -8,10 +10,10 @@ const getBlacklistDates = async (req, res) => {
         if (!requestor) {
             return res.status(404).json({ message: "Employee Not Found" });
         }
-        else if (requestor.reportingManager == null) {
+        else if (requestor.reporting_manager == null) {
             return res.status(400).json({ message: "Unable to determine Blacklisted Dates Due To No Reporitng Manager" });
         }
-        let approver = await Employee.findByPk(requestor.reportingManager);
+        let approver = await Employee.findByPk(requestor.reporting_manager);
         if (!approver) {
             return res.status(400).json({ message: "Reporting Manager Not Found" });
         }
@@ -30,6 +32,9 @@ const getBlacklistDates = async (req, res) => {
                     end_date: {
                         [Op.between]: [normalisedStartDate, normalisedEndDate]
                     }
+                },
+                order: {
+                    start_date: 'ASC'
                 }
             });
         } else if (req.body.start_date) {
@@ -41,6 +46,9 @@ const getBlacklistDates = async (req, res) => {
                     start_date: {
                         [Op.gte]: normalisedStartDate
                     }
+                },
+                order: {
+                    start_date: 'ASC'
                 }
             });
         } else if (req.body.end_date) {
@@ -52,6 +60,9 @@ const getBlacklistDates = async (req, res) => {
                     end_date: {
                         [Op.lte]: normalisedEndDate
                     }
+                },
+                order: {
+                    start_date: 'ASC'
                 }
             });
         } else {
@@ -63,6 +74,9 @@ const getBlacklistDates = async (req, res) => {
                     start_date: {
                         [Op.gte]: normalisedStartDate
                     }
+                },
+                order: {
+                    start_date: 'ASC'
                 }
             });
         }
@@ -71,6 +85,7 @@ const getBlacklistDates = async (req, res) => {
         else
             return res.status(200).json(blacklistDates);
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }
@@ -81,11 +96,16 @@ const getBlacklistDatesManager = async (req, res) => {
         let manager = await Employee.findByPk(req.user.id);
         if (!manager)
             return res.status(404).json({ message: "Manager Not Found" });
+        let normalisedStartDate = new Date();
+        normalisedStartDate.setHours(0, 0, 0, 0);
         let blacklistDates = await Blacklist.findAll({
             where: {
                 created_by: manager.id,
                 start_date: {
-                    [Op.gte]: new Date().setHours(0, 0, 0, 0)
+                    [Op.gte]: normalisedStartDate
+                },
+                order: {
+                    start_date: 'ASC'
                 }
             }
         });
@@ -115,29 +135,54 @@ const getBlacklistDate = async (req, res) => {
 
 // POST - Create A New Blacklist Date
 const createBlacklistDate = async (req, res) => {
+    let { startDateTime, endDateTime, remarks, recurrenceRule, recurrenceEndDate } = req.body;
+    const transaction = await sequelize.transaction();
     try {
-        let conflictingDates = await Blacklist.findAll({
-            where: {
-                start_date: {
-                    [Op.between]: [req.body.start_date, req.body.end_date]
-                },
-                end_date: {
-                    [Op.between]: [req.body.start_date, req.body.end_date]
-                },
-                created_by: req.user.id
+        if (recurrenceRule && recurrenceEndDate) {
+            let blacklists = [];
+            let currentStartDate = moment(startDateTime);
+            let currentEndDate = moment(endDateTime);
+            while (currentStartDate.isBefore(recurrenceEndDate)) {
+                currentStartDate.add(1, recurrenceRule);
+                currentEndDate.add(1, recurrenceRule);
+                let blacklistDate = await Blacklist.create({
+                    start_date: currentStartDate.toDate(),
+                    end_date: currentEndDate.toDate(),
+                    created_by: req.user.id,
+                    last_update_by: req.user.id,
+                    remarks: remarks
+                });
+                blacklists.push(blacklistDate);
             }
-        });
-        if (conflictingDates.length > 0)
-            return res.status(400).json({ message: "A Conflicting Blacklist Date Entry Already Exists" });
-        let blacklistDate = await Blacklist.create({
-            start_date: req.body.start_date,
-            end_date: req.body.end_date,
-            created_by: req.user.id,
-            last_update_by: req.user.id,
-            remarks: req.body.remarks
-        });
-        return res.status(201).json({ message: "Blacklist Date Created Successfully", blacklist_id: blacklistDate.blacklist_id });
+            Blacklist.bulkCreate(blacklists);
+            await transaction.commit();
+            return res.status(201).json({ message: "Blacklist Dates Created Successfully" });
+        } else {
+            let conflictingDates = await Blacklist.findAll({
+                where: {
+                    start_date: {
+                        [Op.between]: [startDateTime, endDateTime]
+                    },
+                    end_date: {
+                        [Op.between]: [startDateTime, endDateTime]
+                    },
+                    created_by: req.user.id
+                }
+            });
+            if (conflictingDates.length > 0)
+                return res.status(400).json({ message: "A Conflicting Blacklist Date Entry Already Exists" });
+            let blacklistDate = await Blacklist.create({
+                start_date: startDateTime,
+                end_date: endDateTime,
+                created_by: req.user.id,
+                last_update_by: req.user.id,
+                remarks: remarks
+            });
+            await transaction.commit();
+            return res.status(201).json({ message: "Blacklist Date Created Successfully", blacklist_id: blacklistDate.blacklist_id });
+        }
     } catch (error) {
+        await transaction.rollback();
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }
@@ -150,7 +195,7 @@ const updateBlacklistDate = async (req, res) => {
             return res.status(404).json({ message: "Blacklist Date Not Found" });
         else if (blacklistDate.created_by != req.user.id)
             return res.status(403).json({ message: "Forbidden" });
-        else if (new Date() > blacklistDate.start_date)
+        else if (new Date() > blacklistDate.startDateTime)
             return res.status(400).json({ message: "Blacklist Date Has Already Passed" });
         let conflictingDates = await Blacklist.findAll({
             where: {
@@ -158,18 +203,18 @@ const updateBlacklistDate = async (req, res) => {
                     [Op.ne]: req.params.blacklist_id
                 },
                 start_date: {
-                    [Op.between]: [req.body.start_date, req.body.end_date]
+                    [Op.between]: [req.body.startDateTime, req.body.endDateTime]
                 },
                 end_date: {
-                    [Op.between]: [req.body.start_date, req.body.end_date]
+                    [Op.between]: [req.body.startDateTime, req.body.endDateTime]
                 },
                 created_by: req.user.id
             }
         });
         if (conflictingDates.length > 0)
             return res.status(400).json({ message: "A Conflicting Blacklist Date Entry Already Exists" });
-        blacklistDate.start_date = req.body.start_date;
-        blacklistDate.end_date = req.body.end_date;
+        blacklistDate.start_date = req.body.startDateTime;
+        blacklistDate.end_date = req.body.endDateTime;
         blacklistDate.last_update_by = req.user.id;
         blacklistDate.remarks = req.body.remarks;
         await blacklistDate.save();
