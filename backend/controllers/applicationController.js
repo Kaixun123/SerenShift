@@ -526,11 +526,11 @@ const updatePendingApplication = async (req, res, next) => {
         application.last_update_by = employeeInfo.id;
         application.requestor_remarks = requestor_remarks;
 
-        await application.save();
+        const updateApplication = await application.save();
 
         // Upload files if provided
         if (files && files.length > 0) {
-            await uploadFilesToS3(files, employeeInfo.id);
+            await uploadFilesToS3(files, updateApplication.application_id, employeeInfo.id);
         }
 
         // Handle recurring applications for regular type
@@ -547,6 +547,191 @@ const updatePendingApplication = async (req, res, next) => {
     }
 };
 
+//PATCH function - to update an existing approved application
+const updateApprovedApplication = async(req, res, next) => {
+    let { application_id, application_type, originalStartDate, originalEndDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date} = req.body;
+    const transaction = await sequelize.transaction();
+    try{
+        //get request from frontend on user changes.
+        console.log(req.body);
+        
+
+        if (!application_id) {
+            return res.status(400).json({ message: "Application ID is required for updates." });
+        }
+
+        console.log("first 400 status passed");
+
+        const files = req.files;
+        let employeeInfo = await Employee.findByPk(req.user.id);
+
+        // Check if employee exists
+        if (!employeeInfo) {
+            return res.status(404).json({ message: "Employee not found." });
+        }
+
+        // Check if reporting manager exists
+        let reportingManager = employeeInfo.reporting_manager;
+        if (!reportingManager) {
+            return res.status(404).json({ message: "Reporting Manager not found." });
+        }
+
+        // Find the pending application by application_id
+        let application = await Application.findOne({
+            where: { application_id: application_id, status: 'Approved' }
+        });
+
+        console.log(application);
+
+        // Check if the application exists
+        if (!application) {
+            return res.status(404).json({ message: "Pending application not found." });
+        }
+
+        // Find schedule by employee ID and start & end dates
+        let schedule = await Schedule.findOne({
+            where: {
+                created_by: employeeInfo.id,
+                start_date: originalStartDate,
+                end_date: originalEndDate
+            }
+        });
+
+        // Check if the application exists
+        if (!schedule) {
+            return res.status(404).json({ message: "Pending schedule not found." });
+        }
+
+        // system check if arrangement start or end date has passed
+        // Retrieve existing pending applications for overlap check, excluding the current one
+        let existingPending = await Application.findAll({
+            where: {
+                created_by: req.user.id,
+                status: 'Pending',
+                application_id: { [Op.ne]: application_id } // Exclude the current application
+            }
+        });
+
+        console.log("existingPending:", JSON.stringify(existingPending, null, 2));
+
+        // Retrieve approved applications based on user id
+        let approvedApplications = await Schedule.findAll({
+            where: {
+                created_by: req.user.id
+            }
+        });
+
+        console.log("approvedApplications:", approvedApplications);
+
+        // Check for overlaps in existing pending and approved applications
+        let existingPendingRes = await checkforOverlap(newStartDate, newEndDate, existingPending, 'existing');
+        console.log("existing: ", existingPendingRes);
+
+        let approvedApplicationRes = await checkforOverlap(newStartDate, newEndDate, approvedApplications, 'approved');
+        console.log("approved: ", approvedApplicationRes);
+
+        //system does a check to see if there is a clash with other approved arrangements.
+        // Return error if overlaps found
+        if (existingPendingRes || approvedApplicationRes) {
+            return res.status(400).json({ message: "Invalid application period. Updated application cannot overlap with existing or approved applications." });
+        }
+
+        //system updates schedule in db
+        //steps: update application row -> delete schedule rows
+
+        //update old application to the status of deleted
+        application.status = "Deleted";
+        application.last_name  = employeeInfo.id;
+    
+        const updatedApplication = await application.save();
+        if (!updatedApplication) {
+            return res.status(404).json({ message: "Old Application was not updated due to an error." });
+        }
+
+        //delete schedule row
+        const deleteSchedule = await schedule.destroy();
+        if (!deleteSchedule) {
+            return res.status(404).json({ message: "Schedule was not deleted due to an error." });
+        }
+
+        console.log("application: ", application_type);
+
+        //create new application
+        const newApplication = await Application.create({
+            application_type: application_type,
+            start_date: newStartDate,
+            end_date: newEndDate,
+            requestor_remarks: requestor_remarks,
+            created_by: employeeInfo.id,
+            last_update_by: employeeInfo.id,
+            status: "Pending",
+        }, { transaction });
+
+        if (!newApplication) {
+            return res.status(404).json({ message: "Error creating a new application" });
+        }
+
+        // Upload files using the application ID
+        if (files && files.length > 0) {
+            await uploadFilesToS3(files, newApplication.application_id, employeeInfo.id);
+        }
+
+        // If it's a regular application, generate recurring child events
+        if (application_type === "Regular" && recurrence_rule && recurrence_end_date) {
+            let currentStartDate = moment(newStartDate);
+            let currentEndDate = moment(newEndDate);
+            while (currentStartDate.isBefore(recurrence_end_date)) {
+                currentStartDate.add(1, recurrence_rule); // E.g., add 1 week or 1 month
+                currentEndDate.add(1, recurrence_rule);
+
+                // Conduct check for overlapping schedules
+                existingPendingRes = await checkforOverlap(currentStartDate.toDate(), currentEndDate.toDate(), existingPendingApplications, 'existing');
+                approvedApplicationRes = await checkforOverlap(currentStartDate.toDate(), currentEndDate.toDate(), approvedSchedules, 'approved')
+                // Roll back transaction if overlaps found
+                if (existingPendingRes || approvedApplicationRes) {
+                    await transaction.rollback();
+                    return res.status(400).json({ message: `Invalid application period. New application cannot overlap with the existing or approved application.` });
+                }
+                // Conduct check for overlapping blacklist dates
+                matchingBlacklists = await Blacklist.findAll({
+                    where: {
+                        start_date: {
+                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                        },
+                        end_date: {
+                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                        },
+                        created_by: employeeInfo.reporting_manager
+                    }
+                });
+
+                // Roll back transaction if overlaps found
+                if (matchingBlacklists.length > 0) {
+                    await transaction.rollback();
+                    return res.status(400).json({ message: "Application period overlaps with blacklist period." });
+                }
+
+               await Application.create({
+                    start_date: currentStartDate.toDate(),
+                    end_date: currentEndDate.toDate(),
+                    application_type: 'Regular',
+                    created_by: employeeInfo.id,
+                    last_update_by: employeeInfo.id,
+                    requestor_remarks: requestor_remarks,
+                    status: 'Pending',
+                }, { transaction });
+            }
+        }
+        await transaction.commit();
+
+        return res.status(201).json({message: "Application has been updated for manager approval"});
+    }catch(error) {
+        console.error("Error retrieving own schedule:", error);
+        return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
+    }
+}
+
+
 module.exports = {
     retrieveApplications,
     retrievePendingApplications,
@@ -556,5 +741,6 @@ module.exports = {
     withdrawPendingApplication,
     withdrawApprovedApplication,
     withdrawApprovedApplicationByEmployee,
-    updatePendingApplication
+    updatePendingApplication,
+    updateApprovedApplication
 }

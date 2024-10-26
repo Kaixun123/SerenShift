@@ -165,7 +165,7 @@ export default function PendingApplicationPage() {
       applicationToEdit.status === "Pending"
         ? "/api/application/updatePendingApplication"
         : applicationToEdit.status === "Approved"
-        ? "/api/schedule/updateSchedule"
+        ? "/api/application/updateApprovedApplication"
         : null;
 
     try {
@@ -177,7 +177,7 @@ export default function PendingApplicationPage() {
         }
       );
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201  ) {
         const result = await response.json();
 
         // Show success toast message

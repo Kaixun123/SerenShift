@@ -285,11 +285,14 @@ export default function EditApplicationCard({ applicationData, onSave, onCancel 
           <>
             <FormControl mb={4}>
               <FormLabel>Recurrence Rule</FormLabel>
-              <Textarea
+              <Select
+                placeholder="Select Recurrence Rule"
                 value={recurrenceRule}
                 onChange={(e) => setRecurrenceRule(e.target.value)}
-                placeholder="Enter recurrence rule"
-              />
+              >
+                <option value={"week"}>Weekly</option>
+                <option value={"month"}>Monthly</option>
+              </Select>
             </FormControl>
 
             <FormControl mb={4}>
