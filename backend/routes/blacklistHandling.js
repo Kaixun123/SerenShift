@@ -22,9 +22,11 @@ const getBlacklistDateValidationRules = () => {
 // Create New Blacklist Date Vaildation Rules
 const createBlacklistDateValidationRules = () => {
     return [
-        check("startDate").isISO8601().toDate().withMessage("Invalid Start Date For Blacklist"),
-        check("endDate").isISO8601().toDate().withMessage("Invalid End Date for Blacklist"),
-        check("remarks").optional().isString().isLength({ max: 255 }).withMessage("Remarks Is Too Long For Blacklist")
+        check("startDateTime").isISO8601().toDate().withMessage("Invalid Start Date For Blacklist"),
+        check("endDateTime").isISO8601().toDate().withMessage("Invalid End Date for Blacklist"),
+        check("remarks").optional().isString().isLength({ max: 255 }).withMessage("Remarks Is Too Long For Blacklist"),
+        check("recurrenceRule").optional().isString().isIn(['week', 'month']).withMessage("Invalid Recurrence Rule For Blacklist"),
+        check("recurrenceEndDateTime").optional().isISO8601().toDate().withMessage("Invalid Recurrence End Date For Blacklist")
     ];
 };
 
@@ -32,8 +34,8 @@ const createBlacklistDateValidationRules = () => {
 const updateBlacklistDateValidationRules = () => {
     return [
         check("blacklist_id").isInt().withMessage("Invalid Blacklist ID"),
-        check("startDate").isISO8601().toDate().withMessage("Invalid Start Date For Blacklist"),
-        check("endDate").isISO8601().toDate().withMessage("Invalid End Date for Blacklist"),
+        check("startDateTime").isISO8601().toDate().withMessage("Invalid Start Date For Blacklist"),
+        check("endDateTime").isISO8601().toDate().withMessage("Invalid End Date for Blacklist"),
         check("remarks").optional().isString().isLength({ max: 255 }).withMessage("Remarks Is Too Long For Blacklist")
     ]
 };
@@ -58,11 +60,11 @@ const vaildateParameters = (req, res, next) => {
 };
 
 
-router.get("/getBlockedDates", ensureLoggedIn, (req, res) => blacklistController.getBlockedDates(req, res));
-router.get("/getBlacklistedDates", ensureManagerAndAbove, (req, res) => blacklistController.getBlacklistDatesManager(req, res));
-router.get("/getBlacklistedDate/:blacklist_id", getBlacklistDateValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => blacklistController.getBlacklistDate(req, res));
+router.get("/getBlockedDates", getBlacklistDatesValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => blacklistController.getBlacklistDates(req, res));
+router.get("/getBlacklistDates", ensureManagerAndAbove, (req, res) => blacklistController.getBlacklistDatesManager(req, res));
+router.get("/getBlacklistDate/:blacklist_id", getBlacklistDateValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => blacklistController.getBlacklistDate(req, res));
 router.post("/createBlacklistDate", createBlacklistDateValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => blacklistController.createBlacklistDate(req, res));
-router.patch("/updateBlacklistDate", updateBlacklistDateValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => blacklistController.updateBlacklistDate(req, res));
-router.delete("/deleteBlacklistDate", deleteBlacklistDateValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => blacklistController.deleteBlacklistDate(req, res));
+router.patch("/updateBlacklistDate/:blacklist_id", updateBlacklistDateValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => blacklistController.updateBlacklistDate(req, res));
+router.delete("/deleteBlacklistDate/:blacklist_id", deleteBlacklistDateValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => blacklistController.deleteBlacklistDate(req, res));
 
 module.exports = router;

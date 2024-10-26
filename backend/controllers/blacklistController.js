@@ -33,9 +33,9 @@ const getBlacklistDates = async (req, res) => {
                         [Op.between]: [normalisedStartDate, normalisedEndDate]
                     }
                 },
-                order: {
-                    start_date: 'ASC'
-                }
+                order: [
+                    ['start_date', 'ASC']
+                ]
             });
         } else if (req.body.start_date) {
             let normalisedStartDate = new Date(req.body.start_date);
@@ -47,9 +47,9 @@ const getBlacklistDates = async (req, res) => {
                         [Op.gte]: normalisedStartDate
                     }
                 },
-                order: {
-                    start_date: 'ASC'
-                }
+                order: [
+                    ['start_date', 'ASC']
+                ]
             });
         } else if (req.body.end_date) {
             let normalisedEndDate = new Date(req.body.end_date);
@@ -61,9 +61,9 @@ const getBlacklistDates = async (req, res) => {
                         [Op.lte]: normalisedEndDate
                     }
                 },
-                order: {
-                    start_date: 'ASC'
-                }
+                order: [
+                    ['start_date', 'ASC']
+                ]
             });
         } else {
             let normalisedStartDate = new Date();
@@ -75,9 +75,9 @@ const getBlacklistDates = async (req, res) => {
                         [Op.gte]: normalisedStartDate
                     }
                 },
-                order: {
-                    start_date: 'ASC'
-                }
+                order: [
+                    ['start_date', 'ASC']
+                ]
             });
         }
         if (!blacklistDates)
@@ -104,10 +104,10 @@ const getBlacklistDatesManager = async (req, res) => {
                 start_date: {
                     [Op.gte]: normalisedStartDate
                 },
-                order: {
-                    start_date: 'ASC'
-                }
-            }
+            },
+            order: [
+                ['start_date', 'ASC']
+            ]
         });
         if (!blacklistDates)
             return res.status(200).json([]);
@@ -139,22 +139,19 @@ const createBlacklistDate = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
         if (recurrenceRule && recurrenceEndDate) {
-            let blacklists = [];
             let currentStartDate = moment(startDateTime);
             let currentEndDate = moment(endDateTime);
             while (currentStartDate.isBefore(recurrenceEndDate)) {
-                currentStartDate.add(1, recurrenceRule);
-                currentEndDate.add(1, recurrenceRule);
-                let blacklistDate = await Blacklist.create({
+                await Blacklist.create({
                     start_date: currentStartDate.toDate(),
                     end_date: currentEndDate.toDate(),
                     created_by: req.user.id,
                     last_update_by: req.user.id,
                     remarks: remarks
-                });
-                blacklists.push(blacklistDate);
+                }, { transaction });
+                currentStartDate.add(1, recurrenceRule);
+                currentEndDate.add(1, recurrenceRule);
             }
-            Blacklist.bulkCreate(blacklists);
             await transaction.commit();
             return res.status(201).json({ message: "Blacklist Dates Created Successfully" });
         } else {
@@ -177,7 +174,7 @@ const createBlacklistDate = async (req, res) => {
                 created_by: req.user.id,
                 last_update_by: req.user.id,
                 remarks: remarks
-            });
+            }, { transaction });
             await transaction.commit();
             return res.status(201).json({ message: "Blacklist Date Created Successfully", blacklist_id: blacklistDate.blacklist_id });
         }

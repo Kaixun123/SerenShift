@@ -20,7 +20,7 @@ module.exports = {
       },
       remarks: {
         type: Sequelize.STRING(255),
-        allowNull: true,
+        allowNull: false,
       },
       created_by: {
         type: Sequelize.INTEGER(6),
