@@ -17,7 +17,7 @@ import {
 // mantine
 import { DateInput } from "@mantine/dates";
 
-export default function EditApplicationCard({ applicationData, onSave }) {
+export default function EditApplicationCard({ applicationData, onSave, onCancel }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState(null);
@@ -320,7 +320,7 @@ export default function EditApplicationCard({ applicationData, onSave }) {
         <FormControl mb={4}>
           <FormLabel>Upload Supporting Files</FormLabel>
           <FileUploader
-            onChange={handleFilesChange}
+            onFilesChange={handleFilesChange}
             clearFiles={clearFiles}
             fileList={files}
           />

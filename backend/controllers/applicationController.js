@@ -121,10 +121,9 @@ const retrievePendingApplications = async (req, res, next) => {
 
 // POST function - to create new application
 const createNewApplication = async (req, res, next) => {
+    let { application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
+    const transaction = await sequelize.transaction();
     try {
-        console.log(req.body);
-        let { application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body
-
         const files = req.files;
         let employeeInfo = await Employee.findByPk(req.user.id);
 
@@ -137,25 +136,40 @@ const createNewApplication = async (req, res, next) => {
         if (!reportingManager) {
             return res.status(404).json({ message: "Reporting Manager not found." });
         };
-        // retrieve existing pending application to use for overlapping check later
-        let existingPending = await Application.findAll({
+        // retrieve existing pending applications to use for overlapping check later
+        let existingPendingApplications = await Application.findAll({
             where: {
                 created_by: req.user.id,
                 status: 'Pending'
             }
         })
 
-        // retrieve approved application based on user id
-        let approvedApplication = await Schedule.findAll({
+        // retrieve approved schedules based on user id
+        let approvedSchedules = await Schedule.findAll({
             where: { created_by: req.user.id }
         })
 
-        let existingPendingRes = await checkforOverlap(startDate, endDate, existingPending, 'existing');
-        let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedApplication, 'approved')
+        let existingPendingRes = await checkforOverlap(startDate, endDate, existingPendingApplications, 'existing');
+        let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedSchedules, 'approved')
         if (existingPendingRes || approvedApplicationRes) {
             return res.status(400).json({ message: `Invalid application period. New application cannot overlap with the existing or approved application.` });
         }
 
+        // Check if the application period is within the blacklist period
+        let matchingBlacklists = await Blacklist.findAll({
+            where: {
+                start_date: {
+                    [Op.between]: [startDate, endDate]
+                },
+                end_date: {
+                    [Op.between]: [startDate, endDate]
+                },
+                created_by: employeeInfo.reporting_manager
+            }
+        })
+        if (matchingBlacklists.length > 0) {
+            return res.status(400).json({ message: "Application period overlaps with blacklist period." });
+        }
         // Create a new application
         const newApplication = await Application.create({
             start_date: startDate,
@@ -165,9 +179,8 @@ const createNewApplication = async (req, res, next) => {
             last_update_by: employeeInfo.id,
             status: "Pending",
             requestor_remarks: requestor_remarks,
-        });
+        }, { transaction });
 
-        console.log(newApplication);
         // Upload files using the application ID
         if (files && files.length > 0) {
             await uploadFilesToS3(files, newApplication.application_id, employeeInfo.id);
@@ -175,17 +188,59 @@ const createNewApplication = async (req, res, next) => {
 
         // If it's a regular application, generate recurring child events
         if (application_type === "Regular" && recurrence_rule && recurrence_end_date) {
-            await createRecurringApplications(recurrence_rule, startDate, endDate, recurrence_end_date, requestor_remarks, req.user.id);
+            let currentStartDate = moment(startDate);
+            let currentEndDate = moment(endDate);
+            while (currentStartDate.isBefore(recurrence_end_date)) {
+                currentStartDate.add(1, recurrence_rule); // E.g., add 1 week or 1 month
+                currentEndDate.add(1, recurrence_rule);
+
+                // Conduct check for overlapping schedules
+                existingPendingRes = await checkforOverlap(currentStartDate.toDate(), currentEndDate.toDate(), existingPendingApplications, 'existing');
+                approvedApplicationRes = await checkforOverlap(currentStartDate.toDate(), currentEndDate.toDate(), approvedSchedules, 'approved')
+                // Roll back transaction if overlaps found
+                if (existingPendingRes || approvedApplicationRes) {
+                    await transaction.rollback();
+                    return res.status(400).json({ message: `Invalid application period. New application cannot overlap with the existing or approved application.` });
+                }
+                // Conduct check for overlapping blacklist dates
+                matchingBlacklists = await Blacklist.findAll({
+                    where: {
+                        start_date: {
+                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                        },
+                        end_date: {
+                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                        },
+                        created_by: employeeInfo.reporting_manager
+                    }
+                });
+
+                // Roll back transaction if overlaps found
+                if (matchingBlacklists.length > 0) {
+                    await transaction.rollback();
+                    return res.status(400).json({ message: "Application period overlaps with blacklist period." });
+                }
+
+               await Application.create({
+                    start_date: currentStartDate.toDate(),
+                    end_date: currentEndDate.toDate(),
+                    application_type: 'Regular',
+                    created_by: employeeInfo.id,
+                    last_update_by: employeeInfo.id,
+                    requestor_remarks: requestor_remarks,
+                    status: 'Pending',
+                }, { transaction });
+            }
         }
-
-        console.log("New Application:", newApplication);
-
-        return res.status(201).json({ message: "New application successfully created.", result: newApplication });
+        await transaction.commit();
+        return res.status(201).json({ message: "New application successfully created.", result: newApplication })
     } catch (error) {
+        await transaction.rollback();
         console.error("Error creating new application:", error);
         return res.status(500).json({ error: "An error occurred while creating new application." });
     }
 }
+
 
 // PUT function - to update application status to approved - inherited from managerController.js
 const approvePendingApplication = async (req, res) => {
@@ -400,7 +455,17 @@ const withdrawApprovedApplicationByEmployee = async (req, res) => {
 const updatePendingApplication = async (req, res, next) => {
     try {
         console.log(req.body);
-        let { application_id, application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
+        const {
+            application_id,
+            application_type,
+            originalStartDate,
+            originalEndDate,
+            newStartDate,
+            newEndDate,
+            requestor_remarks,
+            recurrence_rule,
+            recurrence_end_date
+        } = req.body || {};
 
         const files = req.files;
         let employeeInfo = await Employee.findByPk(req.user.id);
@@ -446,8 +511,8 @@ const updatePendingApplication = async (req, res, next) => {
         });
 
         // Check for overlaps in existing pending and approved applications
-        let existingPendingRes = await checkforOverlap(startDate, endDate, existingPending, 'existing');
-        let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedApplications, 'approved');
+        let existingPendingRes = await checkforOverlap(newStartDate, newEndDate, existingPending, 'existing');
+        let approvedApplicationRes = await checkforOverlap(newStartDate, newEndDate, approvedApplications, 'approved');
 
         // Return error if overlaps found
         if (existingPendingRes || approvedApplicationRes) {
@@ -455,8 +520,8 @@ const updatePendingApplication = async (req, res, next) => {
         }
 
         // Update the existing pending application
-        application.start_date = startDate;
-        application.end_date = endDate;
+        application.start_date = newStartDate;
+        application.end_date = newEndDate;
         application.application_type = application_type;
         application.last_update_by = employeeInfo.id;
         application.requestor_remarks = requestor_remarks;
@@ -470,7 +535,7 @@ const updatePendingApplication = async (req, res, next) => {
 
         // Handle recurring applications for regular type
         if (application_type === "Regular" && recurrence_rule && recurrence_end_date) {
-            await createRecurringApplications(recurrence_rule, startDate, endDate, recurrence_end_date, requestor_remarks, req.user.id);
+            await createRecurringApplications(recurrence_rule, newStartDate, newEndDate, recurrence_end_date, requestor_remarks, req.user.id);
         }
 
         console.log("Updated Application:", application);

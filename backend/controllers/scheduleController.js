@@ -211,12 +211,23 @@ const updateOwnSchedule = async(req, res, next) => {
         console.log("in update approved application function")
         //get request from frontend on user changes.
         console.log(req.body);
-        let { application_id, application_type, startDate, endDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
+        const {
+            application_id,
+            application_type,
+            originalStartDate,
+            originalEndDate,
+            newStartDate,
+            newEndDate,
+            requestor_remarks,
+            recurrence_rule,
+            recurrence_end_date
+        } = req.body || {};
 
-        // Validate application_id
         if (!application_id) {
             return res.status(400).json({ message: "Application ID is required for updates." });
         }
+
+        console.log("first 400 status passed");
 
         const files = req.files;
         let employeeInfo = await Employee.findByPk(req.user.id);
@@ -246,7 +257,11 @@ const updateOwnSchedule = async(req, res, next) => {
 
         // Find schedule by employee ID and start & end dates
         let schedule = await Schedule.findOne({
-            where: { created_by: employeeInfo.id, start_date: startDate, end_date: endDate }
+            where: {
+                created_by: employeeInfo.id,
+                start_date: originalStartDate,
+                end_date: originalEndDate
+            }
         });
 
         // Check if the application exists
@@ -259,25 +274,36 @@ const updateOwnSchedule = async(req, res, next) => {
         let existingPending = await Application.findAll({
             where: {
                 created_by: req.user.id,
-                status: 'Approved',
+                status: 'Pending',
                 application_id: { [Op.ne]: application_id } // Exclude the current application
             }
         });
 
+        console.log("existingPending:", JSON.stringify(existingPending, null, 2));
+
         // Retrieve approved applications based on user id
-        let approvedApplications = await Application.findAll({
-            where: { created_by: req.user.id }
+        let approvedApplications = await Schedule.findAll({
+            where: {
+                created_by: req.user.id
+            }
         });
 
+        console.log("approvedApplications:", approvedApplications);
+
         // Check for overlaps in existing pending and approved applications
-        let existingPendingRes = await checkforOverlap(startDate, endDate, existingPending, 'existing');
-        let approvedApplicationRes = await checkforOverlap(startDate, endDate, approvedApplications, 'approved');
+        let existingPendingRes = await checkforOverlap(newStartDate, newEndDate, existingPending, 'existing');
+        console.log("existing: ", existingPendingRes);
+
+        let approvedApplicationRes = await checkforOverlap(newStartDate, newEndDate, approvedApplications, 'approved');
+        console.log("approved: ", approvedApplicationRes);
 
         //system does a check to see if there is a clash with other approved arrangements.
         // Return error if overlaps found
         if (existingPendingRes || approvedApplicationRes) {
             return res.status(400).json({ message: "Invalid application period. Updated application cannot overlap with existing or approved applications." });
         }
+
+        console.log("second 400 status passed");
 
         //system updates schedule in db
         //steps: update application row -> delete schedule rows
@@ -297,8 +323,18 @@ const updateOwnSchedule = async(req, res, next) => {
             return res.status(404).json({ message: "Schedule was not deleted due to an error." });
         }
 
+        console.log("application: ", application_type);
+
         //create new application
-        const newApplication = await createNewApplication(application_type, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date, files)
+        const newApplication = await createNewApplication({
+            application_type: application_type,
+            startDate: newStartDate,
+            endDate: newEndDate,
+            requestor_remarks: requestor_remarks,
+            recurrence_rule: recurrence_rule,
+            recurrence_end_date: recurrence_end_date,
+            files: files, // Pass files to the application creation logic
+        });
         if (!newApplication) {
             return res.status(404).json({ message: "New Application was not created due to an error." });
         }
