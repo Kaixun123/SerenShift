@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require('multer');
 const { check, validationResult } = require("express-validator");
-const { ensureLoggedIn, ensureManagerAndAbove } = require("../middlewares/authMiddleware");
+const { ensureLoggedIn, ensureManagerAndAbove, ensureManager } = require("../middlewares/authMiddleware");
 const applicationController = require("../controllers/applicationController");
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -46,6 +46,7 @@ const withdrawPendingApplicationValidationRules = () => {
 const withdrawApprovedApplicationValidationRules = () => {
     return [
         check("application_id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid Application ID"),
+        // check("rejectedDates").optional().isArray().withMessage("Rejected Dates Must Be An Array of Dates"),
     ];
 };
 
@@ -64,14 +65,13 @@ const vaildateParameters = (req, res, next) => {
 
 router.get("/retrieveApplications", ensureLoggedIn, (req, res) => applicationController.retrieveApplications(req, res));
 router.get("/retrievePendingApplications", ensureManagerAndAbove, (req, res) => applicationController.retrievePendingApplications(req, res));
+router.get("/retrieveApprovedApplication", ensureManagerAndAbove, (req, res) => applicationController.retrieveApprovedApplications(req, res));
 router.post("/createNewApplication", createNewApplicationValidationRules(), ensureLoggedIn, upload.array('files'), (req, res) => applicationController.createNewApplication(req, res))
 router.put("/approveApplication", approvePendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
 router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
 router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
-router.put("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.withdrawApprovedApplication(req, res));
+router.patch("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.withdrawApprovedApplication(req, res));
 router.patch("/updatePendingApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updatePendingApplication(req, res));
 router.delete("/withdrawApprovedApplicationByEmployee", ensureLoggedIn, (req, res) => applicationController.withdrawApprovedApplicationByEmployee(req, res));
-router.patch("/updateApprovedApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updateApprovedApplication(req, res));
-
 
 module.exports = router;
