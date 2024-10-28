@@ -345,7 +345,8 @@ const retrieveDepartmentSchedule = async (req, res) => {
                         wfhStaff.push({
                             id: staff.id,
                             name: `${staff.first_name} ${staff.last_name}`,
-                            wfhPeriod: wfhPeriod
+                            wfhPeriod: wfhPeriod,
+                            position: staff.position
                         });
                     }
                 });
