@@ -8,7 +8,7 @@ const ApplicationDetailsCard = ({
     last_name = "",
     position = "",
     requestor_remarks = "",
-    supportingDocs = "",
+    supportingDocs = [],
   }) => {
     // Construct the applicant's full name
     const applicantName = `${first_name} ${last_name}`;
@@ -48,6 +48,19 @@ const ApplicationDetailsCard = ({
         </Box>
       );
     }
+
+    const supportingDocLinks = 
+      <ul style={{ listStyleType: 'disc', paddingLeft: '20px' }}>
+      {supportingDocs.map((doc, index) => (
+        <li key={`doc_${index}`}>
+          <Link href={doc.download_url} color="blue.500" isExternal>
+            <Text>{doc.file_name}.{doc.file_extension}</Text>
+          </Link>
+        </li>
+      ))}
+    </ul>
+    ;
+    
   
     return (
       <Box
@@ -130,13 +143,12 @@ const ApplicationDetailsCard = ({
               width="70%"
             />
           </Flex>
-  
-          <Flex align="center" justify="space-between">
-            <Text fontWeight="bold">Supporting Documents</Text>
-            <Link href="#" color="blue.500" isExternal>
-              {supportingDocs}
-            </Link>
-          </Flex>
+          {supportingDocs.length > 0 && (
+            <Flex direction="column" align="start" justify="space-between">
+              <Text fontWeight="bold">Supporting Documents</Text>
+              {supportingDocLinks}
+            </Flex>
+          )}
         </Flex>
       </Box>
     );
