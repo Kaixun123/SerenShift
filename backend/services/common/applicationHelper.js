@@ -72,35 +72,33 @@ const splitDatesByDay = (startDate, endDate) => {
 
 const splitConsecutivePeriodByDay = (startDate, endDate) => {
     const results = [];
-
     // Validate dates
     if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
-        console.error("Invalid dates provided:", startDate, endDate);
-        return [];
+      console.error("Invalid dates provided:", startDate, endDate);
+      return [];
+    } else {
+      console.log("Valid dates provided:", startDate, endDate);
     }
 
     let currentDate = new Date(startDate);
     const endDateTime = new Date(endDate);
-
-    // Ensure that startDate is before or equal to endDate
     if (currentDate > endDateTime) {
-        console.error("startDate is after endDate:", startDate, endDate);
-        return [];
+      console.error("startDate is after endDate:", startDate, endDate);
+      return [];
+    } else {
+      console.log("startDate is before or equal to endDate:", startDate, endDate);
     }
 
     while (currentDate <= endDateTime) {
-        // Clone currentDate for start and end times for the current day
-        const newDay = new Date(currentDate);
-        results.push(newDay);
-
-        // Move to the next day
-        currentDate.setDate(currentDate.getDate() + 1);
-        console.log("DEBUG splitfunc: currentDate", currentDate);
+      // Clone currentDate for start and end times for the current day
+      const newDay = new Date(currentDate);
+      results.push(newDay);
+  
+      // Move to the next day
+      currentDate.setDate(currentDate.getDate() + 1);
     }
-
     return results;
-}
-
+  };
 
 // Helper Function to upload files to S3
 const uploadFilesToS3 = async (files, applicationId, userId) => {
