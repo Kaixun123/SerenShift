@@ -77,11 +77,15 @@ const splitConsecutivePeriodByDay = (startDate, endDate) => {
       console.error("Invalid dates provided:", startDate, endDate);
       return [];
     } else {
+      console.log("Splitting consecutive period by day:", startDate, endDate);
       console.log("Valid dates provided:", startDate, endDate);
     }
 
     let currentDate = new Date(startDate);
     const endDateTime = new Date(endDate);
+    currentDate.setUTCHours(0, 0, 0, 0);
+    endDateTime.setUTCHours(0, 0, 0, 0);
+
     if (currentDate > endDateTime) {
       console.error("startDate is after endDate:", startDate, endDate);
       return [];
