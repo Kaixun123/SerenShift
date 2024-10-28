@@ -183,6 +183,8 @@ export default function PendingApplicationPage() {
         body: formData,
       });
 
+      const responseData = await response.json();
+
       if (response.status === 200 || response.status === 201) {
         // Show success toast message
         toast({
@@ -196,13 +198,13 @@ export default function PendingApplicationPage() {
         handleRefresh();
       } else {
         // Handle different error statuses
-        let errorMessage = "Failed to update application.";
+        let errorMessage = responseData.message || "Failed to update application.";
         if (response.status === 400) {
-          errorMessage = "Bad Request. Please check your input.";
+          errorMessage = responseData.message || "Bad Request. Please check your input.";
         } else if (response.status === 404) {
-          errorMessage = "Application not found. Please try again later.";
+          errorMessage = responseData.message || "Application not found. Please try again later.";
         } else if (response.status === 500) {
-          errorMessage = "Internal Server Error. Please try again later.";
+          errorMessage = responseData.message || "Internal Server Error. Please try again later.";
         }
 
         console.error(errorMessage);

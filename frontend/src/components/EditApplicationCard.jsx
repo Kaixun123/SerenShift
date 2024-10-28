@@ -226,7 +226,7 @@ export default function EditApplicationCard({ applicationData, onSave, onCancel 
     setFiles([]);
     setRecurrenceRule("");
     setRecurrenceEndDate("");
-    onSave(); // Call the onSave callback to refresh or close the card
+    onCancel(); // Call the onSave callback to refresh or close the card
   };
 
   return (
