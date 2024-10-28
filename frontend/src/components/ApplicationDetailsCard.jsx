@@ -54,7 +54,7 @@ const ApplicationDetailsCard = ({
       {supportingDocs.map((doc, index) => (
         <li key={`doc_${index}`}>
           <Link href={doc.download_url} color="blue.500" isExternal>
-            <Text>{doc.file_name}.{doc.file_extension}</Text>
+            <Text whiteSpace="normal" wordBreak="break-word">{doc.file_name}.{doc.file_extension}</Text>
           </Link>
         </li>
       ))}
