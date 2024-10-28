@@ -265,7 +265,7 @@ export default function PendingApplicationPage() {
         onModalWithdrawOpen();
       }}
       onEdit={() => handleEdit(application)} // Pass the application to be edited
-      canManage={application.status === "Pending withdrawal" ? false : true}
+      isOwnApplication={application.status === "Pending withdrawal" ? false : true}
     />
   ));
 

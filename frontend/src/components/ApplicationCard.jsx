@@ -13,7 +13,7 @@ const ApplicationCard = ({
   first_name,
   last_name,
   position,
-  canManage,
+  isOwnApplication,
   occurence,
 }) => {
   const formatDate = (datetime) => {
@@ -71,14 +71,14 @@ const ApplicationCard = ({
             <></>
           )}
           <Flex gap={"4px"} flexDirection={"column"}>
-            {canManage === true && first_name && last_name && position ? (
+            {isOwnApplication === false && first_name && last_name && position ? (
               <Text fontSize="lg" fontWeight={"bold"} flexWrap={"wrap"}>
                 {first_name} {last_name} - {position}
               </Text>
             ) : (
               <></>
             )}
-            {canManage === true && occurence ? (
+            {isOwnApplication === false && occurence ? (
               <Text fontSize="lg" fontWeight={"bold"} flexWrap={"wrap"}>
                 Occurrence #{occurence}
               </Text>
@@ -194,7 +194,7 @@ const ApplicationCard = ({
             </Flex>
           </Box>
 
-          {canManage === true ? (
+          {isOwnApplication === true ? (
             <Flex>
               <Button
                 width={"100%"}
