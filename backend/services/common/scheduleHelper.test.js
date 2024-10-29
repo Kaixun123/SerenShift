@@ -1,4 +1,4 @@
-const { splitScheduleByDate, scheduleHasNotPassedCurrentDay } = require('./scheduleHelper');
+const { splitScheduleByDate, scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime } = require('./scheduleHelper');
 const moment = require('moment');
 
 describe('Schedule Helper', () => {
@@ -128,6 +128,23 @@ describe('Schedule Helper', () => {
             futureDate.setDate(futureDate.getDate() + 1); // Tomorrow
 
             expect(scheduleHasNotPassedCurrentDay(futureDate)).toBe(false);
+        });
+    });
+
+    describe('scheduleIsAfterCurrentTime', () => {
+        it('should return true for a future date', () => {
+            const futureDate = '2024-10-30T12:00:00Z'; // 1 day in the future
+            expect(scheduleIsAfterCurrentTime(futureDate)).toBe(true);
+        });
+    
+        it('should return false for a past date', () => {
+            const pastDate = '2024-10-28T12:00:00Z'; // 1 day in the past
+            expect(scheduleIsAfterCurrentTime(pastDate)).toBe(false);
+        });
+    
+        it('should return false for a date just before the current time', () => {
+            const justBeforeCurrentDate = '2024-10-29T11:59:59Z'; // Just before current time
+            expect(scheduleIsAfterCurrentTime(justBeforeCurrentDate)).toBe(false);
         });
     });
 });
