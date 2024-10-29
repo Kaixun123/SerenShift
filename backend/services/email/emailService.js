@@ -28,14 +28,24 @@ const send_email = async (mainRecipient, subject, message, cc, bcc) => {
     to: mainRecipient,
     subject: subject,
   };
-  if (cc)
-    mailOptions.cc = cc;
-  if (bcc)
-    mailOptions.bcc = bcc;
   if (process.env.AWS_DUMMY_RECEIVER_EMAIL) {
-    mailOptions.text = "\n TO:" + mainRecipient + "\n CC:" + cc + "\n BCC:" + bcc + "\n" + message;
+    mailOptions.text = "To: " + mainRecipient;
     mailOptions.to = process.env.AWS_DUMMY_RECEIVER_EMAIL;
+    if (cc) {
+      mailOptions.text += "\nCc: " + cc;
+      mailOptions.cc = cc;
+    }
+    if (bcc) {
+      mailOptions.text += "\nBcc: " + bcc;
+      mailOptions.bcc = bcc
+    }
+    mailOptions.text += "\nSubject: " + subject + "\n\n" + message;
   } else {
+    mailOptions.to = mainRecipient;
+    if (cc)
+      mailOptions.cc = cc;
+    if (bcc)
+      mailOptions.bcc = bcc
     mailOptions.text = message;
   }
   transporter.sendMail(mailOptions, function (error, info) {
