@@ -171,7 +171,7 @@ export default function PendingApplicationPage() {
     }
 
     const apiEndpoint =
-      applicationToEdit.status === "Pending"
+      applicationToEdit.status === "Pending Approval"
         ? "/api/application/updatePendingApplication"
         : applicationToEdit.status === "Approved"
         ? "/api/application/updateApprovedApplication"

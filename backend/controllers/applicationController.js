@@ -1,5 +1,5 @@
 const { Application, Employee, Schedule, Blacklist, Notification } = require('../models');
-const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3 } = require('../services/common/applicationHelper');
+const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3, sendNotificationEmail } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
@@ -192,6 +192,7 @@ const retrieveApprovedApplications = async (req, res) => {
 
 // POST function - to create new application
 const createNewApplication = async (req, res) => {
+    console.log(req.body);
     let { application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
     const transaction = await sequelize.transaction();
     try {
@@ -207,6 +208,13 @@ const createNewApplication = async (req, res) => {
         if (!reportingManager) {
             return res.status(404).json({ message: "Reporting Manager not found." });
         };
+
+        // retrieve reporting manager information based on reporting manager
+        let managerInfo = await Employee.findByPk(employeeInfo.reporting_manager);
+        if (!managerInfo) {
+            return res.status(404).json({ message: "Reporting Manager Information not found." });
+        };
+
         // retrieve existing pending applications to use for overlapping check later
         let existingPendingApplications = await Application.findAll({
             where: {
@@ -317,7 +325,13 @@ const createNewApplication = async (req, res) => {
             last_update_by: req.user.id
         }, { transaction })
 
+
         await transaction.commit();
+
+        if(newApplication || employeeInfo || managerInfo){
+            await sendNotificationEmail(newApplication, employeeInfo, managerInfo, "createApplication");
+        }
+
         return res.status(201).json({ message: "New application successfully created.", result: newApplication })
     } catch (error) {
         await transaction.rollback();
@@ -385,6 +399,11 @@ const approvePendingApplication = async (req, res) => {
         }, { transaction })
 
         await transaction.commit();
+
+        if(application || requestor || approver){
+            await sendNotificationEmail(application, requestor, approver, "approvedApplication");
+        }
+
         return res.status(200).json({ message: "Application approved successfully" });
     } catch (error) {
         await transaction.rollback();
@@ -427,6 +446,11 @@ const rejectPendingApplication = async (req, res) => {
         }, { transaction })
 
         await transaction.commit();
+
+        if(application || requestor || approver){
+            await sendNotificationEmail(application, requestor, approver, "rejectedApplication");
+        }
+
         return res.status(200).json({ message: "Application rejected successfully" });
     } catch (error) {
         await transaction.rollback();
@@ -450,6 +474,18 @@ const withdrawPendingApplication = async (req, res) => {
             return res.status(400).json({ message: 'Staff ID not found' });
         }
 
+        let reportingManager = currentEmployee.reporting_manager
+        // check if the employee has a reporting manager
+        if (!reportingManager) {
+            return res.status(404).json({ message: "Reporting Manager not found." });
+        };
+
+        // retrieve reporting manager information based on reporting manager
+        let managerInfo = await Employee.findByPk(currentEmployee.reporting_manager);
+        if (!managerInfo) {
+            return res.status(404).json({ message: "Reporting Manager Information not found." });
+        };
+
         // Get the application ID from the request body
         const { application_id } = req.body;
 
@@ -469,6 +505,11 @@ const withdrawPendingApplication = async (req, res) => {
         // Update status to 'Withdrawn'
         application.status = 'Withdrawn';
         await application.save();
+
+        //send email
+        if(application || currentEmployee || managerInfo){
+            await sendNotificationEmail(application, currentEmployee, managerInfo, "withdrawnApplication");
+        }
 
         // Send a response with the updated application
         res.status(200).json({
@@ -545,6 +586,11 @@ const withdrawApprovedApplication = async (req, res) => {
         // Delete the corresponding schedule
         await schedule.destroy();
         await transaction.commit();
+
+        //send email
+        if(application || requestor || approver){
+            await sendNotificationEmail(application, requestor, approver, "withdrawnApplication");
+        }
 
         res.status(200).json({
             message: 'Application updated to withdrawn and schedule deleted successfully',
@@ -773,6 +819,13 @@ const updateApprovedApplication = async (req, res) => {
             return res.status(404).json({ message: "Reporting Manager not found." });
         }
 
+        // retrieve reporting manager information based on reporting manager
+        let managerInfo = await Employee.findByPk(reportingManager);
+        if (!managerInfo) {
+            return res.status(404).json({ message: "Reporting Manager Information not found." });
+        };
+
+
         // Find the pending application by application_id
         let application = await Application.findOne({
             where: { application_id: application_id, status: 'Approved' }
@@ -911,6 +964,11 @@ const updateApprovedApplication = async (req, res) => {
             }
         }
         await transaction.commit();
+
+        //send email
+        if(application || employeeInfo || managerInfo){
+            await sendNotificationEmail(application, employeeInfo, managerInfo, "updateApplication");
+        }
 
         return res.status(201).json({ message: "Application has been updated for manager approval" });
     } catch (error) {

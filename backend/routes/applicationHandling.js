@@ -74,5 +74,6 @@ router.patch("/withdrawApproved", withdrawApprovedApplicationValidationRules(), 
 router.patch("/updatePendingApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updatePendingApplication(req, res));
 router.patch("/withdrawApprovedApplicationByEmployee", ensureLoggedIn, (req, res) => applicationController.withdrawApprovedApplicationByEmployee(req, res));
 router.patch("/rejectWithdrawalOfApprovedApplication", ensureManagerAndAbove, (req, res) => applicationController.rejectWithdrawalOfApprovedApplication(req, res));
+router.patch("/updateApprovedApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updateApprovedApplication(req, res));
 
 module.exports = router;
