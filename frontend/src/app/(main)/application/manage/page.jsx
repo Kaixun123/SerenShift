@@ -149,7 +149,7 @@ export default function ManageApplicationPage() {
         last_name={application.last_name}
         department={application.department}
         position={application.position}
-        canManage={false}
+        isOwnApplication={false}
       />
     </Flex>
   ));

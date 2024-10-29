@@ -5,6 +5,7 @@ const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime } = require('
 const { Op } = require('sequelize');
 const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
+const { retrieveFileDetails } = require('../services/uploads/s3');
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplications = async (req, res) => {
@@ -122,7 +123,7 @@ const retrievePendingApplications = async (req, res) => {
     }
 }
 
-// GET Function - retrieve pending applications - inherited from managerController.js
+// GET Function - retrieve pending applications of subordinates - inherited from managerController.js
 const retrieveApprovedApplications = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -130,13 +131,12 @@ const retrieveApprovedApplications = async (req, res) => {
 
         let response = await Promise.all(
             subordinates.map(async sub => {
-
                 let subApplicationRes = await Application.findAll({
                     where: {
                         created_by: sub.user_id,
                         status: "Approved"
                     }
-                })
+                });
 
                 let subResponse = {
                     user_id: sub.user_id,
@@ -146,40 +146,49 @@ const retrieveApprovedApplications = async (req, res) => {
                     position: sub.position,
                     country: sub.country,
                     email: sub.email,
-                }
+                };
 
                 if (subApplicationRes && subApplicationRes.length > 0) {
-                    subResponse.approvedApplications = subApplicationRes
-                        .filter(application => scheduleIsAfterCurrentTime(application.start_date))
-                        .map(application => ({
-                            application_id: application.application_id,
-                            start_date: application.start_date,
-                            end_date: application.end_date,
-                            application_type: application.application_type,
-                            created_by: application.created_by,
-                            last_update_by: application.last_update_by,
-                            verify_by: application.verify_by,
-                            verify_timestamp: application.verify_timestamp,
-                            status: application.status,
-                            requestor_remarks: application.requestor_remarks,
-                            approver_remarks: application.requestor_remarks,
-                            created_timestamp: application.created_timestamp,
-                            last_update_timestamp: application.last_update_timestamp
-                        }))
+                    subResponse.approvedApplications = await Promise.all(
+                        subApplicationRes
+                            .filter(application => scheduleIsAfterCurrentTime(application.start_date))
+                            .map(async (application) => {
+                                // Fetch file details for each application
+                                let files = await retrieveFileDetails('application', application.application_id);
+                                
+                                return {
+                                    application_id: application.application_id,
+                                    start_date: application.start_date,
+                                    end_date: application.end_date,
+                                    application_type: application.application_type,
+                                    created_by: application.created_by,
+                                    last_update_by: application.last_update_by,
+                                    verify_by: application.verify_by,
+                                    verify_timestamp: application.verify_timestamp,
+                                    status: application.status,
+                                    requestor_remarks: application.requestor_remarks,
+                                    approver_remarks: application.requestor_remarks,
+                                    created_timestamp: application.created_timestamp,
+                                    last_update_timestamp: application.last_update_timestamp,
+                                    files: files.length > 0 ? files : []
+                                };
+                            })
+                    );
                 } else {
                     subResponse.approvedApplications = []; // No pending applications
                 }
 
                 return subResponse;
             })
-        )
+        );
 
         return res.status(200).json(response);
     } catch (error) {
         console.error("Error fetching application:", error);
         return res.status(500).json({ error: "An error occurred while fetching application." });
     }
-}
+};
+
 
 // POST function - to create new application
 const createNewApplication = async (req, res) => {

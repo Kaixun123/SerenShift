@@ -366,7 +366,7 @@ export default function WithdrawApplicationPage() {
           last_name={application.last_name}
           department={application.department}
           position={application.position}
-          canManage={false}
+          isOwnApplication={false}
         />
       </Flex>
     );
@@ -410,6 +410,10 @@ export default function WithdrawApplicationPage() {
       });
       return;
     }
+  };
+
+  const handleSpecificWithdrawClick = () => {
+    return;
   };
 
   return (
@@ -518,103 +522,109 @@ export default function WithdrawApplicationPage() {
         </div>
 
         <div className="w-1/2">
-          <Flex alignItems="center" width="100%">
-            <Box width="100%">
-              {selectedApplications.length > 1 && (
-                <div className="flex flex-col gap-4 mb-8">
-                  <Text fontWeight="bold" color="gray.600">
-                    Reason for Withdrawal ({selectedApplications.length}{" "}
-                    Selected): <span style={{ color: "red" }}>*</span>
-                  </Text>
-                  <Textarea
-                    placeholder="Enter required reason here..."
-                    onChange={(e) => setRemarksMultiple(e.target.value)}
-                    bg="gray.50"
-                    borderColor="gray.300"
-                    focusBorderColor="blue.500"
-                    resize="none"
-                    height="100px"
-                  />
-                  <Flex justifyContent="flex-start" w="full">
-                    <Button
-                      colorScheme="red"
-                      width="full"
-                      onClick={handleWithdrawMultipleClick}
-                      isDisabled={
-                        !(remarksMultiple && String(remarksMultiple).trim())
-                      }
-                    >
-                      Withdraw All Selected
-                    </Button>
-                  </Flex>
-                </div>
-              )}
-              {selectedApplicationDetails ? (
-                <>
-                  <ApplicationDetailsCard
-                    startDate={selectedApplicationDetails.start_date}
-                    endDate={selectedApplicationDetails.end_date}
-                    applicationType={
-                      selectedApplicationDetails.application_type
-                    }
-                    first_name={selectedApplicationDetails.first_name}
-                    last_name={selectedApplicationDetails.last_name}
-                    position={selectedApplicationDetails.position}
-                    requestor_remarks={
-                      selectedApplicationDetails.requestor_remarks
-                    }
-                    supportingDocs={selectedApplicationDetails.supportingDocs}
-                  />
-                  {selectedApplications.length > 1 && (
-                    <Pagination
-                      total={selectedApplications.length}
-                      value={currentApplicationIndex + 1}
-                      onChange={(page) => setCurrentApplicationIndex(page - 1)}
-                      className="flex mt-5 justify-center"
-                    />
-                  )}
-                </>
-              ) : (
-                <ApplicationDetailsCard
-                  startDate=""
-                  endDate=""
-                  applicationType=""
-                  first_name=""
-                  last_name=""
-                  position=""
-                  requestor_remarks=""
-                  supportingDocs=""
-                  message="No WFH selected" // Custom prop to indicate no selection
-                />
-              )}
-              <Box mt={4}>
-                <Text fontWeight="bold" color="gray.600">
-                  Reason for Withdrawal: <span style={{ color: "red" }}>*</span>
-                </Text>
-                <Textarea
-                  placeholder="Enter required reason here..."
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  bg="gray.50"
-                  borderColor="gray.300"
-                  focusBorderColor="blue.500"
-                  resize="none"
-                  height="100px"
-                  isDisabled={selectedApplications == 0} // Use isDisabled prop to control input
-                />
-              </Box>
-              <Flex mt={4} justifyContent="flex-start" w="full">
-                <Button
+        <Flex alignItems="center" width="100%">
+        <Box width="100%">
+        {selectedApplications.length > 1 && (
+            <div className="flex flex-col gap-4 mb-8">
+              <Text fontWeight="bold" color="gray.600">
+                Reason for Withdrawal ({selectedApplications.length} Selected): <span style={{ color: 'red' }}>*</span>
+              </Text>
+              <Textarea
+                placeholder="Enter required reason here..."
+                onChange={(e) => setRemarksMultiple(e.target.value)}
+                bg="gray.50"
+                borderColor="gray.300"
+                focusBorderColor="blue.500"
+                resize="none"
+                height="100px"
+              />
+              <Flex justifyContent="flex-start" w="full">
+                <Button 
                   colorScheme="red"
                   width="full"
-                  onClick={handleWithdrawClick}
-                  isDisabled={!(remarks && String(remarks).trim())}
-                >
-                  Withdraw Application
-                </Button>
+                  onClick={handleWithdrawMultipleClick}
+                  isDisabled={!(remarksMultiple && String(remarksMultiple).trim())}
+                  >
+                Withdraw All Selected
+              </Button>
               </Flex>
+            </div>
+          )} 
+          {selectedApplicationDetails ? (
+            <>
+              <ApplicationDetailsCard
+                startDate={selectedApplicationDetails.start_date}
+                endDate={selectedApplicationDetails.end_date}
+                applicationType={selectedApplicationDetails.application_type}
+                first_name={selectedApplicationDetails.first_name}
+                last_name={selectedApplicationDetails.last_name}
+                position={selectedApplicationDetails.position}
+                requestor_remarks={selectedApplicationDetails.requestor_remarks}
+                supportingDocs={selectedApplicationDetails.files}
+              />
+              {selectedApplications.length > 1 && (
+                <Pagination
+                  total={selectedApplications.length}
+                  value={currentApplicationIndex + 1}
+                  onChange={(page) => setCurrentApplicationIndex(page - 1)}
+                  className="flex mt-5 justify-center"
+                />
+              )}
+            </>
+          ) : (
+            <ApplicationDetailsCard
+              startDate=""
+              endDate=""
+              applicationType=""
+              first_name=""
+              last_name=""
+              position=""
+              requestor_remarks=""
+              supportingDocs=""
+              message="No WFH selected" // Custom prop to indicate no selection
+            />
+          )}
+          <Box mt={4}>
+            <Text fontWeight="bold" color="gray.600">
+              Reason for Withdrawal: <span style={{ color: 'red' }}>*</span>
+            </Text>
+              <Textarea
+                placeholder="Enter required reason here..."
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                bg="gray.50"
+                borderColor="gray.300"
+                focusBorderColor="blue.500"
+                resize="none"
+                height="100px"
+                isDisabled={selectedApplications == 0} // Use isDisabled prop to control input
+              />
             </Box>
+          <Flex direction="row" gap={4} mt={4} justifyContent="flex-start" w="full" minHeight="40px">
+            <Button 
+                colorScheme="red"
+                width="full"
+                height="auto"
+                whiteSpace="normal"
+                onClick={handleWithdrawClick}
+                isDisabled={!(remarks && String(remarks).trim())}
+                >
+              Withdraw Application
+            </Button>
+            <Button 
+                colorScheme="red"
+                variant="outline"
+                width="full"
+                height="auto"
+                whiteSpace="normal"
+                onClick={handleSpecificWithdrawClick}
+                isDisabled={!(remarks && String(remarks).trim())}
+                >
+              Withdraw Specific Dates...
+            </Button>
           </Flex>
+        </Box>
+        </Flex>
         </div>
       </div>
     </main>
