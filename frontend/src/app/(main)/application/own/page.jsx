@@ -66,18 +66,13 @@ export default function PendingApplicationPage() {
 
   // Handle withdrawal function
   const handleWithdraw = async (applicationId, applicationStatus) => {
+    console.log(applicationId, applicationStatus);
+
     const apiEndpoint =
-      applicationStatus === "Pending"
+      applicationStatus === "Pending approval"
         ? "/api/application/withdrawPending"
         : applicationStatus === "Approved"
         ? "/api/application/withdrawApprovedApplicationByEmployee"
-        : null;
-
-    const method =
-      applicationStatus === "Pending"
-        ? "PUT"
-        : applicationStatus === "Approved"
-        ? "DELETE"
         : null;
 
     if (!apiEndpoint) {
@@ -88,16 +83,14 @@ export default function PendingApplicationPage() {
 
     try {
       const response = await fetch(apiEndpoint, {
-        method: method,
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ application_id: applicationId }),
       });
       if (response.ok) {
-        setApplications((prev) =>
-          prev.filter((app) => app.application_id !== applicationId)
-        );
+        handleRefresh();
         onModalWithdrawClose();
         setPage(1);
       } else {
@@ -137,27 +130,43 @@ export default function PendingApplicationPage() {
   };
 
   const handleSaveEdit = async (updatedData) => {
-
     const formData = new FormData();
-    formData.append('application_id', applicationToEdit.application_id);
-    formData.append('application_type', updatedData.application_type || applicationToEdit.application_type);
-    formData.append('originalStartDate', applicationToEdit.start_date);
-    formData.append('originalEndDate', applicationToEdit.end_date);
-    formData.append('newStartDate', updatedData.startDate || applicationToEdit.start_date);
-    formData.append('newEndDate', updatedData.endDate || applicationToEdit.end_date);
-    formData.append('requestor_remarks', updatedData.reason || applicationToEdit.requestor_remarks);
+    formData.append("application_id", applicationToEdit.application_id);
+    formData.append(
+      "application_type",
+      updatedData.application_type || applicationToEdit.application_type
+    );
+    formData.append("originalStartDate", applicationToEdit.start_date);
+    formData.append("originalEndDate", applicationToEdit.end_date);
+    formData.append(
+      "newStartDate",
+      updatedData.startDate || applicationToEdit.start_date
+    );
+    formData.append(
+      "newEndDate",
+      updatedData.endDate || applicationToEdit.end_date
+    );
+    formData.append(
+      "requestor_remarks",
+      updatedData.reason || applicationToEdit.requestor_remarks
+    );
 
     //append only for regular applications
     if (updatedData.application_type == "Regular") {
-      formData.append("recurrence_rule", updatedData.recurrenceRule || applicationToEdit.recurrenceRule);
-      formData.append("recurrence_end_date", updatedData.recurrenceEndDate || applicationToEdit.recurrenceEndDate);
+      formData.append(
+        "recurrence_rule",
+        updatedData.recurrenceRule || applicationToEdit.recurrenceRule
+      );
+      formData.append(
+        "recurrence_end_date",
+        updatedData.recurrenceEndDate || applicationToEdit.recurrenceEndDate
+      );
     }
-
 
     // Append each file to FormData if files are provided
     if (updatedData.files && updatedData.files.length > 0) {
       updatedData.files.forEach((file) => {
-          formData.append('files', file);
+        formData.append("files", file);
       });
     }
 
@@ -169,16 +178,14 @@ export default function PendingApplicationPage() {
         : null;
 
     try {
-      const response = await fetch(
-        apiEndpoint,
-        {
-          method: "PATCH",
-          body: formData,
-        }
-      );
+      const response = await fetch(apiEndpoint, {
+        method: "PATCH",
+        body: formData,
+      });
 
-      if (response.status === 200 || response.status === 201  ) {
+      const responseData = await response.json();
 
+      if (response.status === 200 || response.status === 201) {
         // Show success toast message
         toast({
           title: "Application updated.",
@@ -191,13 +198,13 @@ export default function PendingApplicationPage() {
         handleRefresh();
       } else {
         // Handle different error statuses
-        let errorMessage = "Failed to update application.";
+        let errorMessage = responseData.message || "Failed to update application.";
         if (response.status === 400) {
-          errorMessage = "Bad Request. Please check your input.";
+          errorMessage = responseData.message || "Bad Request. Please check your input.";
         } else if (response.status === 404) {
-          errorMessage = "Application not found. Please try again later.";
+          errorMessage = responseData.message || "Application not found. Please try again later.";
         } else if (response.status === 500) {
-          errorMessage = "Internal Server Error. Please try again later.";
+          errorMessage = responseData.message || "Internal Server Error. Please try again later.";
         }
 
         console.error(errorMessage);
@@ -260,7 +267,7 @@ export default function PendingApplicationPage() {
         onModalWithdrawOpen();
       }}
       onEdit={() => handleEdit(application)} // Pass the application to be edited
-      canManage={false}
+      isOwnApplication={application.status === "Pending withdrawal" ? false : true}
     />
   ));
 
