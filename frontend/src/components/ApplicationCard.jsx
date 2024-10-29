@@ -13,7 +13,7 @@ const ApplicationCard = ({
   first_name,
   last_name,
   position,
-  canManage,
+  isOwnApplication,
   occurence,
 }) => {
   const formatDate = (datetime) => {
@@ -46,39 +46,39 @@ const ApplicationCard = ({
       >
         {/* Left Side */}
         <VStack spacing={"15px"} align="flex-start" flex="1">
-        {status ? (
-          <Badge
-          fontSize="xs"
-          p={1}
-          w={"95px"}
-          borderRadius="4"
-          textAlign="center"
-          fontWeight="medium"
-          bg={
-            status === "Pending"
-              ? "yellow.500" // Yellow for Pending
-              : status === "Approved"
-              ? "green.500" // Green for Approved
-              : status === "Edited"
-              ? "red.500" // Red for Edited
-              : "gray.500" // Default gray for other statuses
-          }
-          color="white" // Ensure the text is white
-        >
-          {status}
-        </Badge>
-        ) : (
-          <></>
+          {status ? (
+            <Badge
+              fontSize="xs"
+              p={1}
+              w={"max-content"}
+              borderRadius="4"
+              textAlign="center"
+              fontWeight="medium"
+              bg={
+                status === "Pending approval"
+                  ? "yellow.500" // Yellow for Pending approval
+                  : status === "Approved"
+                  ? "green.500" // Green for Approved
+                  : status === "Pending withdrawal"
+                  ? "red.500" // Red for Pending withdrawal
+                  : "gray.500" // Default gray for other statuses
+              }
+              color="white" // Ensure the text is white
+            >
+              {status}
+            </Badge>
+          ) : (
+            <></>
           )}
           <Flex gap={"4px"} flexDirection={"column"}>
-            {canManage === true && first_name && last_name && position ? (
+            {isOwnApplication === false && first_name && last_name && position ? (
               <Text fontSize="lg" fontWeight={"bold"} flexWrap={"wrap"}>
                 {first_name} {last_name} - {position}
               </Text>
             ) : (
               <></>
             )}
-            {canManage === true && occurence ? (
+            {isOwnApplication === false && occurence ? (
               <Text fontSize="lg" fontWeight={"bold"} flexWrap={"wrap"}>
                 Occurrence #{occurence}
               </Text>
@@ -194,7 +194,7 @@ const ApplicationCard = ({
             </Flex>
           </Box>
 
-          {canManage === false ? (
+          {isOwnApplication === true ? (
             <Flex>
               <Button
                 width={"100%"}

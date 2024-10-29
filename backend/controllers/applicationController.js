@@ -5,8 +5,7 @@ const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime } = require('
 const { Op } = require('sequelize');
 const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
-
-const { uploadFile } = require('../services/uploads/s3');
+const { retrieveFileDetails } = require('../services/uploads/s3');
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplications = async (req, res) => {
@@ -33,6 +32,8 @@ const retrieveApplications = async (req, res) => {
         const today = new Date();
         ownApplication.forEach(application => {
             const startDate = new Date(application.start_date);
+            const statusPending = (application.verify_by === null && application.status === 'Pending') ? 'Pending approval' : 'Pending withdrawal';
+
             if (startDate > today) {
                 response.push({
                     application_id: application.application_id,
@@ -43,7 +44,7 @@ const retrieveApplications = async (req, res) => {
                     last_update_by: application.last_update_by,
                     verify_by: application.verify_by,
                     verify_timestamp: application.verify_timestamp,
-                    status: application.status,
+                    status: application.status === 'Approved' ? application.status : statusPending,
                     requestor_remarks: application.requestor_remarks,
                     approver_remarks: application.requestor_remarks,
                     created_timestamp: application.created_timestamp,
@@ -60,10 +61,9 @@ const retrieveApplications = async (req, res) => {
 }
 
 // GET Function - retrieve pending applications - inherited from managerController.js
-const retrievePendingApplications = async (req, res, next) => {
+const retrievePendingApplications = async (req, res) => {
     try {
-        const userId = req.user.id;
-        let subordinates = await fetchSubordinates(userId);
+        let subordinates = await fetchSubordinates(req.user.id);
 
         let response = await Promise.all(
             subordinates.map(async sub => {
@@ -89,21 +89,25 @@ const retrievePendingApplications = async (req, res, next) => {
                 if (subApplicationRes && subApplicationRes.length > 0) {
                     subResponse.pendingApplications = subApplicationRes
                         .filter(application => new Date(application.start_date) > today)
-                        .map(application => ({
-                            application_id: application.application_id,
-                            start_date: application.start_date,
-                            end_date: application.end_date,
-                            application_type: application.application_type,
-                            created_by: application.created_by,
-                            last_update_by: application.last_update_by,
-                            verify_by: application.verify_by,
-                            verify_timestamp: application.verify_timestamp,
-                            status: application.status,
-                            requestor_remarks: application.requestor_remarks,
-                            approver_remarks: application.requestor_remarks,
-                            created_timestamp: application.created_timestamp,
-                            last_update_timestamp: application.last_update_timestamp
-                        }))
+                        .map(application => {
+                            const statusPending = (application.verify_by === null && application.status === 'Pending') ? 'Pending approval' : 'Pending withdrawal';
+
+                            return {
+                                application_id: application.application_id,
+                                start_date: application.start_date,
+                                end_date: application.end_date,
+                                application_type: application.application_type,
+                                created_by: application.created_by,
+                                last_update_by: application.last_update_by,
+                                verify_by: application.verify_by,
+                                verify_timestamp: application.verify_timestamp,
+                                status: application.status === 'Approved' ? application.status : statusPending,
+                                requestor_remarks: application.requestor_remarks,
+                                approver_remarks: application.requestor_remarks,
+                                created_timestamp: application.created_timestamp,
+                                last_update_timestamp: application.last_update_timestamp
+                            }
+                        })
                 } else {
                     subResponse.pendingApplications = []; // No pending applications
                 }
@@ -119,21 +123,20 @@ const retrievePendingApplications = async (req, res, next) => {
     }
 }
 
-// GET Function - retrieve pending applications - inherited from managerController.js
-const retrieveApprovedApplications = async (req, res, next) => {
+// GET Function - retrieve pending applications of subordinates - inherited from managerController.js
+const retrieveApprovedApplications = async (req, res) => {
     try {
         const userId = req.user.id;
         let subordinates = await fetchSubordinates(userId);
 
         let response = await Promise.all(
             subordinates.map(async sub => {
-
                 let subApplicationRes = await Application.findAll({
                     where: {
                         created_by: sub.user_id,
                         status: "Approved"
                     }
-                })
+                });
 
                 let subResponse = {
                     user_id: sub.user_id,
@@ -143,43 +146,52 @@ const retrieveApprovedApplications = async (req, res, next) => {
                     position: sub.position,
                     country: sub.country,
                     email: sub.email,
-                }
+                };
 
                 if (subApplicationRes && subApplicationRes.length > 0) {
-                    subResponse.approvedApplications = subApplicationRes
-                        .filter(application => scheduleIsAfterCurrentTime(application.start_date))
-                        .map(application => ({
-                            application_id: application.application_id,
-                            start_date: application.start_date,
-                            end_date: application.end_date,
-                            application_type: application.application_type,
-                            created_by: application.created_by,
-                            last_update_by: application.last_update_by,
-                            verify_by: application.verify_by,
-                            verify_timestamp: application.verify_timestamp,
-                            status: application.status,
-                            requestor_remarks: application.requestor_remarks,
-                            approver_remarks: application.requestor_remarks,
-                            created_timestamp: application.created_timestamp,
-                            last_update_timestamp: application.last_update_timestamp
-                        }))
+                    subResponse.approvedApplications = await Promise.all(
+                        subApplicationRes
+                            .filter(application => scheduleIsAfterCurrentTime(application.start_date))
+                            .map(async (application) => {
+                                // Fetch file details for each application
+                                let files = await retrieveFileDetails('application', application.application_id);
+                                
+                                return {
+                                    application_id: application.application_id,
+                                    start_date: application.start_date,
+                                    end_date: application.end_date,
+                                    application_type: application.application_type,
+                                    created_by: application.created_by,
+                                    last_update_by: application.last_update_by,
+                                    verify_by: application.verify_by,
+                                    verify_timestamp: application.verify_timestamp,
+                                    status: application.status,
+                                    requestor_remarks: application.requestor_remarks,
+                                    approver_remarks: application.requestor_remarks,
+                                    created_timestamp: application.created_timestamp,
+                                    last_update_timestamp: application.last_update_timestamp,
+                                    files: files.length > 0 ? files : []
+                                };
+                            })
+                    );
                 } else {
                     subResponse.approvedApplications = []; // No pending applications
                 }
 
                 return subResponse;
             })
-        )
+        );
 
         return res.status(200).json(response);
     } catch (error) {
         console.error("Error fetching application:", error);
         return res.status(500).json({ error: "An error occurred while fetching application." });
     }
-}
+};
+
 
 // POST function - to create new application
-const createNewApplication = async (req, res, next) => {
+const createNewApplication = async (req, res) => {
     let { application_type, startDate, endDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
     const transaction = await sequelize.transaction();
     try {
@@ -300,8 +312,7 @@ const createNewApplication = async (req, res, next) => {
     }
 }
 
-
-// PUT function - to update application status to approved - inherited from managerController.js
+// PATCH function - to update application status to approved - inherited from managerController.js
 const approvePendingApplication = async (req, res) => {
     let { application_id, approverRemarks } = req.body;
     const transaction = await sequelize.transaction();
@@ -352,7 +363,7 @@ const approvePendingApplication = async (req, res) => {
     }
 };
 
-// PUT function - to update application status to rejected - inherited from manageController.js
+// PATCH function - to update application status to rejected - inherited from manageController.js
 const rejectPendingApplication = async (req, res) => {
     let { application_id, approverRemarks } = req.body;
     const transaction = await sequelize.transaction();
@@ -380,7 +391,7 @@ const rejectPendingApplication = async (req, res) => {
     }
 };
 
-// PUT function - to update pending application status to withdrawn
+// PATCH function - to update pending application status to withdrawn
 const withdrawPendingApplication = async (req, res) => {
     try {
         // Get the current employee using the user ID from the request
@@ -416,9 +427,6 @@ const withdrawPendingApplication = async (req, res) => {
         application.status = 'Withdrawn';
         await application.save();
 
-        // Print out the now withdrawn request
-        console.log('Withdrawn Application:', application);
-
         // Send a response with the updated application
         res.status(200).json({
             message: 'Application updated to withdrawn successfully',
@@ -429,7 +437,7 @@ const withdrawPendingApplication = async (req, res) => {
     }
 };
 
-// PUT function - to update approved application status to withdrawn
+// PATCH function - to update approved application status to withdrawn
 const withdrawApprovedApplication = async (req, res) => {
     try {
         const { application_id, remarks } = req.body;
@@ -489,8 +497,10 @@ const withdrawApprovedApplication = async (req, res) => {
     }
 };
 
-
-// DELETE - to delete approved application from Application table
+// PATCH - to update approved application status withdrawn
+// (1) while waiting for manager approval, status changes to 'Pending - withdrawal'
+// (2) if manager approves, status changes to 'Withdrawn'
+// (3) else, status remains 'Approved'
 const withdrawApprovedApplicationByEmployee = async (req, res) => {
     try {
         let { application_id } = req.body;
@@ -518,22 +528,20 @@ const withdrawApprovedApplicationByEmployee = async (req, res) => {
             return res.status(404).json({ message: "Linked application not found." });
         }
 
-        applicationInfo.status = "Withdrawn";
+        applicationInfo.status = "Pending";
         applicationInfo.last_update_by = req.user.id;
         await applicationInfo.save({ transaction })
-        await linkedSchedule.destroy({ transaction })
         await transaction.commit();
 
-        return res.status(200).json({ message: "Approved application withdrawn successfully" });
+        return res.status(200).json({ message: "Your Withdrawal request of approved application successfully sent to the manager." });
     } catch (error) {
         console.error("Error withdrawing application:", error);
         return res.status(500).json({ error: "An error occurred while withdrawing application." });
     }
 }
 
-
 // PATCH function - to update an existing pending application
-const updatePendingApplication = async (req, res, next) => {
+const updatePendingApplication = async (req, res) => {
     let { application_id, application_type, originalStartDate, originalEndDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
     const transaction = await sequelize.transaction();
     try {
@@ -660,7 +668,7 @@ const updatePendingApplication = async (req, res, next) => {
 };
 
 //PATCH function - to update an existing approved application
-const updateApprovedApplication = async (req, res, next) => {
+const updateApprovedApplication = async (req, res) => {
     let { application_id, application_type, originalStartDate, originalEndDate, newStartDate, newEndDate, requestor_remarks, recurrence_rule, recurrence_end_date } = req.body;
     const transaction = await sequelize.transaction();
     try {
@@ -829,6 +837,49 @@ const updateApprovedApplication = async (req, res, next) => {
     }
 }
 
+// PATCH - to update approved application status back to approved
+const rejectWithdrawalOfApprovedApplication = async (req, res) => {
+    try {
+        const { application_id } = req.body;
+        const managerId = req.user.id;
+
+        // Find the corresponding application by matching application_id
+        const application = await Application.findByPk(application_id);
+        if (!application) {
+            return res.status(404).json({ message: 'Application not found or not authorized' });
+        }
+
+        if (scheduleHasNotPassedCurrentDay(application.start_date)) {
+            return res.status(404).json({ message: "Cannot withdraw application which has started" });
+        }
+
+        // Find the requestor and approver
+        let requestor = await Employee.findByPk(application.created_by);
+        let approver = await Employee.findByPk(managerId);
+
+        if (!requestor || !approver) {
+            return res.status(404).json({ message: 'Requestor or Approver not found' });
+        }
+
+        // Check if the approver is the direct reporting manager
+        if (requestor.reporting_manager !== approver.id) {
+            return res.status(404).json({ message: "Only the direct reporting manager can reject this withdrawal of approved application" });
+        }
+
+        // Update the application status to 'Withdrawn'
+        application.status = 'Approved';
+        application.last_update_by = managerId;
+        await application.save();
+
+        res.status(200).json({
+            message: 'Reject withdrawal of approved application successfully',
+        });
+    } catch (error) {
+        console.error("Error approving withdrawal of approved application:", error);
+        return res.status(500).json({ error: "An error occurred while approving withdrawal of approved application." });
+    }
+}
+
 
 module.exports = {
     retrieveApplications,
@@ -841,5 +892,6 @@ module.exports = {
     withdrawApprovedApplication,
     withdrawApprovedApplicationByEmployee,
     updatePendingApplication,
-    updateApprovedApplication
+    updateApprovedApplication,
+    rejectWithdrawalOfApprovedApplication
 }
