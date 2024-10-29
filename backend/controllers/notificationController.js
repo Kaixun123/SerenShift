@@ -1,5 +1,6 @@
 const { Application, Employee, Notification } = require('../models');
 const { sequelize } = require('../services/database/mysql');
+const { send_email } = require('../services/email/emailService');
 
 const retrieveNotifications = async (req, res) => {
     try {
@@ -116,8 +117,19 @@ const clearNotifications = async (req, res) => {
     }
 };
 
+const sendEmail = async (req, res) => {
+    try {
+        await send_email(req.body.mainRecipient, req.body.subject, req.body.message, req.body.cc, req.body.bcc);
+        return res.status(200).json({ message: "Email sent successfully" });
+    } catch (error) {
+        console.error("Error sending email:", error);
+        return res.status(500).json({ error: "An error occurred while sending email." });
+    }
+}
+
 module.exports = {
     retrieveNotifications,
     updateNotificationReadStatus,
-    clearNotifications
+    clearNotifications,
+    sendEmail
 }
