@@ -86,10 +86,6 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
       },
-      deleted_timestamp: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
     });
   },
 
