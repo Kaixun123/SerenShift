@@ -21,7 +21,6 @@ import { Box, VStack, Text, Flex, useDisclosure } from "@chakra-ui/react";
 import { MultiSelect, Pagination, Checkbox } from "@mantine/core";
 
 export default function ManageApplicationPage() {
-  const [userId, setUserInfo] = useState(0);
   const [subApplication, setSubApplication] = useState([]);
   const [subList, setSubList] = useState([]);
   const [selectedSubIds, setSelectedSubIds] = useState([]);
@@ -53,23 +52,13 @@ export default function ManageApplicationPage() {
   };
 
   useEffect(() => {
-    async function fetchUserData() {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        setUserInfo(data.id);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    }
-    fetchUserData();
     fetchSubordinateApplication([]);
   }, [isRefresh]);
 
   const fetchSubordinateApplication = async (subordinateIds = []) => {
     try {
       const applicationResponse = await fetch(
-        `/api/application/retrievePendingApplications?id=${userId}`,
+        `/api/application/retrievePendingApplications`,
         {
           method: "GET",
           headers: {
@@ -160,7 +149,7 @@ export default function ManageApplicationPage() {
         last_name={application.last_name}
         department={application.department}
         position={application.position}
-        canManage={true}
+        isOwnApplication={false}
       />
     </Flex>
   ));
@@ -217,12 +206,33 @@ export default function ManageApplicationPage() {
   // Function to handle confirmation of the action
   const handleConfirm = async () => {
     const applicationId = selectedApplicationDetails.application_id; // Get the application ID
+    const applicationStatus = selectedApplicationDetails.status;
+
+    const apiEndpointForApprove =
+      applicationStatus === "Pending approval"
+        ? "/api/application/approveApplication"
+        : applicationStatus === "Pending withdrawal"
+        ? "/api/application/withdrawApproved"
+        : null;
+
+    const apiEndpointForReject =
+      applicationStatus === "Pending approval"
+        ? "/api/application/rejectApplication"
+        : applicationStatus === "Pending withdrawal"
+        ? "/api/application/rejectWithdrawalOfApprovedApplication"
+        : null;
+
+    if (!apiEndpointForApprove || !apiEndpointForReject) {
+      console.error("Invalid application status");
+      onClose();
+      setPage(1);
+    }
 
     try {
       if (currentAction === "approve") {
         // Approve action
-        const response = await fetch(`/api/application/approveApplication`, {
-          method: "PUT",
+        const response = await fetch(apiEndpointForApprove, {
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
@@ -243,8 +253,8 @@ export default function ManageApplicationPage() {
         }
       } else if (currentAction === "reject") {
         // Reject action
-        const response = await fetch(`/api/application/rejectApplication`, {
-          method: "PUT",
+        const response = await fetch(apiEndpointForReject, {
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
@@ -289,8 +299,23 @@ export default function ManageApplicationPage() {
     try {
       if (currentMultipleAction === "approve") {
         for (const application of selectedApplications) {
-          const response = await fetch(`/api/application/approveApplication`, {
-            method: "PUT",
+          const applicationStatus = application.status;
+
+          const apiEndpointForApprove =
+            applicationStatus === "Pending approval"
+              ? "/api/application/approveApplication"
+              : applicationStatus === "Pending withdrawal"
+              ? "/api/application/withdrawApproved"
+              : null;
+
+          if (!apiEndpointForApprove) {
+            console.error("Invalid application status");
+            onClose();
+            setPage(1);
+          }
+
+          const response = await fetch(apiEndpointForApprove, {
+            method: "PATCH",
             headers: {
               "Content-Type": "application/json",
             },
@@ -309,8 +334,23 @@ export default function ManageApplicationPage() {
         }
       } else if (currentMultipleAction === "reject") {
         for (const application of selectedApplications) {
-          const response = await fetch(`/api/application/rejectApplication`, {
-            method: "PUT",
+          const applicationStatus = application.status;
+
+          const apiEndpointForReject =
+            applicationStatus === "Pending approval"
+              ? "/api/application/rejectApplication"
+              : applicationStatus === "Pending withdrawal"
+              ? "/api/application/rejectWithdrawalOfApprovedApplication"
+              : null;
+
+          if (!apiEndpointForReject) {
+            console.error("Invalid application status");
+            onClose();
+            setPage(1);
+          }
+
+          const response = await fetch(apiEndpointForReject, {
+            method: "PATCH",
             headers: {
               "Content-Type": "application/json",
             },

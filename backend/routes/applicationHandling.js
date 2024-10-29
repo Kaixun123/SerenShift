@@ -67,11 +67,12 @@ router.get("/retrieveApplications", ensureLoggedIn, (req, res) => applicationCon
 router.get("/retrievePendingApplications", ensureManagerAndAbove, (req, res) => applicationController.retrievePendingApplications(req, res));
 router.get("/retrieveApprovedApplication", ensureManagerAndAbove, (req, res) => applicationController.retrieveApprovedApplications(req, res));
 router.post("/createNewApplication", createNewApplicationValidationRules(), ensureLoggedIn, upload.array('files'), (req, res) => applicationController.createNewApplication(req, res))
-router.put("/approveApplication", approvePendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
-router.put("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
-router.put("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
+router.patch("/approveApplication", approvePendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.approvePendingApplication(req, res));
+router.patch("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
+router.patch("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
 router.patch("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.withdrawApprovedApplication(req, res));
 router.patch("/updatePendingApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updatePendingApplication(req, res));
-router.delete("/withdrawApprovedApplicationByEmployee", ensureLoggedIn, (req, res) => applicationController.withdrawApprovedApplicationByEmployee(req, res));
+router.patch("/withdrawApprovedApplicationByEmployee", ensureLoggedIn, (req, res) => applicationController.withdrawApprovedApplicationByEmployee(req, res));
+router.patch("/rejectWithdrawalOfApprovedApplication", ensureManagerAndAbove, (req, res) => applicationController.rejectWithdrawalOfApprovedApplication(req, res));
 
 module.exports = router;
