@@ -1,4 +1,4 @@
-const { Application, Employee, Schedule, Blacklist } = require('../models');
+const { Application, Employee, Schedule, Blacklist, Notification } = require('../models');
 const { checkforOverlap, checkWhetherSameDate, uploadFilesToS3 } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime } = require('../services/common/scheduleHelper');
@@ -155,7 +155,7 @@ const retrieveApprovedApplications = async (req, res) => {
                             .map(async (application) => {
                                 // Fetch file details for each application
                                 let files = await retrieveFileDetails('application', application.application_id);
-                                
+
                                 return {
                                     application_id: application.application_id,
                                     start_date: application.start_date,
@@ -303,6 +303,20 @@ const createNewApplication = async (req, res) => {
                 }, { transaction });
             }
         }
+
+        // Create a notification once application is created
+        let content = `has submitted for ${application_type} WFH application`
+        await Notification.create({
+            notification_type: 'Pending',
+            content: content,
+            read_status: 0,
+            sender_id: req.user.id,
+            recipient_id: reportingManager,
+            linked_application_id: newApplication.application_id,
+            created_by: req.user.id,
+            last_update_by: req.user.id
+        }, { transaction })
+
         await transaction.commit();
         return res.status(201).json({ message: "New application successfully created.", result: newApplication })
     } catch (error) {
@@ -346,6 +360,7 @@ const approvePendingApplication = async (req, res) => {
         application.verify_timestamp = new Date();
         application.approver_remarks = approverRemarks;
         await application.save({ transaction });
+
         await Schedule.create({
             start_date: application.start_date,
             end_date: application.end_date,
@@ -355,6 +370,20 @@ const approvePendingApplication = async (req, res) => {
             verify_timestamp: new Date(),
             last_update_by: req.user.id
         }, { transaction });
+
+        // Create a notification once application is created
+        let content = `has approved your ${application.application_type} WFH application`
+        await Notification.create({
+            notification_type: 'Approved',
+            content: content,
+            read_status: 0,
+            sender_id: approver.id,
+            recipient_id: requestor.id,
+            linked_application_id: application_id,
+            created_by: approver.id,
+            last_update_by: approver.id
+        }, { transaction })
+
         await transaction.commit();
         return res.status(200).json({ message: "Application approved successfully" });
     } catch (error) {
@@ -383,6 +412,20 @@ const rejectPendingApplication = async (req, res) => {
         application.last_update_by = req.user.id;
         application.approver_remarks = approverRemarks;
         await application.save({ transaction });
+
+        // Create a notification once application is created
+        let content = `has rejected your ${application.application_type} WFH application`
+        await Notification.create({
+            notification_type: 'Rejected',
+            content: content,
+            read_status: 0,
+            sender_id: approver.id,
+            recipient_id: requestor.id,
+            linked_application_id: application_id,
+            created_by: approver.id,
+            last_update_by: approver.id
+        }, { transaction })
+
         await transaction.commit();
         return res.status(200).json({ message: "Application rejected successfully" });
     } catch (error) {
@@ -442,6 +485,7 @@ const withdrawApprovedApplication = async (req, res) => {
     try {
         const { application_id, remarks } = req.body;
         const managerId = req.user.id;
+        const transaction = await sequelize.transaction();
 
         // Find the corresponding application by matching application_id
         const application = await Application.findByPk(application_id);
@@ -479,14 +523,28 @@ const withdrawApprovedApplication = async (req, res) => {
             return res.status(404).json({ message: 'Schedule not found' });
         }
 
+
+        // Create a notification once application is created
+        let content = `has withdrawn your approved ${application.application_type} WFH application`
+        await Notification.create({
+            notification_type: 'Withdrawn',
+            content: content,
+            read_status: 0,
+            sender_id: approver.id,
+            recipient_id: requestor.id,
+            linked_application_id: application_id,
+            created_by: approver.id,
+            last_update_by: approver.id
+        }, { transaction })
+
         // Update the application status to 'Withdrawn'
         application.status = 'Withdrawn';
         application.withdrawal_remarks = remarks;
         application.last_update_by = managerId;
         await application.save();
-
         // Delete the corresponding schedule
         await schedule.destroy();
+        await transaction.commit();
 
         res.status(200).json({
             message: 'Application updated to withdrawn and schedule deleted successfully',
@@ -505,7 +563,18 @@ const withdrawApprovedApplicationByEmployee = async (req, res) => {
     try {
         let { application_id } = req.body;
         let applicationInfo = await Application.findByPk(application_id);
+        let employeeInfo = await Employee.findByPk(req.user.id);
         const transaction = await sequelize.transaction();
+
+        if (!employeeInfo) {
+            return res.status(404).json({ message: "Employee not found." });
+        }
+
+        let reportingManager = employeeInfo.reporting_manager
+        // check if the employee has a reporting manager
+        if (!reportingManager) {
+            return res.status(404).json({ message: "Reporting Manager not found." });
+        };
 
         if (!applicationInfo) {
             return res.status(404).json({ message: "Approved application not found." });
@@ -527,6 +596,19 @@ const withdrawApprovedApplicationByEmployee = async (req, res) => {
         if (!linkedSchedule) {
             return res.status(404).json({ message: "Linked application not found." });
         }
+
+        // Create a notification once application is created
+        let content = `has submitted for a withdrawal of approved ${applicationInfo.application_type} WFH application`
+        await Notification.create({
+            notification_type: 'Pending',
+            content: content,
+            read_status: 0,
+            sender_id: req.user.id,
+            recipient_id: reportingManager,
+            linked_application_id: application_id,
+            created_by: req.user.id,
+            last_update_by: req.user.id
+        }, { transaction })
 
         applicationInfo.status = "Pending";
         applicationInfo.last_update_by = req.user.id;
