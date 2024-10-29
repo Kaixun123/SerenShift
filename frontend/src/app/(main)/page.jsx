@@ -11,6 +11,7 @@ import {
   Box,
   Spinner,
   Flex,
+  Button,
 } from "@chakra-ui/react";
 import { FaCheckCircle, FaTimesCircle, FaExclamationCircle } from "react-icons/fa"; // Icons for status types
 import { BsDot } from "react-icons/bs"; // For unread notification dot
@@ -76,6 +77,34 @@ export default function Home() {
     }
   };
 
+  // Function to mark notifications as read
+  const markAsRead = async (notification_id) => {
+    try {
+      const response = await fetch("/api/notification/updateNotificationReadStatus", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ notification_id }),
+      });
+  
+      if (response.ok) {
+        // Update the notification's read status in the local state
+        setNotifications((prevNotifications) =>
+          prevNotifications.map((notification) =>
+            notification.notification_id === notification_id
+              ? { ...notification, read_status: true }
+              : notification
+          )
+        );
+      } else {
+        console.error("Failed to update notification read status");
+      }
+    } catch (error) {
+      console.error("Error updating notification read status:", error);
+    }
+  };
+
   return (
     <main>
       <TopHeader
@@ -127,20 +156,35 @@ export default function Home() {
                         {notification.content}
                       </Td>
                       <Td
-                        style={{
-                          color: notification.read_status ? "lightgray" : "black",
-                        }}
+                      style={{
+                        color: notification.read_status ? "lightgray" : "black",
+                      }}
                       >
-                        <Flex align="center" justify="space-between">
-                          <span>
-                            {new Date(notification.created_timestamp).toLocaleString()}
-                          </span>
+                      <Flex align="center" justify="space-between">
+                        {/* Date */}
+                        <span>{new Date(notification.created_timestamp).toLocaleString()}</span>
+
+                        <Flex align="center" ml={4}>
+                          {/* Red Dot */}
                           {!notification.read_status && (
                             <BsDot color="red" style={{ fontSize: "48px", marginLeft: "8px" }} />
                           )}
+
+                          {/* Mark as Read Button */}
+                          {!notification.read_status && (
+                            <Button
+                              size="sm"
+                              ml={2} // Adds margin-left to space the button from the red dot
+                              colorScheme="blue"
+                              onClick={() => markAsRead(notification.notification_id)}
+                            >
+                              Mark as Read
+                            </Button>
+                          )}
                         </Flex>
-                      </Td>
-                    </Tr>
+                      </Flex>
+                    </Td>
+                  </Tr>
                   ))
                 ) : (
                   <Tr>
