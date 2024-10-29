@@ -2,6 +2,7 @@ const moment = require('moment'); // Ensure moment.js is installed
 const { splitScheduleByDate } = require('./scheduleHelper');
 const { uploadFile } = require('../uploads/s3');
 const { Application } = require('../../models');
+const { sendEmail } = require('../email/emailService');
 
 const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationType) => {
     try {
@@ -112,10 +113,91 @@ const uploadFilesToS3 = async (files, applicationId, userId) => {
     await Promise.all(uploadPromises);
 };
 
+const emailTemplates = {
+    "createApplication": {
+        subject: "A WFH application is pending your approval",
+    },
+    "approvedApplication": {
+        subject: "Your WFH Application has been approved",
+    },
+    "rejectedApplication": {
+        subject: "Your WFH application has been rejected",
+    },
+    "updateApplication": {
+        subject: "A WFH is pending your reapproval",
+    },
+    "withdrawnApplication": {
+        subject: "A WFH application has been withdrawn",
+    }
+}
+
+const sendNotificationEmail = async (application, requestor, recipient, eventType, cc, bcc) => {
+    if (!application || !requestor || !recipient || !eventType)
+        console.error("One or more of the required parameters are missing");   
+    else {
+    try {
+        const template = emailTemplates[eventType];
+        if (!template) {
+            console.error(`No email template found for event type: ${eventType}`);
+            return;
+        }
+
+        const message = "";
+        const { subject } = template;
+
+        switch(eventType){
+            case "createApplication":
+                message += "Hi " + recipient.first_name +" " + recipient.last_name+
+                ",\n\n You have a pending Work From Home Request from "+requestor.first_name +
+                " "+requestor.last_name+". Kindly review and make your decision at your earlier convinience.\n\n"+
+                "Requested WFH Start Peroid: "+ application.start_date.toLocaleDateString()+"\nRequested WFH End Peroid: "+ application.end_date.toLocaleDateString() +
+                "\nRemarks: "+ application.requestor_remarks+"\n\n Thank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                break;
+            case "approvedApplication":
+                message += "Hi " + recipient.first_name +" " + recipient.last_name+
+                ",\n\n Your application has been aproved by "+requestor.first_name +
+                " "+requestor.last_name+". Kindly review your application at your earlier convinience.\n\n"+
+                "Requested WFH Start Peroid: "+ application.start_date.toLocaleDateString()+"\nRequested WFH End Peroid: "+ application.end_date.toLocaleDateString() +
+                "\nRemarks: "+ application.requestor_remarks+"\n\n Thank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                break;
+            case "rejectedApplication":
+                message += "Hi " + recipient.first_name +" " + recipient.last_name+
+                ",\n\n Your application has been reject by "+requestor.first_name +
+                " "+requestor.last_name+". Kindly review your application at your earlier convinience.\n\n"+
+                "Requested WFH Start Peroid: "+ application.start_date.toLocaleDateString()+"\nRequested WFH End Peroid: "+ application.end_date.toLocaleDateString() +
+                "\nRemarks: "+ application.requestor_remarks+"\n\n Thank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                break;
+            case "updateApplication":
+                message += "Hi " + recipient.first_name +" " + recipient.last_name+
+                ",\n\n Your authorized application has been modified by "+requestor.first_name +
+                " "+requestor.last_name+". Kindly review and make your decision at your earlier convinience.\n\n"+
+                "Requested WFH Start Peroid: "+ application.start_date.toLocaleDateString()+"\nRequested WFH End Peroid: "+ application.end_date.toLocaleDateString() +
+                "\nRemarks: "+ application.requestor_remarks+"\n\n Thank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                break;
+            case "withdrawnApplication":
+                message += "Hi " + recipient.first_name +" " + recipient.last_name+
+                ",\n\n Your authorized application has been withdrawn by "+requestor.first_name +
+                " "+requestor.last_name+". Kindly reach to your team member at your earlier convinience.\n\n"+
+                "Requested WFH Start Peroid: "+ application.start_date.toLocaleDateString()+"\nRequested WFH End Peroid: "+ application.end_date.toLocaleDateString() +
+                "\nRemarks: "+ application.requestor_remarks+"\n\n Thank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                break;
+            default:
+                break;
+        }
+
+        await sendEmail(recipient.email, subject, message, cc, bcc);
+
+        } catch(error){
+            console.error(error);
+        }
+    }
+}
+
 module.exports = {
     checkforOverlap,
     checkWhetherSameDate,
     splitDatesByDay,
     splitConsecutivePeriodByDay,
     uploadFilesToS3,
+    sendNotificationEmail
 };
