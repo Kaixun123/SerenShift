@@ -132,6 +132,16 @@ File.belongsTo(Employee, {
     as: 'updater',
 });
 
+Notification.belongsTo(Application, {
+    foreignKey: 'linked_application_id',
+    as: 'application',
+});
+
+Application.hasMany(Notification, {
+    foreignKey: 'linked_application_id',
+    as: 'notifications',
+});
+
 Employee.hasMany(Notification, {
     foreignKey: 'sender_id',
     as: 'sent_notifications',

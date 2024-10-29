@@ -18,6 +18,11 @@ module.exports = {
         type: Sequelize.STRING(255),
         allowNull: false,
       },
+      send_status: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+      },
       read_status: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
@@ -42,6 +47,16 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
+      },
+      linked_application_id: {
+        type: Sequelize.INTEGER(),
+        allowNull: true,
+        references: {
+          model: 'Applications',
+          key: 'application_id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
       },
       created_by: {
         type: Sequelize.INTEGER(6),

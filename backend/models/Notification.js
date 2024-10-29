@@ -19,6 +19,11 @@ Notification.init(
             type: DataTypes.STRING(255),
             allowNull: false,
         },
+        send_status: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
         read_status: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
@@ -30,6 +35,10 @@ Notification.init(
         },
         recipient_id: {
             type: DataTypes.INTEGER(6),
+            allowNull: false,
+        },
+        linked_application_id: {
+            type: DataTypes.INTEGER(),
             allowNull: false,
         },
         created_by: {
