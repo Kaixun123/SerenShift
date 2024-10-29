@@ -198,7 +198,7 @@ const retrieveOwnSchedule = async (req, res) => {
         return res.status(200).json(calendarEvents);
     } catch (error) {
         console.error("Error retrieving own schedule:", error);
-        return res.status(500).json({ error: "An error occurred while  retrieving the schedule." });
+        return res.status(500).json({ error: "An error occurred while retrieving the schedule." });
     }
 };
 
