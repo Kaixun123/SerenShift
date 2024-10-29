@@ -8,10 +8,12 @@ import {
   Tr,
   Th,
   Td,
-  TableCaption,
   Box,
-  Spinner, // Import Spinner for loading state
+  Spinner,
+  Flex,
 } from "@chakra-ui/react";
+import { FaCheckCircle, FaTimesCircle, FaExclamationCircle } from "react-icons/fa"; // Icons for status types
+import { BsDot } from "react-icons/bs"; // For unread notification dot
 
 export default function Home() {
   const [employee, setEmployee] = useState({ name: "" });
@@ -45,7 +47,6 @@ export default function Home() {
       try {
         const response = await fetch("/api/notification/retrieveNotifications");
         const data = await response.json();
-        // Directly set notifications from the API response
         setNotifications(data || []); // Adjusted to handle the structure of the API response
       } catch (error) {
         console.error("Error fetching notifications:", error);
@@ -57,6 +58,23 @@ export default function Home() {
     fetchEmployeeData();
     fetchNotifications(); // Call to fetch notifications
   }, []);
+
+  // Function to render the icon based on notification type
+  const renderStatusIcon = (type, read_status) => {
+    if (read_status) return null; // Don't show the icon if the notification is read
+    switch (type) {
+      case "Approved":
+        return <FaCheckCircle color="green" />;
+      case "Rejected":
+        return <FaTimesCircle color="red" />;
+      case "Withdrawn":
+        return <FaCheckCircle color="blue" />;
+      case "Pending":
+        return <FaExclamationCircle color="orange" />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <main>
@@ -81,24 +99,54 @@ export default function Home() {
               <Tbody>
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
-                    <Tr key={notification.notification_id}> {/* Assuming notification has an id */}
-                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
-                        {notification.notification_id}
+                    <Tr key={notification.notification_id}>
+                      <Td
+                        style={{
+                          color: notification.read_status ? "lightgray" : "black",
+                        }}
+                      >
+                      <Flex align="center">
+                        {renderStatusIcon(notification.notification_type, notification.read_status)}
+                        <span style={{ marginLeft: "8px" }}>
+                          {notification.notification_id}
+                        </span>
+                      </Flex>
                       </Td>
-                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
+                      <Td
+                        style={{
+                          color: notification.read_status ? "lightgray" : "black",
+                        }}
+                      >
                         {notification.notification_type}
                       </Td>
-                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
+                      <Td
+                        style={{
+                          color: notification.read_status ? "lightgray" : "black",
+                        }}
+                      >
                         {notification.content}
                       </Td>
-                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
-                        {new Date(notification.created_timestamp).toLocaleString()} {/* Format date if needed */}
+                      <Td
+                        style={{
+                          color: notification.read_status ? "lightgray" : "black",
+                        }}
+                      >
+                        <Flex align="center" justify="space-between">
+                          <span>
+                            {new Date(notification.created_timestamp).toLocaleString()}
+                          </span>
+                          {!notification.read_status && (
+                            <BsDot color="red" style={{ fontSize: "48px", marginLeft: "8px" }} />
+                          )}
+                        </Flex>
                       </Td>
                     </Tr>
                   ))
                 ) : (
                   <Tr>
-                    <Td colSpan={4} textAlign="center">No notifications available.</Td>
+                    <Td colSpan={4} textAlign="center">
+                      No notifications available.
+                    </Td>
                   </Tr>
                 )}
               </Tbody>
