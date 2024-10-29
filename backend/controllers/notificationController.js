@@ -56,7 +56,7 @@ const updateNotificationReadStatus = async (req, res) => {
             return res.status(404).json({ message: "Notification does not belong to the recipient." });
         }
 
-        notificationInfo.read_status = 1;
+        notificationInfo.read_status = true;
         notificationInfo.last_update_by = req.user.id;
         await notificationInfo.save({ transaction });
         await transaction.commit();
@@ -84,34 +84,37 @@ const clearNotifications = async (req, res) => {
 
             for (let notification of notificationInfo) {
                 notification.last_update_by = req.user.id;
-                await notification.destroy({ transaction });
+                notification.read_status = true; // Mark all notifications as cleared/read
+                await notification.save({ transaction });
             }
 
             await transaction.commit();
-            return res.status(200).json({ message: "All notifications cleared successfully" });
+            return res.status(200).json({ message: "All notifications marked as cleared successfully" });
         }
 
-        // For individual notification deletion
+        // For individual notification marking as cleared
         let notificationInfo = await Notification.findByPk(notification_id);
 
-        if (!notificationInfo || notificationInfo.length === 0) {
+        if (!notificationInfo) {
             await transaction.rollback();
             return res.status(404).json({ message: "No notification found to clear." });
-        } else if (notificationInfo.recipient_id != req.user.id) {
+        } else if (notificationInfo.recipient_id !== req.user.id) {
             await transaction.rollback();
             return res.status(403).json({ message: "Notification does not belong to the recipient." });
         }
 
         notificationInfo.last_update_by = req.user.id;
-        await notificationInfo.destroy({ transaction });
+        notificationInfo.read_status = true; // Mark the individual notification as cleared/read
+        await notificationInfo.save({ transaction });
+
         await transaction.commit();
-        return res.status(200).json({ message: "Notification cleared successfully" });
+        return res.status(200).json({ message: "Notification marked as cleared successfully" });
 
     } catch (error) {
-        console.error("Error deleting notification:", error);
-        return res.status(500).json({ error: "An error occurred while deleting notification." });
+        console.error("Error clearing notification:", error);
+        return res.status(500).json({ error: "An error occurred while clearing notification." });
     }
-}
+};
 
 module.exports = {
     retrieveNotifications,
