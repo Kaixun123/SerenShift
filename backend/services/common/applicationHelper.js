@@ -160,36 +160,36 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                 case "createApplication":
                     message += "Hi " + recipient.first_name +" " + recipient.last_name+
                     ",\n\nYou have a pending Work From Home Request from "+requestor.first_name +
-                    " "+requestor.last_name+". Kindly review and make your decision at your earlier convinience.\n\n"+
+                    " "+requestor.last_name+". Kindly review and make your decision at your earlier convinence.\n\n"+
                     "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
                     "\nRemarks: "+ application.requestor_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "approvedApplication":
                     message += "Hi " + recipient.first_name +" " + recipient.last_name+
                     ",\n\nYour application has been aproved by "+requestor.first_name +
-                    " "+requestor.last_name+". Kindly review your application at your earlier convinience.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.end_date.toLocaleDateString() +
-                    "\nRemarks: "+ application.requestor_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    " "+requestor.last_name+". Kindly review your application at your earlier convinence.\n\n"+
+                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
+                    "\nRemarks: "+ application.approver_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "rejectedApplication":
                     message += "Hi " + recipient.first_name +" " + recipient.last_name+
                     ",\n\nYour application has been reject by "+requestor.first_name +
-                    " "+requestor.last_name+". Kindly review your application at your earlier convinience.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.end_date.toLocaleDateString() +
-                    "\nRemarks: "+ application.requestor_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    " "+requestor.last_name+". Kindly review your application at your earlier convinence.\n\n"+
+                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
+                    "\nRemarks: "+ application.approver_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "updateApplication":
                     message += "Hi " + recipient.first_name +" " + recipient.last_name+
                     ",\n\nYour authorized application has been modified by "+requestor.first_name +
-                    " "+requestor.last_name+". Kindly review and make your decision at your earlier convinience.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.end_date.toLocaleDateString() +
+                    " "+requestor.last_name+". Kindly review and make your decision at your earlier convinence.\n\n"+
+                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
                     "\nRemarks: "+ application.requestor_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "withdrawnApplication":
                     message += "Hi " + recipient.first_name +" " + recipient.last_name+
                     ",\n\nYour authorized application has been withdrawn by "+requestor.first_name +
-                    " "+requestor.last_name+". Kindly reach to your team member at your earlier convinience.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.end_date.toLocaleDateString() +
+                    " "+requestor.last_name+". Kindly reach to your team member at your earlier convinence.\n\n"+
+                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
                     "\nRemarks: "+ application.requestor_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 default:

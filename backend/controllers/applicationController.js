@@ -786,7 +786,12 @@ const updatePendingApplication = async (req, res) => {
             }
         }
         await transaction.commit();
-        console.log("Updated Application:", application);
+        
+        //send email
+        if(application || employeeInfo || managerInfo){
+            await sendNotificationEmail(application, employeeInfo, managerInfo, "updateApplication");
+        }
+
         return res.status(200).json({ message: "Pending application successfully updated.", result: application });
     } catch (error) {
         await transaction.rollback();
@@ -966,8 +971,8 @@ const updateApprovedApplication = async (req, res) => {
         await transaction.commit();
 
         //send email
-        if(application || employeeInfo || managerInfo){
-            await sendNotificationEmail(application, employeeInfo, managerInfo, "updateApplication");
+        if(newApplication || employeeInfo || managerInfo){
+            await sendNotificationEmail(newApplication, employeeInfo, managerInfo, "updateApplication");
         }
 
         return res.status(201).json({ message: "Application has been updated for manager approval" });
