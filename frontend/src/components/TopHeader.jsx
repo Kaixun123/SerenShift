@@ -99,13 +99,19 @@ export default function TopHeader({ mainText, subText }) {
       });
 
       if (response.ok) {
-        setNotifications((prevNotifications) =>
-          prevNotifications.map((notification) =>
+        setNotifications((prevNotifications) => {
+          const updatedNotifications = prevNotifications.map((notification) =>
             notification.notification_id === notification_id
               ? { ...notification, read_status: true }
               : notification
-          )
-        );
+          );
+
+          // Move the read notification to the bottom
+          const readNotification = updatedNotifications.find(notification => notification.notification_id === notification_id);
+          const otherNotifications = updatedNotifications.filter(notification => notification.notification_id !== notification_id);
+
+          return [...otherNotifications, readNotification]; // Combine unread notifications with the newly read one at the end
+        });
       } else {
         console.error("Failed to update notification read status");
       }
@@ -145,7 +151,10 @@ export default function TopHeader({ mainText, subText }) {
     try {
       const response = await fetch("/api/notification/retrieveNotifications");
       const data = await response.json();
-      setNotifications(data || []); // Adjusted to handle the structure of the API response
+      const sortedNotifications = (data || []).sort((a, b) => {
+        return a.read_status - b.read_status; // Unread (false) will be sorted before read (true)
+      });
+      setNotifications(sortedNotifications); // Set sorted notifications
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {

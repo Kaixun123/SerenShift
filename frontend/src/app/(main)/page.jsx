@@ -48,7 +48,10 @@ export default function Home() {
       try {
         const response = await fetch("/api/notification/retrieveNotifications");
         const data = await response.json();
-        setNotifications(data || []); // Adjusted to handle the structure of the API response
+        const sortedNotifications = (data || []).sort((a, b) => {
+          return a.read_status - b.read_status; // Unread (false) will be sorted before read (true)
+        });
+        setNotifications(sortedNotifications); // Set sorted notifications
       } catch (error) {
         console.error("Error fetching notifications:", error);
       } finally {
@@ -87,16 +90,22 @@ export default function Home() {
         },
         body: JSON.stringify({ notification_id }),
       });
-  
+
       if (response.ok) {
-        // Update the notification's read status in the local state
-        setNotifications((prevNotifications) =>
-          prevNotifications.map((notification) =>
+        setNotifications((prevNotifications) => {
+          const updatedNotifications = prevNotifications.map((notification) =>
             notification.notification_id === notification_id
               ? { ...notification, read_status: true }
               : notification
-          )
-        );
+          );
+
+        // Separate read and unread notifications
+        const unreadNotifications = updatedNotifications.filter(notification => !notification.read_status);
+        const readNotifications = updatedNotifications.filter(notification => notification.read_status);
+
+        // Move the read notification to the start
+        return [...unreadNotifications, ...readNotifications]; // Combine unread notifications with the newly read one at the end
+        });
       } else {
         console.error("Failed to update notification read status");
       }
@@ -227,7 +236,7 @@ export default function Home() {
             {/* Clear All Notifications Button placed outside the table */}
             <Flex justify="flex-end" mt={4}>
               <Button colorScheme="red" onClick={clearAllNotifications}>
-                Clear All Notifications
+                Mark All as Read
               </Button>
             </Flex>
           </div>
