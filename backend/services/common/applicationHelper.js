@@ -66,7 +66,9 @@ const extractRemainingDates = (existingMoments, withdrawMoments) => { // Both ar
         }
         currentBlock.push(currDate);  // if current date not in withdraw dates, add to current block
     };
-    remainingDates.push(currentBlock);
+    if (currentBlock.length > 0) {
+        remainingDates.push(currentBlock);
+    };
     
     // Returns array of arrays of YYYY-MM-DD dates 
     return remainingDates;  // (all unbroken chains of consecutive dates are in the same array)
