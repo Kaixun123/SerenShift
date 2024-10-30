@@ -85,7 +85,7 @@ const clearNotifications = async (req, res) => {
 
             for (let notification of notificationInfo) {
                 notification.last_update_by = req.user.id;
-                notification.read_status = true; // Mark all notifications as cleared/read
+                notification.read_status = true; 
                 await notification.save({ transaction });
             }
 
