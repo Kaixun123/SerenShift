@@ -70,36 +70,30 @@ const splitDatesByDay = (startDate, endDate) => {
     return results;
 }
 
+// const convertToGMT8 = (date) => {
+//     const gmt8Date = new Date(date);
+//     gmt8Date.setHours(gmt8Date.getHours() + 8); // Add 8 hours to convert to GMT+8
+//     return gmt8Date.toISOString().split('T')[0]; // Return only the date part (YYYY-MM-DD)
+//   };
+
 const splitConsecutivePeriodByDay = (startDate, endDate) => {
-    const results = [];
-    // Validate dates
+    // Validation of date inputs
     if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
       console.error("Invalid dates provided:", startDate, endDate);
       return [];
     } else {
-      console.log("Splitting consecutive period by day:", startDate, endDate);
       console.log("Valid dates provided:", startDate, endDate);
     }
 
-    let currentDate = new Date(startDate);
-    const endDateTime = new Date(endDate);
-    currentDate.setUTCHours(0, 0, 0, 0);
-    endDateTime.setUTCHours(0, 0, 0, 0);
+    const results = [];
+    let currentDate = moment(startDate);
+    const endDateTime = moment(endDate);
 
-    if (currentDate > endDateTime) {
-      console.error("startDate is after endDate:", startDate, endDate);
-      return [];
-    } else {
-      console.log("startDate is before or equal to endDate:", startDate, endDate);
-    }
-
-    while (currentDate <= endDateTime) {
-      // Clone currentDate for start and end times for the current day
-      const newDay = new Date(currentDate);
-      results.push(newDay);
-  
-      // Move to the next day
-      currentDate.setDate(currentDate.getDate() + 1);
+    while (currentDate.isSameOrBefore(endDateTime, 'day')) {
+        // Push date in 'YYYY-MM-DD' format
+        results.push(currentDate.format('YYYY-MM-DD'));
+        // Move to the next day
+        currentDate.add(1, 'day');
     }
     return results;
   };
@@ -117,5 +111,6 @@ module.exports = {
     checkWhetherSameDate,
     splitDatesByDay,
     splitConsecutivePeriodByDay,
+    // convertToGMT8,
     uploadFilesToS3,
 };
