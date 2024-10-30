@@ -49,6 +49,29 @@ const checkWhetherSameDate = (date1, date2) => {
     );
 }
 
+// Helper function to return the remaining dates after removing the withdrawal/rejected dates
+const extractRemainingDates = (existingMoments, withdrawMoments) => { // Both are arrays of Moment objects
+    let remainingDates = [];
+    let currentBlock = [];
+    // Loop through and compare the existing dates with the withdrawal dates
+    for (const currDate of existingMoments) {
+        const currMoment = moment(currDate).format('YYYY-MM-DD'); // Adjust date format for comparison
+
+        if (withdrawMoments.includes(currMoment)) {
+            if (currentBlock.length > 0) {      // if current date is in withdraw dates, 
+                remainingDates.push(currentBlock);      // end the current block and push to remaining dates
+            };
+            currentBlock = [];  // Reset and start a new block
+            continue;
+        }
+        currentBlock.push(currDate);  // if current date not in withdraw dates, add to current block
+    };
+    remainingDates.push(currentBlock);
+    
+    // Returns array of arrays of YYYY-MM-DD dates 
+    return remainingDates;  // (all unbroken chains of consecutive dates are in the same array)
+};
+
 const splitDatesByDay = (startDate, endDate) => {
     const results = [];
     let currentDate = new Date(startDate);
@@ -70,12 +93,6 @@ const splitDatesByDay = (startDate, endDate) => {
     return results;
 }
 
-// const convertToGMT8 = (date) => {
-//     const gmt8Date = new Date(date);
-//     gmt8Date.setHours(gmt8Date.getHours() + 8); // Add 8 hours to convert to GMT+8
-//     return gmt8Date.toISOString().split('T')[0]; // Return only the date part (YYYY-MM-DD)
-//   };
-
 const splitConsecutivePeriodByDay = (startDate, endDate) => {
     // Validation of date inputs
     if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
@@ -90,10 +107,8 @@ const splitConsecutivePeriodByDay = (startDate, endDate) => {
     const endDateTime = moment(endDate);
 
     while (currentDate.isSameOrBefore(endDateTime, 'day')) {
-        // Push date in 'YYYY-MM-DD' format
-        results.push(currentDate.format('YYYY-MM-DD'));
-        // Move to the next day
-        currentDate.add(1, 'day');
+        results.push(currentDate.format('YYYY-MM-DD'));  // Push date in 'YYYY-MM-DD' format
+        currentDate.add(1, 'day');  // Move to the next day
     }
     return results;
   };
@@ -109,8 +124,8 @@ const uploadFilesToS3 = async (files, applicationId, userId) => {
 module.exports = {
     checkforOverlap,
     checkWhetherSameDate,
+    extractRemainingDates,
     splitDatesByDay,
     splitConsecutivePeriodByDay,
-    // convertToGMT8,
     uploadFilesToS3,
 };
