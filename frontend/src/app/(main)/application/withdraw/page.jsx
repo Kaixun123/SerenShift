@@ -7,6 +7,8 @@ import WithdrawApprovedModal from "@/components/WithdrawApprovedModal";
 import WithdrawMultipleApprovedModal from "@/components/WithdrawMultipleApprovedModal";
 import RefreshButton from "@/components/RefreshButton";
 import { useEffect, useState } from "react";
+import { DatePicker } from '@mantine/dates';
+
 
 // chakra-ui
 import {
@@ -37,6 +39,9 @@ export default function WithdrawApplicationPage() {
   const [currentApplicationIndex, setCurrentApplicationIndex] = useState(0); // For paginating through selected applications
   const [remarks, setRemarks] = useState("");
   const [remarksMultiple, setRemarksMultiple] = useState("");
+  
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [withdrawDates, setWithdrawDates] = useState([]);
 
   // Toast handling
   const toast = useToast();
@@ -115,9 +120,6 @@ export default function WithdrawApplicationPage() {
             employee.approvedApplications.length > 0
           );
         });
-
-        // Log the result after filtering
-        console.log("DEBUG APPROVED", employeesWithApprovedApps);
 
         setSubsWithApproved(employeesWithApprovedApps); // Saving the subordinates data
       } catch (error) {
@@ -250,6 +252,74 @@ export default function WithdrawApplicationPage() {
     }
   };
 
+  const handleWithdrawSpecific = async (application_id, withdrawDates, remarks) => {
+    try {
+      console.log("DEBUG ADJ DATE:", withdrawDates);
+
+      const response = await fetch("/api/application/withdrawSpecificApproved", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ application_id, withdrawDates, remarks }),
+      });
+  
+      if (response.ok) {
+        console.log("RESPONSE OK");
+  
+        toast({
+          title: "Selected Dates Withdrawn",
+          description: "The selected date(s) were successfully withdrawn.",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top-right",
+        });
+  
+        setRefresh(true);
+        setSelectedApplications((prev) =>
+          prev.filter((app) => app.application_id !== application_id)
+        );
+  
+        if (
+          selectedApplicationDetails &&
+          selectedApplicationDetails.application_id === application_id
+        ) {
+          setCurrentApplicationIndex((prevIndex) =>
+            prevIndex > 0 ? prevIndex - 1 : 0
+          );
+        }
+  
+        setRemarks("");
+        setSelectedSubIds([]);
+        onModalWithdrawClose();
+      } else {
+        console.error("Failed to withdraw application");
+  
+        toast({
+          title: "Error",
+          description: "Failed to withdraw the application.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top-right",
+        });
+      }
+    } catch (error) {
+      console.error("Error withdrawing application:", error);
+  
+      toast({
+        title: "Error",
+        description: "An error occurred while withdrawing the application.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+    }
+  };
+  
+
   function handlePagination(array, size) {
     if (!array.length) {
       return [];
@@ -302,14 +372,6 @@ export default function WithdrawApplicationPage() {
       filteredApplications.length > 0
         ? filteredApplications
         : approvedApplications;
-    console.log(
-      "DEBUG APPS",
-      applicationsToUse,
-      "filtered",
-      filteredApplications,
-      "total",
-      approvedApplications
-    );
 
     const updatedPaginatedApplications = handlePagination(
       applicationsToUse
@@ -322,58 +384,29 @@ export default function WithdrawApplicationPage() {
             department: sub.department,
             position: sub.position,
           }))
-        ),
+        )
+        .sort((a, b) => new Date(a.start_date) - new Date(b.start_date)), // Sort by start_date
       applicationsPerPage
     );
 
     setPaginatedApplications(updatedPaginatedApplications);
   }, [approvedApplications, filteredApplications, applicationsPerPage]); // Add filteredApplications to the dependency array
 
-  const items = paginatedApplications[activePage - 1]?.map((application) => {
-    return (
-      <Flex key={application.application_id} alignItems="center" width="100%">
-        <Checkbox
-          className="mr-3"
-          checked={selectedApplications.some(
-            (app) => app.application_id === application.application_id
-          )} // Check by application_id
-          onChange={() => {
-            const isSelected = selectedApplications.some(
-              (app) => app.application_id === application.application_id
-            );
-            const newSelectedApplications = isSelected
-              ? selectedApplications.filter(
-                  (app) => app.application_id !== application.application_id
-                )
-              : [...selectedApplications, application]; // Store the full application object when selected
-
-            setSelectedApplications(newSelectedApplications);
-            // If the application was deselected, reset the currentApplicationIndex, else update it
-            if (isSelected) {
-              setCurrentApplicationIndex(0);
-            } else {
-              setCurrentApplicationIndex(newSelectedApplications.length - 1); // Set to the newly added application's index
-            }
-          }}
-        />
-        <ApplicationCard
-          start_date={application.start_date}
-          end_date={application.end_date}
-          application_type={application.application_type}
-          status={application.status}
-          requestor_remarks={application.requestor_remarks}
-          first_name={application.first_name}
-          last_name={application.last_name}
-          department={application.department}
-          position={application.position}
-          isOwnApplication={false}
-        />
-      </Flex>
-    );
-  });
 
   // Function to handle withdraw action
   const handleWithdrawClick = () => {
+    if (showDatePicker && withdrawDates.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least 1 date to withdraw.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+      return;
+    } 
+
     if (!selectedApplicationDetails || !remarks || !String(remarks).trim()) {
       toast({
         title: "Error",
@@ -412,9 +445,58 @@ export default function WithdrawApplicationPage() {
     }
   };
 
-  const handleSpecificWithdrawClick = () => {
-    return;
+  const handleShowDatesClick = () => {
+    setShowDatePicker(!showDatePicker);
   };
+
+  const items = paginatedApplications[activePage - 1]?.map((application) => {
+    // Compare only the date part, ignoring the time
+    const startDate = new Date(application.start_date).setHours(0, 0, 0, 0);
+    const endDate = new Date(application.end_date).setHours(0, 0, 0, 0);
+    const isMultiDay = startDate !== endDate; // Set isMultiDay based on date comparison
+  
+    return (
+      <Flex key={application.application_id} alignItems="center" width="100%">
+        <Checkbox
+          className="mr-3"
+          checked={selectedApplications.some(
+            (app) => app.application_id === application.application_id
+          )}
+          onChange={() => {
+            const isSelected = selectedApplications.some(
+              (app) => app.application_id === application.application_id
+            );
+            const newSelectedApplications = isSelected
+              ? selectedApplications.filter(
+                  (app) => app.application_id !== application.application_id
+                )
+              : [...selectedApplications, { ...application, isMultiDay }]; // Add isMultiDay to the selected application
+  
+            setSelectedApplications(newSelectedApplications);
+  
+            // Handle currentApplicationIndex
+            if (isSelected) {
+              setCurrentApplicationIndex(0);
+            } else {
+              setCurrentApplicationIndex(newSelectedApplications.length - 1);
+            }
+          }}
+        />
+        <ApplicationCard
+          start_date={application.start_date}
+          end_date={application.end_date}
+          application_type={application.application_type}
+          status={application.status}
+          requestor_remarks={application.requestor_remarks}
+          first_name={application.first_name}
+          last_name={application.last_name}
+          department={application.department}
+          position={application.position}
+          isOwnApplication={false}
+        />
+      </Flex>
+    );
+  });
 
   return (
     <main>
@@ -503,9 +585,13 @@ export default function WithdrawApplicationPage() {
               applicationType={appToWithdraw.application_type}
               startDate={appToWithdraw.start_date}
               endDate={appToWithdraw.end_date}
-              onConfirm={() =>
-                handleWithdraw(appToWithdraw.application_id, remarks)
-              } // Pass handleWithdraw function to WithdrawApprovedModal
+              onConfirm={() => {
+                if (withdrawDates.length === 0) {
+                  handleWithdraw(appToWithdraw.application_id, remarks);
+                } else {
+                  handleWithdrawSpecific(appToWithdraw.application_id, withdrawDates, remarks);
+                }
+              }}
             />
           )}
           {/* Show the multiple withdrawal modal only when withdrawing multiple applications */}
@@ -584,7 +670,36 @@ export default function WithdrawApplicationPage() {
               message="No WFH selected" // Custom prop to indicate no selection
             />
           )}
-          <Box mt={4}>
+          {selectedApplications.length > 0 && selectedApplicationDetails.isMultiDay && (
+          <Box mt={3}>
+            <Button 
+                colorScheme="white"
+                textColor="gray.500"
+                alignItems="right"
+                width="full"
+                height="auto"
+                whiteSpace="normal"
+                justifyContent="flex-end"
+                onClick={handleShowDatesClick}
+                >
+              <Text fontSize="sm" textDecoration="underline">
+                Select Dates...
+              </Text>
+            </Button>
+            {showDatePicker ? (
+              <>
+                <Flex justify="center" align="center">
+                    <DatePicker 
+                      type="multiple" 
+                      value={withdrawDates} 
+                      minDate={new Date(selectedApplicationDetails.start_date)}
+                      maxDate={new Date(selectedApplicationDetails.end_date)}
+                      onChange={setWithdrawDates} />
+                </Flex>
+              </>
+            ) : (null)}
+          </Box>)}
+          <Box mt={2}>
             <Text fontWeight="bold" color="gray.600">
               Reason for Withdrawal: <span style={{ color: 'red' }}>*</span>
             </Text>
@@ -610,17 +725,6 @@ export default function WithdrawApplicationPage() {
                 isDisabled={!(remarks && String(remarks).trim())}
                 >
               Withdraw Application
-            </Button>
-            <Button 
-                colorScheme="red"
-                variant="outline"
-                width="full"
-                height="auto"
-                whiteSpace="normal"
-                onClick={handleSpecificWithdrawClick}
-                isDisabled={!(remarks && String(remarks).trim())}
-                >
-              Withdraw Specific Dates...
             </Button>
           </Flex>
         </Box>
