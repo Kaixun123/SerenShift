@@ -292,6 +292,7 @@ export default function WithdrawApplicationPage() {
   
         setRemarks("");
         setSelectedSubIds([]);
+        setWithdrawDates([]);
         onModalWithdrawClose();
       } else {
         console.error("Failed to withdraw application");
