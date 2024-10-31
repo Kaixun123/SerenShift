@@ -585,6 +585,7 @@ export default function WithdrawApplicationPage() {
               applicationType={appToWithdraw.application_type}
               startDate={appToWithdraw.start_date}
               endDate={appToWithdraw.end_date}
+              datesArray={withdrawDates}
               onConfirm={() => {
                 if (withdrawDates.length === 0) {
                   handleWithdraw(appToWithdraw.application_id, remarks);
@@ -674,7 +675,7 @@ export default function WithdrawApplicationPage() {
           <Box mt={4}>
             <Flex justify="flex-end" width="100%">
             <Button 
-                colorScheme="gray"
+                borderColor="gray.300"
                 variant="outline"
                 borderWidth="1.5px"
                 width="auto"
@@ -684,7 +685,7 @@ export default function WithdrawApplicationPage() {
                 _active={{ bg: "gray.100", color: "white" }}
                 isActive={showDatePicker}
                 >
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="sm" color="gray.800">
                 Select Dates...
               </Text>
             </Button>
@@ -703,7 +704,7 @@ export default function WithdrawApplicationPage() {
             ) : (null)}
           </Box>)}
           <Box mt={2}>
-            <Text fontWeight="bold" color="gray.600">
+            <Text fontWeight="bold" color="black">
               Reason for Withdrawal: <span style={{ color: 'red' }}>*</span>
             </Text>
               <Textarea

@@ -19,17 +19,20 @@ const WithdrawApprovedModal = ({
   applicationType,
   startDate,
   endDate,
+  datesArray = [],
   onConfirm,
 }) => {
 
   const toast = useToast();
+
   // Format the date to display as DD-MM-YYYY
   const formatDate = (datetime) => {
     const date = new Date(datetime);
+    const dayName = date.toLocaleDateString("en-GB", { weekday: "short" });
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${dayName} ${day}/${month}/${year}`;
   };
 
   // Format the time to display only the time part (e.g., HH:MM AM/PM)
@@ -41,6 +44,18 @@ const WithdrawApprovedModal = ({
     }); // Format as time
   };
 
+  const formatDatesArray = () => {
+    const formattedDates = datesArray
+      .map(date => `• ${formatDate(date)}`)
+      .join("\n");
+  
+    return (
+      <Text whiteSpace="pre-line">
+        {formattedDates}
+      </Text>
+    );
+  };  
+  
   const handleConfirm = () => {
     onConfirm();
   };
@@ -54,8 +69,17 @@ const WithdrawApprovedModal = ({
         <ModalBody>
           <Text>Applicant Name: {applicantName}</Text>
           <Text>Type: {applicationType}</Text>
-          <Text>Start Date: {formatDate(startDate)}</Text>
-          <Text>End Date: {formatDate(endDate)}</Text>
+          {datesArray.length === 0 ? (
+            <>
+            <Text>Start Date: {formatDate(startDate)}</Text>
+            <Text>End Date: {formatDate(endDate)}</Text>
+            </>
+          ) : (
+            <>
+            <Text>Date{datesArray.length > 1 ? 's' : ''} Selected: {formatDatesArray()}</Text>
+            </>
+          )}
+          
           <Text>Time: {formatTime(startDate)} to {formatTime(endDate)}</Text> 
         </ModalBody>
         <ModalFooter>
