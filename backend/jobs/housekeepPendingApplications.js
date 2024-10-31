@@ -25,9 +25,9 @@ const job = scheduler.scheduleJob('0 * * * *', async () => {
         await transaction.commit();
         console.info('Housekeep Pending Applications Job rejected ' + count + ' pending applications past their start date');
     } catch (error) {
+        await transaction.rollback();
         console.error('Housekeep Applications Job failed');
         console.error(error);
-        await transaction.rollback();
     } finally {
         console.info('Housekeep Pending Applications Job ended at ' + new Date());
     }
