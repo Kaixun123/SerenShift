@@ -1,1 +1,2 @@
-require('./housekeepPendingApplications.js');
+require('./housekeepApplications.js');
+require('./housekeepSchedules.js');
