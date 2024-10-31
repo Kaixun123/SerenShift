@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Group, Container, Text, Title } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { Flex, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Box, Spinner } from '@chakra-ui/react'; // Import Spinner
+import { Flex, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Box, Spinner, useToast } from '@chakra-ui/react';
 import 'chart.js/auto';
 import TopHeader from "@/components/TopHeader";
 
@@ -13,6 +13,7 @@ const CompanyDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDeptData, setSelectedDeptData] = useState(null); // Store department-specific WFH stats
   const [wfhStaff, setWfhStaff] = useState([]); // Store WFH staff data
+  const toast = useToast(); // Initialize toast
 
   // Fetch data from backend
   const fetchStats = async (selectedDate) => {
@@ -20,12 +21,24 @@ const CompanyDashboardPage = () => {
     const formattedDate = selectedDate.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
     try {
       const response = await fetch(`/api/schedule/companySchedule?date=${formattedDate}`);
-      const data = await response.json(); // Parse the JSON response
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch company stats');
+      }
+      const data = await response.json();
       setStats(data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching data:', error);
       setLoading(false);
+      console.error('Error fetching data:', error);
+      toast({
+        title: 'Error fetching data',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+        position: 'top-right',
+      });
     }
   };
 
@@ -45,41 +58,53 @@ const CompanyDashboardPage = () => {
     try {
       const formattedDate = date.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
       const response = await fetch(`/api/schedule/departmentSchedule?date=${formattedDate}&department=${department}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch department stats');
+      }
       const data = await response.json();
-      setSelectedDeptData(data.wfhStats); // Store the department-specific WFH stats
-      setWfhStaff(data.wfhStaff); // Store the WFH staff data
+      setSelectedDeptData(data.wfhStats);
+      setWfhStaff(data.wfhStaff);
     } catch (error) {
       console.error('Error fetching department data:', error);
+      toast({
+        title: 'Error fetching department data',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+        position: 'top-right',
+      });
     }
   };
 
   // Handle bar click event
   const handleBarClick = (event, chartElement) => {
     if (chartElement.length === 0) return; // No click on a bar
-    const departmentIndex = chartElement[0].index; // Get the index of the clicked department
-    const department = Object.keys(stats)[departmentIndex]; // Get the department name from the index
+    const departmentIndex = chartElement[0].index;
+    const department = Object.keys(stats)[departmentIndex];
     fetchDeptStats(department); // Fetch stats for the clicked department
   };
 
   // Prepare bar chart data for all departments in one graph
   const createChartData = () => {
-    const departments = Object.keys(stats); // Get department names
-    const wfoCounts = departments.map((dept) => stats[dept].wfo); // WFO counts for each department
-    const wfhCounts = departments.map((dept) => stats[dept].wfh); // WFH counts for each department
+    const departments = Object.keys(stats);
+    const wfoCounts = departments.map((dept) => stats[dept].wfo);
+    const wfhCounts = departments.map((dept) => stats[dept].wfh);
 
     return {
-      labels: departments, // Department names as labels
+      labels: departments,
       datasets: [
         {
           label: 'WFO (Work From Office)',
-          data: wfoCounts, // WFO counts
+          data: wfoCounts,
           backgroundColor: 'rgba(75, 192, 192, 0.6)',
           borderColor: 'rgba(75, 192, 192, 1)',
           borderWidth: 1,
         },
         {
           label: 'WFH (Work From Home)',
-          data: wfhCounts, // WFH counts
+          data: wfhCounts,
           backgroundColor: 'rgba(255, 99, 132, 0.6)',
           borderColor: 'rgba(255, 99, 132, 1)',
           borderWidth: 1,
@@ -90,7 +115,7 @@ const CompanyDashboardPage = () => {
 
   // Prepare pie chart data for the selected department
   const createPieChartData = () => {
-    if (!selectedDeptData) return null; // If no department is selected, return null
+    if (!selectedDeptData) return null;
 
     const { am, pm, fullDay } = selectedDeptData.wfh;
 
@@ -128,7 +153,7 @@ const CompanyDashboardPage = () => {
             <DateInput
               value={date}
               onChange={setDate}
-              clearable={false} // This removes the clear button
+              clearable={false}
               label="Pick a date"
               placeholder="Pick a date"
             />
@@ -137,8 +162,8 @@ const CompanyDashboardPage = () => {
 
         {loading ? (
           <Flex direction="column" justifyContent="center" alignItems="center" height="200px">
-            <Spinner size="xl" /> {/* Chakra Spinner */}
-            <Text mt={4}>Loading data...</Text> {/* Loading data text below the spinner */}
+            <Spinner size="xl" />
+            <Text mt={4}>Loading data...</Text>
           </Flex>
         ) : (
           <div style={{ marginBottom: '40px', marginTop: '13px' }}>
@@ -149,7 +174,7 @@ const CompanyDashboardPage = () => {
                   y: {
                     beginAtZero: true,
                     ticks: {
-                      precision: 0, // Ensure integer values on y-axis
+                      precision: 0,
                     },
                   },
                 },
@@ -161,21 +186,21 @@ const CompanyDashboardPage = () => {
                     text: 'Staff Statistics by Department',
                   },
                   tooltip: {
-                    enabled: true, // Enable tooltips on hover
+                    enabled: true,
                     callbacks: {
                       label: function (tooltipItem) {
                         const label = tooltipItem.dataset.label || '';
                         const value = tooltipItem.raw;
-                        return `${label}: ${value}`; // Customize tooltip format
+                        return `${label}: ${value}`;
                       },
                     },
                   },
                 },
                 hover: {
-                  mode: 'index', // Highlight all related bars on hover
-                  intersect: false, // Display tooltip even if hovering slightly off the bar
+                  mode: 'index',
+                  intersect: false,
                 },
-                onClick: (event, chartElement) => handleBarClick(event, chartElement), // Handle bar click
+                onClick: (event, chartElement) => handleBarClick(event, chartElement),
               }}
             />
           </div>
@@ -200,10 +225,10 @@ const CompanyDashboardPage = () => {
                       callbacks: {
                         label: function (tooltipItem) {
                           const dataset = tooltipItem.dataset;
-                          const total = dataset.data.reduce((acc, value) => acc + value, 0); // Calculate total of all segments
-                          const currentValue = dataset.data[tooltipItem.dataIndex]; // Get the current value
-                          const percentage = ((currentValue / total) * 100).toFixed(2); // Calculate percentage
-                          return `${tooltipItem.label}: ${percentage}%`; // Display the label with percentage
+                          const total = dataset.data.reduce((acc, value) => acc + value, 0);
+                          const currentValue = dataset.data[tooltipItem.dataIndex];
+                          const percentage = ((currentValue / total) * 100).toFixed(2);
+                          return `${tooltipItem.label}: ${percentage}%`;
                         },
                       },
                     },
@@ -226,7 +251,7 @@ const CompanyDashboardPage = () => {
                 <AccordionPanel pb={4}>
                   {groupedWfhStaff.am.length > 0 ? (
                     groupedWfhStaff.am.map((staff) => (
-                      <Text key={staff.id}>{staff.name}</Text>
+                      <Text key={staff.id}>{staff.name} - {staff.position}</Text>
                     ))
                   ) : (
                     <Text>No AM WFH staff</Text>
@@ -246,7 +271,7 @@ const CompanyDashboardPage = () => {
                 <AccordionPanel pb={4}>
                   {groupedWfhStaff.pm.length > 0 ? (
                     groupedWfhStaff.pm.map((staff) => (
-                      <Text key={staff.id}>{staff.name}</Text>
+                      <Text key={staff.id}>{staff.name} - {staff.position}</Text>
                     ))
                   ) : (
                     <Text>No PM WFH staff</Text>
@@ -266,7 +291,7 @@ const CompanyDashboardPage = () => {
                 <AccordionPanel pb={4}>
                   {groupedWfhStaff.fullDay.length > 0 ? (
                     groupedWfhStaff.fullDay.map((staff) => (
-                      <Text key={staff.id}>{staff.name}</Text>
+                      <Text key={staff.id}>{staff.name} - {staff.position}</Text>
                     ))
                   ) : (
                     <Text>No Full-Day WFH staff</Text>

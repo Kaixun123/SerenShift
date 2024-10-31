@@ -1,24 +1,25 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Box, Stack, Flex, Text } from "@chakra-ui/react";
+import { Box, Stack, Flex, Text, useToast } from "@chakra-ui/react";
 import TopHeader from "@/components/TopHeader";
 import { MultiSelect } from "@mantine/core";
-import FullCalendar from "@fullcalendar/react"; // Import FullCalendar
-import dayGridPlugin from "@fullcalendar/daygrid"; // Month view
-import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
-import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
-import listPlugin from "@fullcalendar/list"; // List view plugin
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import listPlugin from "@fullcalendar/list";
+import tippy from "tippy.js"; // Import Tippy.js
+import "tippy.js/dist/tippy.css"; // Import Tippy.js styles
 import RefreshButton from "@/components/RefreshButton";
 import "@/components/Calendar.css";
 
-const SubordinateSchedulePage = () => {
+const ColleagueSchedulePage = () => {
   const [loading, setLoading] = useState(false);
-  const [colleagues, setColleagues] = useState([]); // Holds subordinate data
+  const [colleagues, setColleagues] = useState([]);
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [scheduleData, setScheduleData] = useState(null);
   const [employee, setEmployee] = useState({ department: "" });
 
-  // For refresh functionality
   const [isRefresh, setRefresh] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -27,9 +28,7 @@ const SubordinateSchedulePage = () => {
       try {
         const response = await fetch("/api/auth/me");
         const data = await response.json();
-        setEmployee({
-          department: `${data.department}`,
-        });
+        setEmployee({ department: `${data.department}` });
       } catch (error) {
         console.error("Error fetching employee data:", error);
       }
@@ -42,16 +41,11 @@ const SubordinateSchedulePage = () => {
     setScheduleData(null);
 
     try {
-      const colleaguesResponse = await fetch("/api/employee/subordinates");
+      const colleaguesResponse = await fetch("/api/employee/colleagues");
       const colleaguesData = await colleaguesResponse.json();
 
-      const query =
-        colleagueIds.length > 0
-          ? `?colleague_id=${colleagueIds.join(",")}`
-          : "";
-      const scheduleResponse = await fetch(
-        `/api/schedule/subordinateSchedule${query}`
-      );
+      const query = colleagueIds.length > 0 ? `?colleague_id=${colleagueIds.join(",")}` : "";
+      const scheduleResponse = await fetch(`/api/schedule/teamSchedule${query}`);
       const scheduleData = await scheduleResponse.json();
 
       if (colleaguesResponse.ok && scheduleResponse.ok) {
@@ -77,14 +71,14 @@ const SubordinateSchedulePage = () => {
   };
 
   const handleRefresh = () => {
-    // Trigger re-fetching of data with a slight delay for the refreshing effect
     setRefreshing(true);
     setTimeout(() => {
       setRefresh(true);
       setSelectedColleagueIds([]); // Reset colleague selection
+      handleApiCalls([]); // Fetch all colleagues' schedules
       setRefreshing(false);
     }, 200);
-    setRefresh(false); // Reset refresh state
+    setRefresh(false);
   };
 
   // Convert scheduleData into a format suitable for FullCalendar
@@ -143,43 +137,41 @@ const SubordinateSchedulePage = () => {
           overflow: "hidden",
           textOverflow: "ellipsis",
         }}
-        title={eventInfo.event.title}
       >
         {eventInfo.event.title}
       </div>
     );
   };
 
-  const eventPropGetter = (event) => {
-    let backgroundColor;
-    if (event.extendedProps.timePeriod === "Full Day") {
-      backgroundColor = "#4CAF50"; // Green
-    } else if (event.extendedProps.timePeriod === "AM") {
-      backgroundColor = "#F4C542"; // Yellow
-    } else if (event.extendedProps.timePeriod === "PM") {
-      backgroundColor = "#4DA1FF"; // Blue
-    }
+  const eventDidMount = (info) => {
+    const timePeriod = info.event.extendedProps.timePeriod;
+    const startTime = info.event.start
+      ? info.event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "N/A";
+    const endTime = info.event.end
+      ? info.event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "N/A";
 
-    return {
-      style: {
-        backgroundColor,
-        color: "#fff",
-        borderRadius: "4px",
-        padding: "3px",
-        height: "100%",
-        width: "100%",
-        border: "none",
-        boxShadow: "none",
-      },
-    };
+    // Tooltip content
+    const tooltipContent = `
+      <strong>${info.event.title}</strong><br>
+      Time: ${startTime} - ${endTime} (${timePeriod})
+    `;
+
+    // Initialize tippy tooltip
+    tippy(info.el, {
+      content: tooltipContent,
+      allowHTML: true,
+      interactive: true,
+      theme: "light",
+      delay: [200, 0],
+    });
   };
 
   // Legend component
   const Legend = () => (
     <Box mb={4}>
-      <Text fontSize="lg" fontWeight="bold">
-        Legend:
-      </Text>
+      <Text fontSize="lg" fontWeight="bold">Legend:</Text>
       <Flex direction="row" align="center">
         <Box w="20px" h="20px" bg="#4CAF50" mr={2} />
         <Text mr={4}>Full Day</Text>
@@ -193,6 +185,12 @@ const SubordinateSchedulePage = () => {
 
   return (
     <main>
+      <style>{`
+        /* Remove the dot in the list view of FullCalendar */
+        .fc-list-event-dot {
+          display: none !important;
+        }
+      `}</style>
       <Flex direction="column" flex="1" height="100vh">
         <Box position="relative" zIndex="2">
           <TopHeader
@@ -248,8 +246,8 @@ const SubordinateSchedulePage = () => {
               editable={false}
               selectable={true}
               nowIndicator={true}
-              eventPropGetter={eventPropGetter}
               eventContent={eventContent}
+              eventDidMount={eventDidMount}
               dayMaxEventRows={2}
               height="100%"
               slotMinTime="09:00:00"
@@ -263,4 +261,4 @@ const SubordinateSchedulePage = () => {
   );
 };
 
-export default SubordinateSchedulePage;
+export default ColleagueSchedulePage;

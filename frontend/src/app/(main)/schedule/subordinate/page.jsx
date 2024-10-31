@@ -1,14 +1,16 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Box, Stack, Flex, Text } from "@chakra-ui/react";
+import { Box, Stack, Flex, Text, useToast } from "@chakra-ui/react"; // Import useToast from Chakra UI
 import TopHeader from "@/components/TopHeader";
 import { MultiSelect } from "@mantine/core";
-import FullCalendar from "@fullcalendar/react"; // Import FullCalendar
-import dayGridPlugin from "@fullcalendar/daygrid"; // Month view
-import timeGridPlugin from "@fullcalendar/timegrid"; // Week view
-import interactionPlugin from "@fullcalendar/interaction"; // For interactivity
-import listPlugin from "@fullcalendar/list"; // List view plugin
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import listPlugin from "@fullcalendar/list";
 import RefreshButton from "@/components/RefreshButton";
+import tippy from "tippy.js"; // Import Tippy.js
+import "tippy.js/dist/tippy.css"; // Import Tippy.js styles
 import "@/components/Calendar.css";
 
 const SubordinateSchedulePage = () => {
@@ -17,6 +19,7 @@ const SubordinateSchedulePage = () => {
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [scheduleData, setScheduleData] = useState(null);
   const [employee, setEmployee] = useState({ department: "" });
+  const toast = useToast(); // Initialize toast for error notifications
 
   // For Refresh button
   const [isRefresh, setRefresh] = useState(false);
@@ -26,12 +29,22 @@ const SubordinateSchedulePage = () => {
     async function fetchEmployeeData() {
       try {
         const response = await fetch("/api/auth/me");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch employee data");
+        }
         const data = await response.json();
-        setEmployee({
-          department: `${data.department}`,
-        });
+        setEmployee({ department: `${data.department}` });
       } catch (error) {
         console.error("Error fetching employee data:", error);
+        toast({
+          title: "Error fetching employee data",
+          description: error.message,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+        });
       }
     }
     fetchEmployeeData();
@@ -43,25 +56,35 @@ const SubordinateSchedulePage = () => {
 
     try {
       const colleaguesResponse = await fetch("/api/employee/subordinates");
+      if (!colleaguesResponse.ok) {
+        const errorData = await colleaguesResponse.json();
+        throw new Error(errorData.message || "Failed to fetch subordinates");
+      }
       const colleaguesData = await colleaguesResponse.json();
 
       const query =
-        colleagueIds.length > 0
-          ? `?colleague_id=${colleagueIds.join(",")}`
-          : "";
+        colleagueIds.length > 0 ? `?colleague_id=${colleagueIds.join(",")}` : "";
       const scheduleResponse = await fetch(
         `/api/schedule/subordinateSchedule${query}`
       );
+      if (!scheduleResponse.ok) {
+        const errorData = await scheduleResponse.json();
+        throw new Error(errorData.message || "Failed to fetch schedule data");
+      }
       const scheduleData = await scheduleResponse.json();
 
-      if (colleaguesResponse.ok && scheduleResponse.ok) {
-        setColleagues(colleaguesData);
-        setScheduleData(scheduleData);
-      } else {
-        console.error("API error occurred");
-      }
+      setColleagues(colleaguesData);
+      setScheduleData(scheduleData);
     } catch (error) {
       console.error("Error calling API:", error);
+      toast({
+        title: "API Error",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
     } finally {
       setLoading(false);
     }
@@ -80,8 +103,7 @@ const SubordinateSchedulePage = () => {
     setRefreshing(true);
     setTimeout(() => {
       setRefresh(true);
-      // Reset the colleague selection and fetch data again
-      setSelectedColleagueIds([]);
+      setSelectedColleagueIds([]); // Reset the colleague selection and fetch data again
       handleApiCalls([]);
       setRefreshing(false);
     }, 200);
@@ -91,32 +113,32 @@ const SubordinateSchedulePage = () => {
   // Convert scheduleData into a format suitable for FullCalendar
   const events = scheduleData
     ? Object.entries(scheduleData).flatMap(([date, schedule]) =>
-        Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
-          colleagues.map((colleague) => {
-            const eventDate = new Date(date);
-            let start, end;
+      Object.entries(schedule).flatMap(([timePeriod, colleagues]) =>
+        colleagues.map((colleague) => {
+          const eventDate = new Date(date);
+          let start, end;
 
-            if (timePeriod === "Full Day") {
-              start = new Date(eventDate.setHours(9, 0, 0));
-              end = new Date(eventDate.setHours(18, 0, 0));
-            } else if (timePeriod === "AM") {
-              start = new Date(eventDate.setHours(9, 0, 0));
-              end = new Date(eventDate.setHours(13, 0, 0));
-            } else if (timePeriod === "PM") {
-              start = new Date(eventDate.setHours(14, 0, 0));
-              end = new Date(eventDate.setHours(18, 0, 0));
-            }
+          if (timePeriod === "Full Day") {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          } else if (timePeriod === "AM") {
+            start = new Date(eventDate.setHours(9, 0, 0));
+            end = new Date(eventDate.setHours(13, 0, 0));
+          } else if (timePeriod === "PM") {
+            start = new Date(eventDate.setHours(14, 0, 0));
+            end = new Date(eventDate.setHours(18, 0, 0));
+          }
 
-            return {
-              title: `${colleague}`,
-              start,
-              end,
-              allDay: false,
-              timePeriod,
-            };
-          })
-        )
+          return {
+            title: `${colleague}`,
+            start,
+            end,
+            allDay: false,
+            timePeriod,
+          };
+        })
       )
+    )
     : [];
 
   const eventContent = (eventInfo) => {
@@ -144,7 +166,6 @@ const SubordinateSchedulePage = () => {
           overflow: "hidden",
           textOverflow: "ellipsis",
         }}
-        title={eventInfo.event.title}
       >
         {eventInfo.event.title}
       </div>
@@ -175,81 +196,32 @@ const SubordinateSchedulePage = () => {
     };
   };
 
-  // Custom tooltip creation
   const eventDidMount = (info) => {
     const timePeriod = info.event.extendedProps.timePeriod;
     const startTime = info.event.start
-      ? info.event.start.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+      ? info.event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "N/A";
     const endTime = info.event.end
-      ? info.event.end.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+      ? info.event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "N/A";
-    const title = info.event.title || "No Title";
 
-    const tooltipContent = `${title} (${timePeriod})<br>Time: ${startTime} to ${endTime}`;
+    // Tooltip content
+    const tooltipContent = `
+      <strong>${info.event.title}</strong><br>
+      Time: ${startTime} - ${endTime} (${timePeriod})
+    `;
 
-    const tooltipDiv = document.createElement("div");
-    tooltipDiv.className = "custom-tooltip";
-    tooltipDiv.innerHTML = tooltipContent;
-
-    document.body.appendChild(tooltipDiv);
-
-    info.el.onmouseenter = function () {
-      tooltipDiv.style.display = "block";
-      const rect = info.el.getBoundingClientRect();
-      tooltipDiv.style.left = `${rect.left + window.scrollX}px`;
-      tooltipDiv.style.top = `${
-        rect.top + window.scrollY - tooltipDiv.offsetHeight - 10
-      }px`;
-    };
-
-    info.el.onmouseleave = function () {
-      tooltipDiv.style.display = "none";
-    };
+    // Initialize tippy tooltip
+    tippy(info.el, {
+      content: tooltipContent,
+      allowHTML: true,
+      interactive: true,
+      theme: "light",
+      delay: [200, 0],
+    });
   };
 
-  // Custom tooltip styles
-  const customTooltipStyles = `
-    .custom-tooltip {
-      position: absolute;
-      background-color: #333;
-      color: #fff;
-      padding: 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      line-height: 1.5;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      z-index: 1000;
-      white-space: nowrap;
-      display: none;
-    }
-
-    .custom-tooltip::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: #333 transparent transparent transparent;
-    }
-  `;
-
-  // Inject custom tooltip styles
-  useEffect(() => {
-    const styleElement = document.createElement("style");
-    styleElement.innerHTML = customTooltipStyles;
-    document.head.appendChild(styleElement);
-  }, []);
-
-  // Legend component
+  // Define the Legend component here
   const Legend = () => (
     <Box mb={4}>
       <Text fontSize="lg" fontWeight="bold">
@@ -268,6 +240,12 @@ const SubordinateSchedulePage = () => {
 
   return (
     <main>
+      <style>{`
+        /* Remove the dot in the list view of FullCalendar */
+        .fc-list-event-dot {
+          display: none !important;
+        }
+      `}</style>
       <Flex direction="column" flex="1" height="100vh">
         <Box position="relative" zIndex="2">
           <TopHeader
@@ -306,31 +284,8 @@ const SubordinateSchedulePage = () => {
           </Flex>
 
           <Box height="calc(68vh)">
-            <style>{`
-              /* Remove background color for events in the list view */
-              .fc-view-list .fc-list-event {
-                background-color: transparent !important;
-                border: none !important;
-                box-shadow: none !important;
-              }
-              
-              /* Ensure event title and time retain appropriate colors in the list view */
-              .fc-view-list .fc-list-event-title,
-              .fc-view-list .fc-list-event-time {
-                color: #000 !important;
-              }
-                
-              .fc-list-event-dot {
-              display: none !important;
-              }
-          `}</style>
             <FullCalendar
-              plugins={[
-                dayGridPlugin,
-                timeGridPlugin,
-                interactionPlugin,
-                listPlugin,
-              ]}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
               initialView="dayGridMonth"
               events={events}
               headerToolbar={{
@@ -343,7 +298,7 @@ const SubordinateSchedulePage = () => {
               nowIndicator={true}
               eventPropGetter={eventPropGetter}
               eventContent={eventContent}
-              eventDidMount={eventDidMount}
+              eventDidMount={eventDidMount} // Add the tooltip here
               dayMaxEventRows={2}
               height="100%"
               slotMinTime="09:00:00"
