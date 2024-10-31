@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { check, validationResult } = require("express-validator");
-const { ensureLoggedIn, ensureManager, ensureHR } = require("../middlewares/authMiddleware");
+const { ensureLoggedIn, ensureManager, ensureHR, ensureManagerAndAbove } = require("../middlewares/authMiddleware");
 const employeeController = require("../controllers/employeeController");
 
 // Validation Rules
@@ -24,6 +24,6 @@ const vaildateParameters = (req, res, next) => {
 
 router.get("/colleagues", ensureLoggedIn, (req, res) => employeeController.retrieveColleagues(req, res));
 router.get("/employee", employeeValidationRules(), vaildateParameters, (req, res) => employeeController.getEmployee(req, res));
-router.get("/subordinates", ensureManager, (req, res) => employeeController.retrieveSubordinates(req, res));
+router.get("/subordinates", ensureManagerAndAbove, (req, res) => employeeController.retrieveSubordinates(req, res));
 
 module.exports = router;
