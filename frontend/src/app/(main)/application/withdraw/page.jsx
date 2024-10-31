@@ -447,6 +447,9 @@ export default function WithdrawApplicationPage() {
 
   const handleShowDatesClick = () => {
     setShowDatePicker(!showDatePicker);
+    if (showDatePicker) {
+      setWithdrawDates([]); // Reset withdrawDates when hiding the date picker
+    }
   };
 
   const items = paginatedApplications[activePage - 1]?.map((application) => {
