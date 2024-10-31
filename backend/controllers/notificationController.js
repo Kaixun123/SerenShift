@@ -19,21 +19,48 @@ const retrieveNotifications = async (req, res) => {
             return res.status(404).json({ message: `You have no notifications.` });
         };
 
-        let response = [];
-        notificationInfo.forEach(notification => {
-            response.push({
+        let response = await Promise.all(notificationInfo.map(async notification => {
+
+            let applicationInfo = await Application.findOne({
+                where: {
+                    application_id: notification.linked_application_id
+                }
+            })
+
+            let senderInfo = await Employee.findOne({
+                where: {
+                    id: notification.sender_id
+                }
+            })
+
+            return {
                 notification_id: notification.notification_id,
                 notification_type: notification.notification_type,
                 content: notification.content,
                 read_status: notification.read_status,
                 sender_id: notification.sender_id,
+                senderInfo: {
+                    first_name: senderInfo.first_name,
+                    last_name: senderInfo.last_name,
+                    department: senderInfo.department,
+                    position: senderInfo.position,
+                    email: senderInfo.email
+                },
                 recipient_id: notification.recipient_id,
+                application_info: {
+                    start_date: applicationInfo.start_date,
+                    end_date: applicationInfo.end_date,
+                    application_type: applicationInfo.application_type,
+                    requestor_remarks: applicationInfo.requestor_remarks,
+                    approver_remarks: applicationInfo.approver_remarks,
+                    withdrawal_remarks: applicationInfo.withdrawal_remarks
+                },
                 created_by: notification.created_by,
                 last_update_by: notification.last_update_by,
                 created_timestamp: notification.created_timestamp,
                 last_update_timestamp: notification.last_update_timestamp
-            })
-        })
+            }
+        }))
 
         return res.status(200).json(response);
     } catch (error) {
@@ -85,7 +112,7 @@ const clearNotifications = async (req, res) => {
 
             for (let notification of notificationInfo) {
                 notification.last_update_by = req.user.id;
-                notification.read_status = true; 
+                notification.read_status = true;
                 await notification.save({ transaction });
             }
 
