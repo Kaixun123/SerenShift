@@ -671,21 +671,24 @@ export default function WithdrawApplicationPage() {
             />
           )}
           {selectedApplications.length > 0 && selectedApplicationDetails.isMultiDay && (
-          <Box mt={3}>
+          <Box mt={4}>
+            <Flex justify="flex-end" width="100%">
             <Button 
-                colorScheme="white"
-                textColor="gray.500"
-                alignItems="right"
-                width="full"
-                height="auto"
+                colorScheme="gray"
+                variant="outline"
+                borderWidth="1.5px"
+                width="auto"
+                height="30px"
                 whiteSpace="normal"
-                justifyContent="flex-end"
                 onClick={handleShowDatesClick}
+                _active={{ bg: "gray.100", color: "white" }}
+                isActive={showDatePicker}
                 >
-              <Text fontSize="sm" textDecoration="underline">
+              <Text fontSize="sm" color="gray.500">
                 Select Dates...
               </Text>
             </Button>
+            </Flex>
             {showDatePicker ? (
               <>
                 <Flex justify="center" align="center">
