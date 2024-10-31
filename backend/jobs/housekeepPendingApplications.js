@@ -13,7 +13,7 @@ const job = scheduler.scheduleJob('0 * * * *', async () => {
             where: {
                 status: 'Pending',
                 start_date: {
-                    [Op.gt]: currentDate,
+                    [Op.lt]: currentDate,
                 },
             },
         });
