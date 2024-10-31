@@ -1,11 +1,11 @@
-const schedule = require('node-schedule');
+const scheduler = require('node-schedule');
 const { Application } = require('../models');
 const { sequelize } = require('../services/database/mysql');
 const { Op } = require('sequelize');
 
-const job = schedule.scheduleJob('0 * * * *', async () => {
+const job = scheduler.scheduleJob('0 * * * *', async () => {
     const currentDate = new Date();
-    console.info('Housekeep Applications Job started at ' + currentDate);
+    console.info('Housekeep Pending Applications Job started at ' + currentDate);
     const transaction = await sequelize.transaction();
     try {
         let count = 0;
@@ -13,7 +13,7 @@ const job = schedule.scheduleJob('0 * * * *', async () => {
             where: {
                 status: 'Pending',
                 start_date: {
-                    [Op.lt]: currentDate,
+                    [Op.gt]: currentDate,
                 },
             },
         });
@@ -23,13 +23,13 @@ const job = schedule.scheduleJob('0 * * * *', async () => {
             count++;
         }
         await transaction.commit();
-        console.info('Housekeep Applications Job processed ' + count + ' applications');
+        console.info('Housekeep Pending Applications Job rejected ' + count + ' pending applications past their start date');
     } catch (error) {
         console.error('Housekeep Applications Job failed');
         console.error(error);
         await transaction.rollback();
     } finally {
-        console.info('Housekeep Applications Job ended');
+        console.info('Housekeep Pending Applications Job ended at ' + new Date());
     }
 });
 
