@@ -56,6 +56,8 @@ Notification.init(
         createdAt: 'created_timestamp',
         updatedAt: 'last_update_timestamp',
         tableName: "Notifications",
+        paranoid: true,
+        deletedAt: 'deleted_timestamp',
     }
 );
 
