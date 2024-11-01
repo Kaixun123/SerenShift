@@ -1,7 +1,7 @@
 const moment = require('moment'); // Ensure moment.js is installed
 const { splitScheduleByDate } = require('./scheduleHelper');
 const { uploadFile } = require('../uploads/s3');
-const { Application } = require('../../models');
+const { File } = require('../../models');
 
 const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationType) => {
     try {
@@ -143,7 +143,8 @@ const updateFileDetails = async(fileId, newApplicationId, newS3Key) => {
 
 const generateNewFileName = (fileName, userId, newApplicationId, fileExtension) => {
     const currentDateTime = new Date().toISOString().replace(/[:.-]/g, '');
-    return `${fileName}_${userId}_${newApplicationId}_${currentDateTime}.${fileExtension}`;
+    const prefix = fileName.substring(0, fileName.indexOf('_'));
+    return `${prefix}_${userId}_${newApplicationId}_${currentDateTime}.${fileExtension}`;
 };
 
 module.exports = {

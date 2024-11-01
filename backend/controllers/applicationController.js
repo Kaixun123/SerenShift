@@ -1,5 +1,5 @@
 const { Application, Employee, Schedule, Blacklist } = require('../models');
-const { checkforOverlap, extractRemainingDates, splitConsecutivePeriodByDay, uploadFilesToS3, updateFileDetails  } = require('../services/common/applicationHelper');
+const { checkforOverlap, extractRemainingDates, splitConsecutivePeriodByDay, uploadFilesToS3, updateFileDetails, generateNewFileName  } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime, deleteCorrespondingSchedule } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
@@ -890,6 +890,9 @@ const withdrawSpecificDates = async (req, res) => {
     try {
         const transaction = await sequelize.transaction();
         let { application_id, withdrawDates, remarks, files } = req.body;
+        console.log("body request", req.body);
+
+        console.log("in withdraw specific dates functions");
 
         // Apply Moment to all items in withdrawDates -- for date comparison later
         const withdrawMoments = withdrawDates.map(selectedDate => {return moment(selectedDate).format('YYYY-MM-DD'); }); 
@@ -907,6 +910,7 @@ const withdrawSpecificDates = async (req, res) => {
             
             if (start_date && end_date) { // Check if start_date and end_date exist
                 existingMoments = splitConsecutivePeriodByDay(start_date, end_date);
+                console.log("existing moments", existingMoments);
             } else {
                 console.log("Missing start_date or end_date for application:", existingApprovedApp);
             }
@@ -916,6 +920,7 @@ const withdrawSpecificDates = async (req, res) => {
                 existingApprovedApp.status = 'Withdrawn';
                 existingApprovedApp.withdrawal_remarks = remarks;
                 await existingApprovedApp.save({ transaction });
+                console.log("update existing approved application.");
                 await transaction.commit();
             } catch (error) {
                 console.error("Error updating existing application:", error);
@@ -936,11 +941,13 @@ const withdrawSpecificDates = async (req, res) => {
 
             // Find the remaining dates after withdrawal
             const remainingDates = extractRemainingDates(existingMoments, withdrawMoments);
+            console.log("remaining dates to create a new application", remainingDates);
 
             // Handle the blocks of dates -- create new Application entries to reflect the unwithdrawn dates
             for (const block of remainingDates) {
                 try {
                     await createSimilarApplication(block, existingApprovedApp, files);
+                    console.log("new application created.");
                 } catch (error) {
                     console.error("Error creating new application:", error);
                     return res.status(500).json({ error: "An error occurred while creating new application." });
@@ -1021,7 +1028,6 @@ const createSimilarApplication = async (newStartEnd, existingApprovedApp, files)
                         const newFileName = generateNewFileName(file.file_name, employee_id, newApplication.application_id, file.file_extension);
                         console.log("new file name ", newFileName);
                         const newS3Key = `${process.env.NODE_ENV}/application/${newApplication.application_id}/${newFileName}`.toLowerCase();
-                        console.log("new file name ", newFileName);
                         await copyFileInS3(file.s3_key, newS3Key);
                         console.log("copied updated file to S3");
                         await updateFileDetails(file.file_id, newApplication.application_id, newS3Key);
