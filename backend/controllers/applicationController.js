@@ -1,11 +1,11 @@
 const { Application, Employee, Schedule, Blacklist } = require('../models');
-const { checkforOverlap, extractRemainingDates, splitConsecutivePeriodByDay, uploadFilesToS3  } = require('../services/common/applicationHelper');
+const { checkforOverlap, extractRemainingDates, splitConsecutivePeriodByDay, uploadFilesToS3, updateFileDetails, generateNewFileName  } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime, deleteCorrespondingSchedule } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
 const moment = require('moment');
 const { sequelize } = require('../services/database/mysql');
-const { retrieveFileDetails } = require('../services/uploads/s3');
+const { retrieveFileDetails, copyFileInS3 } = require('../services/uploads/s3');
 
 // GET function - to retrieve application data based on userId and status
 const retrieveApplications = async (req, res) => {
@@ -292,7 +292,7 @@ const createNewApplication = async (req, res) => {
                     return res.status(400).json({ message: "Application period overlaps with blacklist period." });
                 }
 
-                await Application.create({
+                let newRegularApp = await Application.create({
                     start_date: currentStartDate.toDate(),
                     end_date: currentEndDate.toDate(),
                     application_type: 'Regular',
@@ -301,6 +301,11 @@ const createNewApplication = async (req, res) => {
                     requestor_remarks: requestor_remarks,
                     status: 'Pending',
                 }, { transaction });
+
+                 // Upload files using the application ID
+                if (files && files.length > 0) {
+                    await uploadFilesToS3(files, newRegularApp.application_id, employeeInfo.id);
+                }
             }
         }
         await transaction.commit();
@@ -884,7 +889,10 @@ const rejectWithdrawalOfApprovedApplication = async (req, res) => {
 const withdrawSpecificDates = async (req, res) => {
     try {
         const transaction = await sequelize.transaction();
-        let { application_id, withdrawDates, remarks } = req.body;
+        let { application_id, withdrawDates, remarks, files } = req.body;
+        console.log("body request", req.body);
+
+        console.log("in withdraw specific dates functions");
 
         // Apply Moment to all items in withdrawDates -- for date comparison later
         const withdrawMoments = withdrawDates.map(selectedDate => {return moment(selectedDate).format('YYYY-MM-DD'); }); 
@@ -902,6 +910,7 @@ const withdrawSpecificDates = async (req, res) => {
             
             if (start_date && end_date) { // Check if start_date and end_date exist
                 existingMoments = splitConsecutivePeriodByDay(start_date, end_date);
+                console.log("existing moments", existingMoments);
             } else {
                 console.log("Missing start_date or end_date for application:", existingApprovedApp);
             }
@@ -911,6 +920,7 @@ const withdrawSpecificDates = async (req, res) => {
                 existingApprovedApp.status = 'Withdrawn';
                 existingApprovedApp.withdrawal_remarks = remarks;
                 await existingApprovedApp.save({ transaction });
+                console.log("update existing approved application.");
                 await transaction.commit();
             } catch (error) {
                 console.error("Error updating existing application:", error);
@@ -923,16 +933,21 @@ const withdrawSpecificDates = async (req, res) => {
                 console.error("Error deleting corresponding schedule:", error);
                     return res.status(500).json({ error: "An error occurred while deleting corresponding schedule." });
             } else {
-                console.log("Schedule successfully deleted");   
+                console.log("Schedule successfully deleted");
             }
+
+            // Find the files tied to application
+            // const files = await retrieveFileDetails(existingApprovedApp.application_type, application_id);
 
             // Find the remaining dates after withdrawal
             const remainingDates = extractRemainingDates(existingMoments, withdrawMoments);
+            console.log("remaining dates to create a new application", remainingDates);
 
             // Handle the blocks of dates -- create new Application entries to reflect the unwithdrawn dates
             for (const block of remainingDates) {
                 try {
-                    await createSimilarApplication(block, existingApprovedApp);
+                    await createSimilarApplication(block, existingApprovedApp, files);
+                    console.log("new application created.");
                 } catch (error) {
                     console.error("Error creating new application:", error);
                     return res.status(500).json({ error: "An error occurred while creating new application." });
@@ -952,7 +967,7 @@ const withdrawSpecificDates = async (req, res) => {
 
 
 // Helper function to withdrawSpecificDates - to create new application similar to a given existing application 
-const createSimilarApplication = async (newStartEnd, existingApprovedApp) => {
+const createSimilarApplication = async (newStartEnd, existingApprovedApp, files) => {
     try {
         const transaction = await sequelize.transaction();
         // const files = await retrieveFileDetails('application', existingApprovedApp.application_id);
@@ -1005,13 +1020,22 @@ const createSimilarApplication = async (newStartEnd, existingApprovedApp) => {
                     last_update_by: manager_id
                     }, { transaction });
                 
-                    // Upload files from original application using the new application ID
-                // if (files && files.length > 0) {
-                //     await uploadFilesToS3(files, newApplication.application_id, employee_id);
-                // }
-                await transaction.commit(); // Save changes to DB
+                console.log("Files ",files);
+                // Upload files from original application using the new application ID
+                if (files && files.length > 0) {
+                    console.log("in file upload function")
+                    for (const file of files) {
+                        const newFileName = generateNewFileName(file.file_name, employee_id, newApplication.application_id, file.file_extension);
+                        console.log("new file name ", newFileName);
+                        const newS3Key = `${process.env.NODE_ENV}/application/${newApplication.application_id}/${newFileName}`.toLowerCase();
+                        await copyFileInS3(file.s3_key, newS3Key);
+                        console.log("copied updated file to S3");
+                        await updateFileDetails(file.file_id, newApplication.application_id, newS3Key);
+                        console.log("done")
+                    }
+                }
 
-                console.log("New application created successfully.");
+                await transaction.commit(); // Save changes to DB
                 return { status: 201, message: "New application successfully created." };
             };
         } catch (error) {
@@ -1037,6 +1061,6 @@ module.exports = {
     withdrawApprovedApplicationByEmployee,
     updatePendingApplication,
     updateApprovedApplication,
-    rejectWithdrawalOfApprovedApplication, 
+    rejectWithdrawalOfApprovedApplication,
     withdrawSpecificDates
 }

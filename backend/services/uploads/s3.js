@@ -3,7 +3,8 @@ const {
     PutObjectCommand,
     DeleteObjectCommand,
     HeadObjectCommand,
-    GetObjectCommand
+    GetObjectCommand,
+    CopyObjectCommand
 } = require('@aws-sdk/client-s3');
 const { File } = require('../../models');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
@@ -44,7 +45,7 @@ const uploadFile = async (file, relatedEntityType, relatedEntityID, overwrite = 
     const userId = user.id;
     const currentDateTime = new Date().toISOString().replace(/[:.-]/g, '');
 
-    const newFileName = `${fileName}_${userId}_${currentDateTime}`;
+    const newFileName = `${fileName}_${userId}_${relatedEntityID}_${currentDateTime}`;
 
     let foundFile = await File.findOne({
         where: {
@@ -115,11 +116,13 @@ const retrieveFileDetails = async (relatedEntityType, relatedEntityID) => {
                 file_name: file.file_name,
                 file_extension: file.file_extension,
                 download_url: presignedUrl,
+                s3_key: file.s3_key,
             });
         } else {
             await file.destroy();
         }
     }
+    console.log(results)
     return results;
 };
 
@@ -173,6 +176,25 @@ const deleteAllFiles = async (relatedEntityType, relatedEntityID) => {
     }
 };
 
+//update the file name of there is a withdraw in specific application day
+const copyFileInS3 = async (oldKey, newKey) => {
+    const copyParams = {
+        Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
+        CopySource: `${process.env.AWS_S3_UPLOADS_BUCKET}/${oldKey}`,
+        Key: newKey,
+    };
+
+    console.log("copy params", copyParams);
+
+    try{
+        await s3.send(new CopyObjectCommand(copyParams));
+        console.log(`File copied successfully from ${oldKey} to ${newKey}`);
+    } catch (error) {
+        console.error("Error copying file in S3:", error);
+        throw error;
+    }
+}
+
 // Generate a pre-signed URL for downloading/viewing a file
 const generatePresignedUrl = async (s3Key, expiresIn = 600) => {
     const params = {
@@ -210,4 +232,5 @@ module.exports = {
     retrieveFileDetails,
     deleteFile,
     deleteAllFiles,
+    copyFileInS3,
 };

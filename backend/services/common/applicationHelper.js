@@ -1,7 +1,7 @@
 const moment = require('moment'); // Ensure moment.js is installed
 const { splitScheduleByDate } = require('./scheduleHelper');
 const { uploadFile } = require('../uploads/s3');
-const { Application } = require('../../models');
+const { File } = require('../../models');
 
 const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationType) => {
     try {
@@ -123,6 +123,30 @@ const uploadFilesToS3 = async (files, applicationId, userId) => {
     await Promise.all(uploadPromises);
 };
 
+const updateFileDetails = async(fileId, newApplicationId, newS3Key) => {
+    try {
+        await File.update(
+            {
+                related_entity_id: newApplicationId,
+                s3_key: newS3Key,
+            },
+            {
+                where: { file_id: fileId },
+            }
+        );
+        console.log(`File details updated successfully for file ID ${fileId}`);
+    } catch (error) {
+        console.error("Error updating file details:", error);
+        throw error;
+    }
+}
+
+const generateNewFileName = (fileName, userId, newApplicationId, fileExtension) => {
+    const currentDateTime = new Date().toISOString().replace(/[:.-]/g, '');
+    const prefix = fileName.substring(0, fileName.indexOf('_'));
+    return `${prefix}_${userId}_${newApplicationId}_${currentDateTime}.${fileExtension}`;
+};
+
 module.exports = {
     checkforOverlap,
     checkWhetherSameDate,
@@ -130,4 +154,6 @@ module.exports = {
     splitDatesByDay,
     splitConsecutivePeriodByDay,
     uploadFilesToS3,
+    updateFileDetails,
+    generateNewFileName
 };

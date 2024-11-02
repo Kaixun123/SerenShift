@@ -256,12 +256,15 @@ export default function WithdrawApplicationPage() {
     try {
       console.log("DEBUG ADJ DATE:", withdrawDates);
 
+      // Retrieve files from selectedApplicationDetails
+      const files = selectedApplicationDetails.files || [];
+
       const response = await fetch("/api/application/withdrawSpecificApproved", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ application_id, withdrawDates, remarks }),
+        body: JSON.stringify({ application_id, withdrawDates, remarks, files }),
       });
   
       if (response.ok) {
