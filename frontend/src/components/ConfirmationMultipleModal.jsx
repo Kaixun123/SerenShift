@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -25,18 +25,32 @@ const formatDateTime = (dateString) => {
   return new Date(dateString).toLocaleString("en-GB", options); // en-GB formats as dd/mm/yyyy
 };
 
-const Multiple = ({ isOpen, onClose, onConfirm, action, selectedApplications }) => {
+const Multiple = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  action,
+  selectedApplications,
+}) => {
   const toast = useToast(); // Initialize Chakra's toast hook
 
+  const [loading, setLoading] = useState(false);
   const handleConfirm = async () => {
     try {
+      setLoading(true);
       // Trigger confirmation action (approve or reject) via API call
       await onConfirm(); // Wait for the onConfirm function to execute (this will call the API)
+      setLoading(false);
 
       // Show success toast based on action
       toast({
-        title: action === "approve" ? "Applications Approved" : "Applications Rejected",
-        description: `The applications have been successfully ${action === "approve" ? "approved" : "rejected"}.`,
+        title:
+          action === "approve"
+            ? "Applications Approved"
+            : "Applications Rejected",
+        description: `The applications have been successfully ${
+          action === "approve" ? "approved" : "rejected"
+        }.`,
         status: "success",
         duration: 3000, // Duration for the toast in milliseconds
         isClosable: true,
@@ -53,51 +67,62 @@ const Multiple = ({ isOpen, onClose, onConfirm, action, selectedApplications }) 
         status: "error",
         duration: 3000,
         isClosable: true,
-        position: "top",
+        position: "top-right",
       });
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>
-          Confirm {action === "approve" ? "Approval" : "Rejection"}
-        </ModalHeader>
-        <ModalBody>
-          <Text>
-            {action === "approve"
-              ? `Are you sure you want to approve the applications of ` 
-              : `Are you sure you want to reject the applications of ` }
-            <Text as="span" fontWeight="bold">
-              {selectedApplications.length} application{selectedApplications.length > 1 ? "s" : ""}
-            </Text>
-            ?
-          </Text>
-          {selectedApplications.map((application) => (
-            <Text mt={2} key={application.id}>
-              <Text as="span" fontWeight="bold">
-                {application.first_name} {application.last_name}:
-              </Text>{" "}
-              {formatDateTime(application.start_date)} - {formatDateTime(application.end_date)}
-            </Text>
-          ))}
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            colorScheme={action === "approve" ? "green" : "red"}
-            mr={3}
-            onClick={handleConfirm} // Call the handleConfirm function
-          >
-            Yes
-          </Button>
-          <Button variant="ghost" onClick={onClose}>
-            Close
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+    <>
+      {selectedApplications.map((application) => (
+        <Modal
+          isOpen={isOpen}
+          onClose={onClose}
+          isCentered
+          key={application.application_id}
+        >
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>
+              Confirm {action === "approve" ? "Approval" : "Rejection"}
+            </ModalHeader>
+            <ModalBody>
+              <Text>
+                {action === "approve"
+                  ? `Are you sure you want to approve the applications of `
+                  : `Are you sure you want to reject the applications of `}
+                <Text as="span" fontWeight="bold">
+                  {selectedApplications.length} application
+                  {selectedApplications.length > 1 ? "s" : ""}
+                </Text>
+                ?
+              </Text>
+              <Text mt={2}>
+                <Text as="span" fontWeight="bold">
+                  {application.first_name} {application.last_name}:
+                </Text>{" "}
+                {formatDateTime(application.start_date)} -{" "}
+                {formatDateTime(application.end_date)}
+              </Text>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                colorScheme={action === "approve" ? "green" : "red"}
+                mr={3}
+                isLoading={loading}
+                loadingText="Approving"
+                onClick={handleConfirm}
+              >
+                Yes
+              </Button>
+              <Button variant="ghost" onClick={onClose}>
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      ))}
+    </>
   );
 };
 
