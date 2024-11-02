@@ -144,13 +144,17 @@ const createBlacklistDate = async (req, res) => {
             while (currentStartDate.isBefore(recurrenceEndDate)) {
                 let conflictingDates = await Blacklist.findAll({
                     where: {
-                        start_date: {
-                            [Op.between]: [currentStartDate, currentEndDate]
-                        },
-                        end_date: {
-                            [Op.between]: [currentEndDate, currentEndDate]
-                        },
-                        created_by: req.user.id
+                        [Op.and]: {
+                            [Op.or]: {
+                                start_date: {
+                                    [Op.between]: [currentStartDate, currentEndDate]
+                                },
+                                end_date: {
+                                    [Op.between]: [currentEndDate, currentEndDate]
+                                },
+                            },
+                            created_by: req.user.id
+                        }
                     }
                 });
                 if (conflictingDates.length > 0) {
@@ -172,13 +176,17 @@ const createBlacklistDate = async (req, res) => {
         } else {
             let conflictingDates = await Blacklist.findAll({
                 where: {
-                    start_date: {
-                        [Op.between]: [startDateTime, endDateTime]
-                    },
-                    end_date: {
-                        [Op.between]: [startDateTime, endDateTime]
-                    },
-                    created_by: req.user.id
+                    [Op.and]: {
+                        [Op.or]: {
+                            start_date: {
+                                [Op.between]: [startDateTime, endDateTime]
+                            },
+                            end_date: {
+                                [Op.between]: [startDateTime, endDateTime]
+                            }
+                        },
+                        created_by: req.user.id
+                    }
                 }
             });
             if (conflictingDates.length > 0) {
@@ -213,16 +221,21 @@ const updateBlacklistDate = async (req, res) => {
             return res.status(400).json({ message: "Blacklist Date Has Already Passed" });
         let conflictingDates = await Blacklist.findAll({
             where: {
-                blacklist_id: {
-                    [Op.ne]: req.params.blacklist_id
-                },
-                start_date: {
-                    [Op.between]: [req.body.startDateTime, req.body.endDateTime]
-                },
-                end_date: {
-                    [Op.between]: [req.body.startDateTime, req.body.endDateTime]
-                },
-                created_by: req.user.id
+                [Op.and]: {
+                    [Op.or]: {
+                        start_date: {
+                            [Op.between]: [req.body.startDateTime, req.body.endDateTime]
+                        },
+                        end_date: {
+                            [Op.between]: [req.body.startDateTime, req.body.endDateTime]
+                        },
+                    },
+                    blacklist_id: {
+                        [Op.ne]: req.params.blacklist_id
+                    },
+
+                    created_by: req.user.id
+                }
             }
         });
         if (conflictingDates.length > 0)
