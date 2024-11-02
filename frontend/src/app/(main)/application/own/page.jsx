@@ -170,12 +170,14 @@ export default function PendingApplicationPage() {
       });
     }
 
+    console.log("Application status:", applicationToEdit.status);
+
     const apiEndpoint =
-      applicationToEdit.status === "Pending"
-        ? "/api/application/updatePendingApplication"
-        : applicationToEdit.status === "Approved"
-        ? "/api/application/updateApprovedApplication"
-        : null;
+      applicationToEdit.status === "Pending approval"
+      ? "/api/application/updatePendingApplication"
+      : applicationToEdit.status === "Approved"
+      ? "/api/application/updateApprovedApplication"
+      : null;
 
     try {
       const response = await fetch(apiEndpoint, {

@@ -2,6 +2,7 @@ const Application = require('./Application');
 const Blacklist = require('./Blacklist');
 const Employee = require('./Employee');
 const File = require('./File');
+const Notification = require('./Notification');
 const Schedule = require('./Schedule');
 const Session = require('./Session');
 
@@ -131,11 +132,59 @@ File.belongsTo(Employee, {
     as: 'updater',
 });
 
+Notification.belongsTo(Application, {
+    foreignKey: 'linked_application_id',
+    as: 'application',
+});
+
+Application.hasMany(Notification, {
+    foreignKey: 'linked_application_id',
+    as: 'notifications',
+});
+
+Employee.hasMany(Notification, {
+    foreignKey: 'sender_id',
+    as: 'sent_notifications',
+});
+
+Notification.belongsTo(Employee, {
+    foreignKey: 'sender_id',
+    as: 'sender',
+});
+
+Employee.hasMany(Notification, {
+    foreignKey: 'recipient_id',
+    as: 'received_notifications',
+});
+
+Notification.belongsTo(Employee, {
+    foreignKey: 'recipient_id',
+    as: 'recipient',
+});
+
+Employee.hasMany(Notification, {
+    foreignKey: 'created_by',
+});
+
+Notification.belongsTo(Employee, {
+    foreignKey: 'created_by',
+});
+
+Employee.hasMany(Notification, {
+    foreignKey: 'last_update_by',
+});
+
+Notification.belongsTo(Employee, {
+    foreignKey: 'last_update_by',
+});
+
+
 module.exports = {
     Application,
     Blacklist,
     Employee,
     File,
+    Notification,
     Schedule,
     Session,
 };

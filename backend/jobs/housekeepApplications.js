@@ -1,7 +1,8 @@
 const scheduler = require('node-schedule');
-const { Application } = require('../models');
+const { Application, Employee } = require('../models');
 const { sequelize } = require('../services/database/mysql');
 const { Op } = require('sequelize');
+const { sendNotificationEmail } = require('../services/common/applicationHelper');
 
 const job = scheduler.scheduleJob('0 * * * *', async () => {
     const currentDate = new Date();
@@ -23,6 +24,16 @@ const job = scheduler.scheduleJob('0 * * * *', async () => {
             count++;
         }
         await transaction.commit();
+        for (let i = 0; i < pendingApplications.length; i++) {
+            let requestor = await Employee.findByPk(pendingApplications[i].created_by);
+            let approver = await Employee.findByPk(requestor.reporting_manager);
+            await sendNotificationEmail(
+                pendingApplications[i],
+                requestor.email,
+                approver.email,
+                'autoRejectedApplication',
+            );
+        }
         console.info('Housekeep Pending Applications Job rejected ' + count + ' pending applications past their start date');
     } catch (error) {
         await transaction.rollback();
