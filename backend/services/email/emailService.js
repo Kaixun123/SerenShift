@@ -1,47 +1,62 @@
-var nodemailer = require("nodemailer");
-const hbs = require("nodemailer-express-handlebars");
-var fs = require("fs");
-const path = require("path");
-var aws = require("@aws-sdk/client-ses");
-var { defaultProvider } = require("@aws-sdk/credential-provider-node");
+const nodemailer = require("nodemailer");
+const aws = require("@aws-sdk/client-ses");
 
 const ses = new aws.SES({
   apiVersion: "2010-12-01",
   region: "ap-southeast-1",
-  defaultProvider,
 });
 
 var transporter = nodemailer.createTransport({
   SES: { ses, aws },
 });
 
-const handlebarOptions = {
-  viewEngine: {
-    partialsDir: path.resolve("./service/email/template/"),
-    defaultLayout: false,
-  },
-  viewPath: path.resolve("./service/email/template/"),
-};
-
-transporter.use("compile", hbs(handlebarOptions));
-
-function email_broadcast(receiptent, subject, file) {
-  var mailOptions = {
-    from: "workarrangemnent_noreply@SerenShift.com",
-    bcc: receiptent,
+const send_email = async (mainRecipient, subject, message, cc, bcc) => {
+  if (mainRecipient === null || mainRecipient === "") {
+    console.error("Recipient is empty");
+    throw new Error("Recipient is empty");
+  }
+  if (subject === null || subject === "") {
+    console.error("Subject is empty");
+    throw new Error("Subject is empty");
+  }
+  if (message === null || message === "") {
+    console.error("Message is empty");
+    throw new Error("Message is empty");
+  }
+  let mailOptions = {
+    from: process.env.AWS_SES_SENDER_EMAIL,
+    to: mainRecipient,
     subject: subject,
-    html: file,
   };
-
+  if (process.env.AWS_DUMMY_RECEIVER_EMAIL) {
+    mailOptions.text = "To: " + mainRecipient;
+    mailOptions.to = process.env.AWS_DUMMY_RECEIVER_EMAIL;
+    if (cc) {
+      mailOptions.text += "\nCc: " + cc;
+      mailOptions.cc = cc;
+    }
+    if (bcc) {
+      mailOptions.text += "\nBcc: " + bcc;
+      mailOptions.bcc = bcc
+    }
+    mailOptions.text += "\nSubject: " + subject + "\n\n" + message;
+  } else {
+    mailOptions.to = mainRecipient;
+    if (cc)
+      mailOptions.cc = cc;
+    if (bcc)
+      mailOptions.bcc = bcc
+    mailOptions.text = message;
+  }
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
-      console.log(error);
+      console.error(error);
     } else {
       console.log("Email sent: " + info.response);
     }
   });
-}
+};
 
 module.exports = {
-  email_broadcast: email_broadcast,
+  send_email
 };

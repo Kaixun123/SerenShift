@@ -68,6 +68,7 @@ app.use("/api/auth", require("./routes/authHandling"));
 app.use("/api/application", require("./routes/applicationHandling"))
 app.use("/api/blacklist", require("./routes/blacklistHandling"));
 app.use("/api/employee", require("./routes/employeeHandling"));
+app.use("/api/notification", require("./routes/notificationHandling"));
 app.use("/api/schedule", require("./routes/scheduleHandling"));
 
 //Error Handling
