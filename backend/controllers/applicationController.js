@@ -155,7 +155,7 @@ const retrieveApprovedApplications = async (req, res) => {
                             .map(async (application) => {
                                 // Fetch file details for each application
                                 let files = await retrieveFileDetails('application', application.application_id);
-                                
+
                                 return {
                                     application_id: application.application_id,
                                     start_date: application.start_date,
@@ -229,13 +229,17 @@ const createNewApplication = async (req, res) => {
         // Check if the application period is within the blacklist period
         let matchingBlacklists = await Blacklist.findAll({
             where: {
-                start_date: {
-                    [Op.between]: [startDate, endDate]
-                },
-                end_date: {
-                    [Op.between]: [startDate, endDate]
-                },
-                created_by: employeeInfo.reporting_manager
+                [Op.and]: {
+                    [Op.or]: {
+                        start_date: {
+                            [Op.between]: [startDate, endDate]
+                        },
+                        end_date: {
+                            [Op.between]: [startDate, endDate]
+                        }
+                    },
+                    created_by: employeeInfo.reporting_manager
+                }
             }
         })
         if (matchingBlacklists.length > 0) {
@@ -276,13 +280,17 @@ const createNewApplication = async (req, res) => {
                 // Conduct check for overlapping blacklist dates
                 matchingBlacklists = await Blacklist.findAll({
                     where: {
-                        start_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        end_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        created_by: employeeInfo.reporting_manager
+                        [Op.and]: {
+                            [Op.or]: {
+                                start_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                },
+                                end_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                }
+                            },
+                            created_by: employeeInfo.reporting_manager
+                        }
                     }
                 });
 
@@ -635,13 +643,17 @@ const updatePendingApplication = async (req, res) => {
                 // Conduct check for overlapping blacklist dates
                 matchingBlacklists = await Blacklist.findAll({
                     where: {
-                        start_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        end_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        created_by: employeeInfo.reporting_manager
+                        [Op.and]: {
+                            [Op.or]: {
+                                start_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                },
+                                end_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                }
+                            },
+                            created_by: employeeInfo.reporting_manager
+                        }
                     }
                 });
 
@@ -806,13 +818,17 @@ const updateApprovedApplication = async (req, res) => {
                 // Conduct check for overlapping blacklist dates
                 matchingBlacklists = await Blacklist.findAll({
                     where: {
-                        start_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        end_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        created_by: employeeInfo.reporting_manager
+                        [Op.and]: {
+                            [Op.or]: {
+                                start_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                },
+                                end_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                }
+                            },
+                            created_by: employeeInfo.reporting_manager
+                        }
                     }
                 });
 
