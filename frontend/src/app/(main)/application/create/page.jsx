@@ -21,6 +21,7 @@ import {
   Table,
   Thead,
   Tbody,
+  Tfoot,
   Tr,
   Th,
   Td,
@@ -53,6 +54,7 @@ export default function NewApplicationPage() {
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [recurrenceError, setRecurrenceError] = useState(""); // error handling
   const [blacklist, setBlacklist] = useState([]);
+  const [timeslotBlocked, setTimeslotBlocked] = useState([]);
 
   // Tooltip messages based on application type
   const startDateTooltipMessage =
@@ -66,13 +68,25 @@ export default function NewApplicationPage() {
       : "This is the end date for the one-time event.";
 
   const handleCalendarChange = (selectedDates) => {
+    // Clear timeslot first
+    setTimeSlot("");
+    setTimeslotBlocked([]);
     setCalendarValue(selectedDates);
     const [newStartDate, newEndDate] = selectedDates;
+    const formattedStartDate = new Date(newStartDate).toDateString();
+    const formattedEndDate = new Date(newEndDate).toDateString();
 
     setFormattedDate({
-      startDate: newStartDate ? new Date(newStartDate).toDateString() : "",
-      endDate: newEndDate ? new Date(newEndDate).toDateString() : "",
+      startDate: newStartDate ? formattedStartDate : "",
+      endDate: newEndDate ? formattedEndDate : "",
     });
+
+    const checkStartDate = new Date(newStartDate).toLocaleDateString("en-GB");
+    const checkEndDate = new Date(newEndDate).toLocaleDateString("en-GB");
+
+    if (newStartDate != null && newEndDate != null) {
+      setTimeslotBlocked(checkTimeslotBlocked(checkStartDate, checkEndDate));
+    }
   };
 
   const handleTypeSelect = (e) => {
@@ -114,6 +128,30 @@ export default function NewApplicationPage() {
     setRecurrenceEndDate(e.target.value);
   };
 
+  const determineDisplayTimeSlot = (startDateTime, endDateTime) => {
+    let startDateObject = new Date(startDateTime);
+    let endDateObject = new Date(endDateTime);
+    let startTimePeriod = `${String(startDateObject.getHours()).padStart(
+      2,
+      "0"
+    )}:${String(startDateObject.getMinutes()).padStart(2, "0")}:${String(
+      startDateObject.getSeconds()
+    ).padStart(2, "0")}`;
+    let endTimePeriod = `${String(endDateObject.getHours()).padStart(
+      2,
+      "0"
+    )}:${String(endDateObject.getMinutes()).padStart(2, "0")}:${String(
+      endDateObject.getSeconds()
+    ).padStart(2, "0")}`;
+    if (startTimePeriod === "09:00:00" && endTimePeriod === "13:00:00") {
+      return "AM";
+    } else if (startTimePeriod === "14:00:00" && endTimePeriod === "18:00:00") {
+      return "PM";
+    } else if (startTimePeriod === "09:00:00" && endTimePeriod === "18:00:00") {
+      return "Full - Day";
+    } else return "Invaild";
+  };
+
   useEffect(() => {
     async function fetchEmployeeData() {
       try {
@@ -126,13 +164,19 @@ export default function NewApplicationPage() {
           reporting_manager: managerName,
         });
 
-        const blacklistRes = await fetch(`/api/blacklist/getBlockedDates`, {
+        const blacklistRes = await fetch(`/api/blacklist/getBlacklistDates`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
         });
         const blacklistData = await blacklistRes.json();
+        blacklistData.map((blacklist) => {
+          blacklist.timeSlot = determineDisplayTimeSlot(
+            blacklist.start_date,
+            blacklist.end_date
+          );
+        });
         setBlacklist(blacklistData);
       } catch (error) {
         console.error("Error fetching employee data:", error);
@@ -141,8 +185,6 @@ export default function NewApplicationPage() {
 
     fetchEmployeeData();
   }, []);
-
-  console.log(blacklist);
 
   const createNewApplication = async (e) => {
     e.preventDefault();
@@ -351,6 +393,47 @@ export default function NewApplicationPage() {
     );
   };
 
+  const checkTimeslotBlocked = (startDate, endDate) => {
+    const startDateEntry = blacklist.find(
+      (block) =>
+        new Date(block.start_date).toLocaleDateString("en-GB") === startDate
+    );
+
+    const endDateEntry = blacklist.find(
+      (block) =>
+        new Date(block.start_date).toLocaleDateString("en-GB") === endDate
+    );
+
+    const timeslotList = [];
+    // If startDate & endDate are the same block dates
+    if (startDateEntry && startDateEntry === endDateEntry) {
+      timeslotList.push(
+        determineDisplayTimeSlot(
+          startDateEntry.start_date,
+          startDateEntry.end_date
+        )
+      );
+    }
+    // If startDate is the block date
+    else if (startDateEntry) {
+      timeslotList.push(
+        determineDisplayTimeSlot(
+          startDateEntry.start_date,
+          startDateEntry.end_date
+        )
+      );
+    }
+
+    // If endDate is the block date
+    if (endDateEntry && endDateEntry !== startDateEntry) {
+      timeslotList.push(
+        determineDisplayTimeSlot(endDateEntry.start_date, endDateEntry.end_date)
+      );
+    }
+
+    return timeslotList;
+  };
+
   return (
     <main>
       <TopHeader
@@ -373,11 +456,6 @@ export default function NewApplicationPage() {
                 minDate={new Date()}
                 maxDate={
                   new Date(new Date().setFullYear(new Date().getFullYear() + 1))
-                }
-                excludeDate={(date) =>
-                  blacklist
-                    .map((item) => new Date(item.start_date).toDateString())
-                    .includes(date.toDateString())
                 }
                 renderDay={dayRenderer}
                 onChange={handleCalendarChange}
@@ -458,6 +536,7 @@ export default function NewApplicationPage() {
                   <Tr>
                     <Th>Start Date</Th>
                     <Th>End Date</Th>
+                    <Th>Time Slot</Th>
                     <Th>Remarks</Th>
                   </Tr>
                 </Thead>
@@ -480,7 +559,10 @@ export default function NewApplicationPage() {
                               "en-GB"
                             )}
                           </Td>
-                          <Td>{data.remarks ? data.remarks : "No Remarks"}</Td>
+                          <Td>{data.timeSlot}</Td>
+                          <Td className="text-wrap">
+                            {data.remarks ? data.remarks : "No Remarks"}
+                          </Td>
                         </Tr>
                       ))
                   ) : (
@@ -489,6 +571,14 @@ export default function NewApplicationPage() {
                     </Tr>
                   )}
                 </Tbody>
+                <Tfoot>
+                  <Tr>
+                    <Th>Start Date</Th>
+                    <Th>End Date</Th>
+                    <Th>Time Slot</Th>
+                    <Th>Remarks</Th>
+                  </Tr>
+                </Tfoot>
               </Table>
             </TableContainer>
           </Flex>
@@ -582,9 +672,34 @@ export default function NewApplicationPage() {
                   onChange={handleTimeSlot}
                   required
                 >
-                  <option value={"am"}>AM (09:00 - 13:00)</option>
-                  <option value={"pm"}>PM (14:00 - 18:00)</option>
-                  <option value={"fullDay"}>Full Day (09:00 - 18:00)</option>
+                  <option
+                    value="am"
+                    disabled={
+                      timeslotBlocked.includes("AM") ||
+                      timeslotBlocked.includes("Full - Day")
+                    }
+                  >
+                    AM (09:00 - 13:00)
+                  </option>
+                  <option
+                    value="pm"
+                    disabled={
+                      timeslotBlocked.includes("PM") ||
+                      timeslotBlocked.includes("Full - Day")
+                    }
+                  >
+                    PM (14:00 - 18:00)
+                  </option>
+                  <option
+                    value="fullDay"
+                    disabled={
+                      timeslotBlocked.includes("Full - Day") ||
+                      timeslotBlocked.includes("AM") ||
+                      timeslotBlocked.includes("PM")
+                    }
+                  >
+                    Full Day (09:00 - 18:00)
+                  </option>
                 </Select>
               </div>
               <div className="flex w-full flex-wrap lg:flex-nowrap">
