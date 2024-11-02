@@ -115,21 +115,26 @@ export default function TopHeader({ mainText, subText }) {
     }
   };
 
-  const clearAllNotifications = async () => {
+  const markAllAsRead = async () => {
     try {
-      const response = await fetch("/api/notification/clearNotifications", {
+      const response = await fetch("/api/notification/markAllAsRead", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clearAll: true }),
+        body: JSON.stringify({ readAll: true }),
       });
-
       if (response.ok) {
         setNotifications((prevNotifications) =>
-          prevNotifications.map((notification) => ({
-            ...notification,
-            read_status: true,
-          }))
+          prevNotifications.map((n) => ({ ...n, read_status: true }))
         );
+
+        // Show success toast message
+        toast({
+          description: "Your notification marked as read successfully.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+        });
       } else {
         console.error("Failed to clear notifications");
       }
@@ -151,7 +156,7 @@ export default function TopHeader({ mainText, subText }) {
           .slice(0, 5);
         setNotifications(sortedNotifications);
       }
-    } catch (error) {``
+    } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
       setLoading(false);
@@ -233,7 +238,7 @@ export default function TopHeader({ mainText, subText }) {
               <MenuItem>{errorMessage}</MenuItem>
             )}
             <MenuDivider />
-            <Button colorScheme="blue" mx={3} onClick={clearAllNotifications}>
+            <Button colorScheme="blue" mx={3} onClick={markAllAsRead}>
               Mark All As Read
             </Button>
             <MenuDivider />

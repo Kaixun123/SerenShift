@@ -198,6 +198,7 @@ export default function Home() {
           isClosable: true,
           position: "top-right",
         });
+        setNotifications([]);
         handleRefresh();
       } else {
         console.error("Failed to clear notifications");
