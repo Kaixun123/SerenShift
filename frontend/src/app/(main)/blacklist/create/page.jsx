@@ -19,7 +19,7 @@ export default function CreateBlacklistPage() {
     });
     const [timeSlot, setTimeSlot] = useState("");
     const [remarks, setRemarks] = useState("");
-    const [recurrenceRule, setRecurrenceRule] = useState("Select Recurrence Rule");
+    const [recurrenceRule, setRecurrenceRule] = useState("None");
     const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
     const [recurrenceError, setRecurrenceError] = useState("");
     const today = new Date();
@@ -117,7 +117,7 @@ export default function CreateBlacklistPage() {
                 endDateTime: formattedEndDateTime,
                 remarks: remarks,
             }
-            if (recurrenceRule !== "Select Recurrence Rule") {
+            if (recurrenceRule !== "None") {
                 formData.recurrenceRule = recurrenceRule;
                 formData.recurrenceEndDate = recurrenceEndDate;
             }
@@ -150,6 +150,8 @@ export default function CreateBlacklistPage() {
             }
         } catch (error) {
             console.error("Error creating new blacklist:", error);
+        } finally {
+            setLoading(false);
         }
     }
     const handleRetrieveExistingBlacklistDates = async () => {
@@ -278,12 +280,13 @@ export default function CreateBlacklistPage() {
                                     value={recurrenceRule}
                                     onChange={(e) => setRecurrenceRule(e.target.value)}
                                 >
-                                    <option value={"Select Recurrence Rule"} selected>Select Recurrence Rule</option>
+                                    <option value={"None"} selected>None</option>
+                                    <option value={"day"}>Daily</option>
                                     <option value={"week"}>Weekly</option>
                                     <option value={"month"}>Monthly</option>
                                 </Select>
                             </div>
-                            {recurrenceRule != "Select Recurrence Rule" && (
+                            {recurrenceRule != "None" && (
                                 <div isinvalid={recurrenceError ? "true" : undefined}>
                                     <FormLabel
                                         className="w-full"

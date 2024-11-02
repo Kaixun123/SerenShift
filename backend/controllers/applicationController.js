@@ -155,7 +155,7 @@ const retrieveApprovedApplications = async (req, res) => {
                             .map(async (application) => {
                                 // Fetch file details for each application
                                 let files = await retrieveFileDetails('application', application.application_id);
-                                
+
                                 return {
                                     application_id: application.application_id,
                                     start_date: application.start_date,
@@ -229,13 +229,17 @@ const createNewApplication = async (req, res) => {
         // Check if the application period is within the blacklist period
         let matchingBlacklists = await Blacklist.findAll({
             where: {
-                start_date: {
-                    [Op.between]: [startDate, endDate]
-                },
-                end_date: {
-                    [Op.between]: [startDate, endDate]
-                },
-                created_by: employeeInfo.reporting_manager
+                [Op.and]: {
+                    [Op.or]: {
+                        start_date: {
+                            [Op.between]: [startDate, endDate]
+                        },
+                        end_date: {
+                            [Op.between]: [startDate, endDate]
+                        }
+                    },
+                    created_by: employeeInfo.reporting_manager
+                }
             }
         })
         if (matchingBlacklists.length > 0) {
@@ -276,13 +280,17 @@ const createNewApplication = async (req, res) => {
                 // Conduct check for overlapping blacklist dates
                 matchingBlacklists = await Blacklist.findAll({
                     where: {
-                        start_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        end_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        created_by: employeeInfo.reporting_manager
+                        [Op.and]: {
+                            [Op.or]: {
+                                start_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                },
+                                end_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                }
+                            },
+                            created_by: employeeInfo.reporting_manager
+                        }
                     }
                 });
 
@@ -309,6 +317,11 @@ const createNewApplication = async (req, res) => {
             }
         }
         await transaction.commit();
+
+        if (newApplication || employeeInfo || managerInfo) {
+            await sendNotificationEmail(newApplication, employeeInfo, managerInfo, "createApplication");
+        }
+
         return res.status(201).json({ message: "New application successfully created.", result: newApplication })
     } catch (error) {
         await transaction.rollback();
@@ -361,6 +374,11 @@ const approvePendingApplication = async (req, res) => {
             last_update_by: req.user.id
         }, { transaction });
         await transaction.commit();
+
+        if (application || requestor || approver) {
+            await sendNotificationEmail(application, requestor, approver, "approvedApplication");
+        }
+
         return res.status(200).json({ message: "Application approved successfully" });
     } catch (error) {
         await transaction.rollback();
@@ -389,6 +407,11 @@ const rejectPendingApplication = async (req, res) => {
         application.approver_remarks = approverRemarks;
         await application.save({ transaction });
         await transaction.commit();
+
+        if (application || requestor || approver) {
+            await sendNotificationEmail(application, requestor, approver, "rejectedApplication");
+        }
+
         return res.status(200).json({ message: "Application rejected successfully" });
     } catch (error) {
         await transaction.rollback();
@@ -432,6 +455,11 @@ const withdrawPendingApplication = async (req, res) => {
         application.status = 'Withdrawn';
         await application.save();
 
+        //send email
+        if (application || currentEmployee || managerInfo) {
+            await sendNotificationEmail(application, currentEmployee, managerInfo, "withdrawnApplication");
+        }
+
         // Send a response with the updated application
         res.status(200).json({
             message: 'Application updated to withdrawn successfully',
@@ -449,7 +477,7 @@ const withdrawApprovedApplication = async (req, res) => {
         const managerId = req.user.id;
 
         // Find the corresponding application by matching application_id
-        const application = await Application.findByPk(application_id);
+        let application = await Application.findByPk(application_id);
         if (!application) {
             return res.status(404).json({ message: 'Application not found or not authorized' });
         }
@@ -493,8 +521,13 @@ const withdrawApprovedApplication = async (req, res) => {
         // Delete the corresponding schedule
         await schedule.destroy();
 
-        res.status(200).json({
-            message: 'Application updated to withdrawn and schedule deleted successfully',
+        //send email
+        if (application || requestor || approver) {
+            await sendNotificationEmail(application, requestor, approver, "withdrawnApplication");
+        }
+
+        return res.status(200).json({
+            message: 'Application updated to withdrawn successfully',
         });
     } catch (error) {
         console.error('Error withdrawing application:', error);
@@ -635,13 +668,17 @@ const updatePendingApplication = async (req, res) => {
                 // Conduct check for overlapping blacklist dates
                 matchingBlacklists = await Blacklist.findAll({
                     where: {
-                        start_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        end_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        created_by: employeeInfo.reporting_manager
+                        [Op.and]: {
+                            [Op.or]: {
+                                start_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                },
+                                end_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                }
+                            },
+                            created_by: employeeInfo.reporting_manager
+                        }
                     }
                 });
 
@@ -663,7 +700,12 @@ const updatePendingApplication = async (req, res) => {
             }
         }
         await transaction.commit();
-        console.log("Updated Application:", application);
+
+        //send email
+        if (application || employeeInfo || managerInfo) {
+            await sendNotificationEmail(application, employeeInfo, managerInfo, "updateApplication");
+        }
+
         return res.status(200).json({ message: "Pending application successfully updated.", result: application });
     } catch (error) {
         await transaction.rollback();
@@ -806,13 +848,17 @@ const updateApprovedApplication = async (req, res) => {
                 // Conduct check for overlapping blacklist dates
                 matchingBlacklists = await Blacklist.findAll({
                     where: {
-                        start_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        end_date: {
-                            [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
-                        },
-                        created_by: employeeInfo.reporting_manager
+                        [Op.and]: {
+                            [Op.or]: {
+                                start_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                },
+                                end_date: {
+                                    [Op.between]: [currentStartDate.toDate(), currentEndDate.toDate()]
+                                }
+                            },
+                            created_by: employeeInfo.reporting_manager
+                        }
                     }
                 });
 
@@ -834,6 +880,11 @@ const updateApprovedApplication = async (req, res) => {
             }
         }
         await transaction.commit();
+
+        //send email
+        if (newApplication || employeeInfo || managerInfo) {
+            await sendNotificationEmail(newApplication, employeeInfo, managerInfo, "updateApplication");
+        }
 
         return res.status(201).json({ message: "Application has been updated for manager approval" });
     } catch (error) {
@@ -876,7 +927,7 @@ const rejectWithdrawalOfApprovedApplication = async (req, res) => {
         application.last_update_by = managerId;
         await application.save();
 
-        res.status(200).json({
+        return res.status(200).json({
             message: 'Reject withdrawal of approved application successfully',
         });
     } catch (error) {
