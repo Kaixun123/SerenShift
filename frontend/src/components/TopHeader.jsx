@@ -20,18 +20,27 @@ import {
 } from "@chakra-ui/react";
 import { IoNotificationsOutline } from "react-icons/io5";
 import { BsDot } from "react-icons/bs";
-import { FaCheckCircle, FaTimesCircle, FaExclamationCircle } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaTimesCircle,
+  FaExclamationCircle,
+} from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
 export default function TopHeader({ mainText, subText }) {
   const [employee, setEmployee] = useState({ name: "", position: "" });
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const router = useRouter();
   const toast = useToast();
 
   const handleLogout = async () => {
-    const response = await fetch("/api/auth/logout", { method: "GET", credentials: "include" });
+    const response = await fetch("/api/auth/logout", {
+      method: "GET",
+      credentials: "include",
+    });
     if (response.ok) {
       toast({
         title: "Logout Success",
@@ -57,7 +66,10 @@ export default function TopHeader({ mainText, subText }) {
       const response = await fetch("/api/auth/me");
       if (!response.ok) router.push("/auth/login");
       const data = await response.json();
-      setEmployee({ name: `${data.first_name} ${data.last_name}`, position: data.position });
+      setEmployee({
+        name: `${data.first_name} ${data.last_name}`,
+        position: data.position,
+      });
     } catch (error) {
       console.error("Error fetching employee data:", error);
     }
@@ -76,11 +88,14 @@ export default function TopHeader({ mainText, subText }) {
 
   const markAsRead = async (notification_id) => {
     try {
-      const response = await fetch("/api/notification/updateNotificationReadStatus", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notification_id }),
-      });
+      const response = await fetch(
+        "/api/notification/updateNotificationReadStatus",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notification_id }),
+        }
+      );
 
       if (response.ok) {
         setNotifications((prevNotifications) =>
@@ -107,10 +122,13 @@ export default function TopHeader({ mainText, subText }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clearAll: true }),
       });
-  
+
       if (response.ok) {
         setNotifications((prevNotifications) =>
-          prevNotifications.map((notification) => ({ ...notification, read_status: true }))
+          prevNotifications.map((notification) => ({
+            ...notification,
+            read_status: true,
+          }))
         );
       } else {
         console.error("Failed to clear notifications");
@@ -124,8 +142,16 @@ export default function TopHeader({ mainText, subText }) {
     try {
       const response = await fetch("/api/notification/retrieveNotifications");
       const data = await response.json();
-      setNotifications((data || []).sort((a, b) => a.read_status - b.read_status));
-    } catch (error) {
+
+      if (data.message) {
+        setErrorMessage(data.message);
+      } else {
+        const sortedNotifications = data
+          .sort((a, b) => a.read_status - b.read_status)
+          .slice(0, 5);
+        setNotifications(sortedNotifications);
+      }
+    } catch (error) {``
       console.error("Error fetching notifications:", error);
     } finally {
       setLoading(false);
@@ -145,13 +171,27 @@ export default function TopHeader({ mainText, subText }) {
       </div>
       <HStack spacing={4}>
         <Menu>
-          <MenuButton as={IconButton} icon={<IoNotificationsOutline size={30} />} variant="ghost" aria-label="Notifications">
+          <MenuButton
+            as={IconButton}
+            icon={<IoNotificationsOutline size={30} />}
+            variant="ghost"
+            aria-label="Notifications"
+          >
             <Box position="relative">
-              <Badge colorScheme="red" borderRadius="full" boxSize={3} position="absolute" top="-1" right="-1" />
+              <Badge
+                colorScheme="red"
+                borderRadius="full"
+                boxSize={3}
+                position="absolute"
+                top="-1"
+                right="-1"
+              />
             </Box>
           </MenuButton>
           <MenuList>
-            <Text fontWeight="bold" px={3}>Click on notification to mark as read</Text>
+            <Text fontWeight="bold" px={3}>
+              Click on notification to mark as read
+            </Text>
             {loading ? (
               <Flex justify="center" align="center">
                 <Spinner />
@@ -161,28 +201,45 @@ export default function TopHeader({ mainText, subText }) {
                 <MenuItem
                   key={notification.notification_id}
                   onClick={() => markAsRead(notification.notification_id)}
-                  style={{ color: notification.read_status ? "lightgray" : "black" }}
+                  style={{
+                    color: notification.read_status ? "lightgray" : "black",
+                  }}
                 >
                   <Flex align="center" justify="space-between">
                     <Flex align="center">
-                      {renderStatusIcon(notification.notification_type, notification.read_status)}
-                      <Text ml={2} whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+                      {renderStatusIcon(
+                        notification.notification_type,
+                        notification.read_status
+                      )}
+                      <Text
+                        ml={2}
+                        whiteSpace="nowrap"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                      >
                         {notification.content}
                       </Text>
                     </Flex>
-                    {!notification.read_status && <BsDot color="red" style={{ fontSize: "24px", marginLeft: "8px" }} />}
+                    {!notification.read_status && (
+                      <BsDot
+                        color="red"
+                        style={{ fontSize: "24px", marginLeft: "8px" }}
+                      />
+                    )}
                   </Flex>
                 </MenuItem>
               ))
             ) : (
-              <MenuItem>No notifications available.</MenuItem>
+              <MenuItem>{errorMessage}</MenuItem>
             )}
             <MenuDivider />
             <Button colorScheme="blue" mx={3} onClick={clearAllNotifications}>
               Mark All As Read
             </Button>
             <MenuDivider />
-            <MenuItem as="a" href="/">View All Notifications</MenuItem>
+            <MenuItem as="a" href="/">
+              View All Notifications
+            </MenuItem>
           </MenuList>
         </Menu>
 
