@@ -164,7 +164,7 @@ export default function NewApplicationPage() {
           reporting_manager: managerName,
         });
 
-        const blacklistRes = await fetch(`/api/blacklist/getBlacklistDates`, {
+        const blacklistRes = await fetch(`/api/blacklist/getBlockedDates`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -494,7 +494,7 @@ export default function NewApplicationPage() {
             <div className="w-full lg:w-1/2">
               <FormLabel>
                 <Box display="inline-flex" alignItems="center" gap={2}>
-                  {type === "Regular" ? "Event End" : "Start End"}{" "}
+                  {type === "Regular" ? "Event End" : "End Date"}{" "}
                   <Tooltip label={endDateTooltipMessage} fontSize="md">
                     <span>
                       <AiOutlineInfoCircle size={15} color="grey" />
@@ -613,6 +613,7 @@ export default function NewApplicationPage() {
                       value={recurrenceRule}
                       onChange={(e) => setRecurrenceRule(e.target.value)}
                     >
+                      <option value={"day"}>Daily</option>
                       <option value={"week"}>Weekly</option>
                       <option value={"month"}>Monthly</option>
                     </Select>
