@@ -1,4 +1,4 @@
-"use client";
+'use client'
 import TopHeader from "@/components/TopHeader";
 import { useEffect, useState } from "react";
 import {
@@ -13,14 +13,14 @@ import {
   Flex,
   Button,
 } from "@chakra-ui/react";
-import { FaCheckCircle, FaTimesCircle, FaExclamationCircle } from "react-icons/fa"; // Icons for status types
-import { BsDot } from "react-icons/bs"; // For unread notification dot
+import { FaCheckCircle, FaTimesCircle, FaExclamationCircle } from "react-icons/fa";
+import { BsDot } from "react-icons/bs";
 
 export default function Home() {
   const [employee, setEmployee] = useState({ name: "" });
   const [greeting, setGreeting] = useState("");
-  const [notifications, setNotifications] = useState([]); // State for notifications
-  const [loading, setLoading] = useState(true); // State for loading notifications
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchEmployeeData() {
@@ -33,14 +33,8 @@ export default function Home() {
       } catch (error) {
         console.error("Error fetching employee data:", error);
       } finally {
-        let date = new Date();
-        if (date.getHours() >= 12 && date.getHours() < 18) {
-          setGreeting("Good Afternoon");
-        } else if (date.getHours() >= 18) {
-          setGreeting("Good Evening");
-        } else {
-          setGreeting("Good Morning");
-        }
+        const date = new Date();
+        setGreeting(date.getHours() >= 18 ? "Good Evening" : date.getHours() >= 12 ? "Good Afternoon" : "Good Morning");
       }
     }
 
@@ -48,63 +42,46 @@ export default function Home() {
       try {
         const response = await fetch("/api/notification/retrieveNotifications");
         const data = await response.json();
-        const sortedNotifications = (data || []).sort((a, b) => {
-          return a.read_status - b.read_status; // Unread (false) will be sorted before read (true)
-        });
-        setNotifications(sortedNotifications); // Set sorted notifications
+        const sortedNotifications = (data || []).sort((a, b) => a.read_status - b.read_status);
+        setNotifications(sortedNotifications);
       } catch (error) {
         console.error("Error fetching notifications:", error);
       } finally {
-        setLoading(false); // Set loading to false after fetching
+        setLoading(false);
       }
     }
 
     fetchEmployeeData();
-    fetchNotifications(); // Call to fetch notifications
+    fetchNotifications();
   }, []);
 
-  // Function to render the icon based on notification type
   const renderStatusIcon = (type, read_status) => {
-    if (read_status) return null; // Don't show the icon if the notification is read
+    if (read_status) return null;
     switch (type) {
-      case "Approved":
-        return <FaCheckCircle color="green" />;
-      case "Rejected":
-        return <FaTimesCircle color="red" />;
-      case "Withdrawn":
-        return <FaCheckCircle color="blue" />;
-      case "Pending":
-        return <FaExclamationCircle color="orange" />;
-      default:
-        return null;
+      case "Approved": return <FaCheckCircle color="green" />;
+      case "Rejected": return <FaTimesCircle color="red" />;
+      case "Withdrawn": return <FaCheckCircle color="blue" />;
+      case "Pending": return <FaExclamationCircle color="orange" />;
+      default: return null;
     }
   };
 
-  // Function to mark notifications as read
   const markAsRead = async (notification_id) => {
     try {
       const response = await fetch("/api/notification/updateNotificationReadStatus", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notification_id }),
       });
 
       if (response.ok) {
         setNotifications((prevNotifications) => {
           const updatedNotifications = prevNotifications.map((notification) =>
-            notification.notification_id === notification_id
-              ? { ...notification, read_status: true }
-              : notification
+            notification.notification_id === notification_id ? { ...notification, read_status: true } : notification
           );
-
-        // Separate read and unread notifications
-        const unreadNotifications = updatedNotifications.filter(notification => !notification.read_status);
-        const readNotifications = updatedNotifications.filter(notification => notification.read_status);
-
-        // Move the read notification to the start
-        return [...unreadNotifications, ...readNotifications]; // Combine unread notifications with the newly read one at the end
+          const unreadNotifications = updatedNotifications.filter(n => !n.read_status);
+          const readNotifications = updatedNotifications.filter(n => n.read_status);
+          return [...unreadNotifications, ...readNotifications];
         });
       } else {
         console.error("Failed to update notification read status");
@@ -114,25 +91,15 @@ export default function Home() {
     }
   };
 
-  // Function to clear all notifications
   const clearAllNotifications = async () => {
     try {
       const response = await fetch("/api/notification/clearNotifications", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ clearAll: true }), // Send clearAll flag
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clearAll: true }),
       });
-  
       if (response.ok) {
-        // Update the read_status of all notifications to true
-        setNotifications((prevNotifications) =>
-          prevNotifications.map((notification) => ({
-            ...notification,
-            read_status: true, // Mark all as read
-          }))
-        );
+        setNotifications(prevNotifications => prevNotifications.map(n => ({ ...n, read_status: true })));
       } else {
         console.error("Failed to clear notifications");
       }
@@ -140,106 +107,79 @@ export default function Home() {
       console.error("Error clearing notifications:", error);
     }
   };
-  
 
   return (
-        <main>
-          <TopHeader
-            mainText={`${greeting}, ${employee.name}!`}
-            subText={`Glad to see you back in the office`}
-          />
-          <div className="p-[30px]">
-            <Box mt={4} overflowX="auto">
-              {loading ? ( // Show loading spinner while fetching notifications
-                <Spinner size="xl" />
-              ) : (
-                <Table variant="simple">
-                  <Thead>
-                    <Tr>
-                      <Th>ID</Th>
-                      <Th>Type</Th>
-                      <Th>Description</Th>
-                      <Th>Date</Th>
-                      <Th>Actions</Th> {/* Added column for actions */}
+    <main>
+      <TopHeader mainText={`${greeting}, ${employee.name}!`} subText="Glad to see you back in the office" />
+      <div className="p-[30px]">
+        <Box mt={4} overflowX="auto">
+          {loading ? (
+            <Spinner size="xl" />
+          ) : (
+            <Table variant="simple">
+              <Thead>
+                <Tr>
+                  <Th>ID</Th>
+                  <Th>Type</Th>
+                  <Th>Description</Th>
+                  <Th>Sender</Th>
+                  <Th>Application Details</Th>
+                  <Th>Date</Th>
+                  <Th>Actions</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <Tr key={notification.notification_id}>
+                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
+                        {notification.notification_id}
+                      </Td>
+                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
+                        <Flex align="center">
+                          {renderStatusIcon(notification.notification_type, notification.read_status)}
+                          <span style={{ marginLeft: "8px" }}>{notification.notification_type}</span>
+                        </Flex>
+                      </Td>
+                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
+                        {notification.content}
+                      </Td>
+                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
+                        {`${notification.senderInfo.first_name} ${notification.senderInfo.last_name} (${notification.senderInfo.position}, ${notification.senderInfo.department})`}
+                      </Td>
+                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
+                        {`Start: ${new Date(notification.application_info.start_date).toLocaleDateString()}, End: ${new Date(notification.application_info.end_date).toLocaleDateString()}`}
+                      </Td>
+                      <Td style={{ color: notification.read_status ? "lightgray" : "black" }}>
+                        {new Date(notification.created_timestamp).toLocaleString()}
+                      </Td>
+                      <Td>
+                        <Flex align="center" justify="space-between">
+                          {!notification.read_status && <BsDot color="red" style={{ fontSize: "48px", marginLeft: "8px" }} />}
+                          {!notification.read_status && (
+                            <Button size="sm" ml={2} colorScheme="blue" onClick={() => markAsRead(notification.notification_id)}>
+                              Mark as Read
+                            </Button>
+                          )}
+                        </Flex>
+                      </Td>
                     </Tr>
-                  </Thead>
-                  <Tbody>
-                    {notifications.length > 0 ? (
-                      notifications.map((notification) => (
-                        <Tr key={notification.notification_id}>
-                          <Td
-                            style={{
-                              color: notification.read_status ? "lightgray" : "black",
-                            }}
-                          >
-                            {notification.notification_id}
-                          </Td>
-                          <Td
-                            style={{
-                              color: notification.read_status ? "lightgray" : "black",
-                            }}
-                          >
-                            <Flex align="center">
-                              {renderStatusIcon(notification.notification_type, notification.read_status)}
-                              <span style={{ marginLeft: "8px" }}>
-                                {notification.notification_type}
-                              </span>
-                            </Flex>
-                          </Td>
-                          <Td
-                            style={{
-                              color: notification.read_status ? "lightgray" : "black",
-                            }}
-                          >
-                            {notification.content}
-                          </Td>
-                          <Td
-                            style={{
-                              color: notification.read_status ? "lightgray" : "black",
-                            }}
-                          >
-                            {new Date(notification.created_timestamp).toLocaleString()}
-                          </Td>
-                          <Td>
-                            <Flex align="center" justify="space-between">
-                              {/* Red Dot */}
-                              {!notification.read_status && (
-                                <BsDot color="red" style={{ fontSize: "48px", marginLeft: "8px" }} />
-                              )}
-
-                              {/* Mark as Read Button */}
-                              {!notification.read_status && (
-                                <Button
-                                  size="sm"
-                                  ml={2}
-                                  colorScheme="blue"
-                                  onClick={() => markAsRead(notification.notification_id)}
-                                >
-                                  Mark as Read
-                                </Button>
-                              )}
-                            </Flex>
-                          </Td>
-                        </Tr>
-                      ))
-                    ) : (
-                      <Tr>
-                        <Td colSpan={5} textAlign="center">
-                          No notifications available.
-                        </Td>
-                      </Tr>
-                    )}
-                  </Tbody>
-                </Table>
-              )}
-            </Box>
-            {/* Clear All Notifications Button placed outside the table */}
-            <Flex justify="flex-end" mt={4}>
-              <Button colorScheme="red" onClick={clearAllNotifications}>
-                Mark All as Read
-              </Button>
-            </Flex>
-          </div>
-        </main>
+                  ))
+                ) : (
+                  <Tr>
+                    <Td colSpan={7} textAlign="center">No notifications available.</Td>
+                  </Tr>
+                )}
+              </Tbody>
+            </Table>
+          )}
+        </Box>
+        <Flex justify="flex-end" mt={4}>
+          <Button colorScheme="red" onClick={clearAllNotifications}>
+            Mark All as Read
+          </Button>
+        </Flex>
+      </div>
+    </main>
   );
 }
