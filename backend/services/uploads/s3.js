@@ -116,6 +116,7 @@ const retrieveFileDetails = async (relatedEntityType, relatedEntityID) => {
                 file_name: file.file_name,
                 file_extension: file.file_extension,
                 download_url: presignedUrl,
+                created_by: file.created_by,
                 s3_key: file.s3_key,
             });
         } else {
@@ -187,13 +188,57 @@ const copyFileInS3 = async (oldKey, newKey) => {
     console.log("copy params", copyParams);
 
     try{
-        await s3.send(new CopyObjectCommand(copyParams));
-        console.log(`File copied successfully from ${oldKey} to ${newKey}`);
+        const fileExists = await checkFileExists(oldKey);
+        if (fileExists) {
+            await s3.send(new CopyObjectCommand(copyParams));
+            console.log(`File copied successfully from ${oldKey} to ${newKey}`);
+        } else {
+            console.log(`File not found at ${oldKey}, retrieving and uploading new file to ${newKey}`);
+            const fileData = await getFileFromS3(oldKey);
+            const uploadParams = {
+                Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
+                Key: newKey,
+                Body: fileData.buffer,
+                ContentType: fileData.mimetype,
+            };
+            await s3.send(new PutObjectCommand(uploadParams));
+            console.log(`New file uploaded successfully to ${newKey}`);
+        }
     } catch (error) {
         console.error("Error copying file in S3:", error);
         throw error;
     }
 }
+
+//helper function to get file information
+const getFileFromS3 = async (s3Key) => {
+    const params = {
+        Bucket: process.env.AWS_S3_UPLOADS_BUCKET,
+        Key: s3Key,
+    };
+
+    try {
+        const data = await s3.send(new GetObjectCommand(params));
+        const buffer = await streamToBuffer(data.Body);
+        return {
+            buffer,
+            mimetype: data.ContentType,
+        };
+    } catch (error) {
+        console.error("Error retrieving file from S3:", error);
+        throw error;
+    }
+};
+
+// Helper function to convert stream to buffer
+const streamToBuffer = (stream) => {
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+        stream.on('error', reject);
+    });
+};
 
 // Generate a pre-signed URL for downloading/viewing a file
 const generatePresignedUrl = async (s3Key, expiresIn = 600) => {
@@ -233,4 +278,5 @@ module.exports = {
     deleteFile,
     deleteAllFiles,
     copyFileInS3,
+    checkFileExists,
 };

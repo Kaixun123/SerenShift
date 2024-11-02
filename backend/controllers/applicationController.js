@@ -944,9 +944,11 @@ const withdrawSpecificDates = async (req, res) => {
             console.log("remaining dates to create a new application", remainingDates);
 
             // Handle the blocks of dates -- create new Application entries to reflect the unwithdrawn dates
+            let isFirstBlock = true;
             for (const block of remainingDates) {
                 try {
-                    await createSimilarApplication(block, existingApprovedApp, files);
+                    await createSimilarApplication(block, existingApprovedApp, files, isFirstBlock);
+                    isFirstBlock = false;
                     console.log("new application created.");
                 } catch (error) {
                     console.error("Error creating new application:", error);
@@ -967,7 +969,7 @@ const withdrawSpecificDates = async (req, res) => {
 
 
 // Helper function to withdrawSpecificDates - to create new application similar to a given existing application 
-const createSimilarApplication = async (newStartEnd, existingApprovedApp, files) => {
+const createSimilarApplication = async (newStartEnd, existingApprovedApp, files, isFirstBlock) => {
     try {
         const transaction = await sequelize.transaction();
         // const files = await retrieveFileDetails('application', existingApprovedApp.application_id);
@@ -1030,8 +1032,7 @@ const createSimilarApplication = async (newStartEnd, existingApprovedApp, files)
                         const newS3Key = `${process.env.NODE_ENV}/application/${newApplication.application_id}/${newFileName}`.toLowerCase();
                         await copyFileInS3(file.s3_key, newS3Key);
                         console.log("copied updated file to S3");
-                        await updateFileDetails(file.file_id, newApplication.application_id, newS3Key);
-                        console.log("done")
+                        await updateFileDetails(file.file_id, newApplication.application_id, newS3Key, file, isFirstBlock);
                     }
                 }
 

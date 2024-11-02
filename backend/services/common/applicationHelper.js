@@ -1,6 +1,6 @@
 const moment = require('moment'); // Ensure moment.js is installed
 const { splitScheduleByDate } = require('./scheduleHelper');
-const { uploadFile } = require('../uploads/s3');
+const { uploadFile, checkFileExists } = require('../uploads/s3');
 const { File } = require('../../models');
 
 const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationType) => {
@@ -123,18 +123,35 @@ const uploadFilesToS3 = async (files, applicationId, userId) => {
     await Promise.all(uploadPromises);
 };
 
-const updateFileDetails = async(fileId, newApplicationId, newS3Key) => {
+const updateFileDetails = async(fileId, newApplicationId, newS3Key, file, isFirstBlock) => {
     try {
-        await File.update(
-            {
+        const fileExists = await checkFileExists(newS3Key);
+        if (fileExists && !isFirstBlock) {
+            // Update the existing file row
+            await File.update(
+                {
+                    related_entity_id: newApplicationId,
+                    s3_key: newS3Key,
+                },
+                {
+                    where: { file_id: fileId },
+                }
+            );
+            console.log(`File details updated successfully for file ID ${fileId}`);
+        } else {
+
+            // Create a new file row
+            await File.create({
                 related_entity_id: newApplicationId,
                 s3_key: newS3Key,
-            },
-            {
-                where: { file_id: fileId },
-            }
-        );
-        console.log(`File details updated successfully for file ID ${fileId}`);
+                file_name: file.file_name,
+                file_extension: file.file_extension,
+                related_entity: "Application",
+                created_by: file.created_by,
+                last_update_by: file.created_by,
+            });
+            console.log(`New file row created successfully for file ID ${fileId}`);
+        }
     } catch (error) {
         console.error("Error updating file details:", error);
         throw error;
