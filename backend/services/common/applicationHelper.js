@@ -75,11 +75,11 @@ const splitConsecutivePeriodByDay = (startDate, endDate) => {
     const results = [];
     // Validate dates
     if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
-      console.error("Invalid dates provided:", startDate, endDate);
-      return [];
+        console.error("Invalid dates provided:", startDate, endDate);
+        return [];
     } else {
-      console.log("Splitting consecutive period by day:", startDate, endDate);
-      console.log("Valid dates provided:", startDate, endDate);
+        console.log("Splitting consecutive period by day:", startDate, endDate);
+        console.log("Valid dates provided:", startDate, endDate);
     }
 
     let currentDate = new Date(startDate);
@@ -88,22 +88,22 @@ const splitConsecutivePeriodByDay = (startDate, endDate) => {
     endDateTime.setUTCHours(0, 0, 0, 0);
 
     if (currentDate > endDateTime) {
-      console.error("startDate is after endDate:", startDate, endDate);
-      return [];
+        console.error("startDate is after endDate:", startDate, endDate);
+        return [];
     } else {
-      console.log("startDate is before or equal to endDate:", startDate, endDate);
+        console.log("startDate is before or equal to endDate:", startDate, endDate);
     }
 
     while (currentDate <= endDateTime) {
-      // Clone currentDate for start and end times for the current day
-      const newDay = new Date(currentDate);
-      results.push(newDay);
-  
-      // Move to the next day
-      currentDate.setDate(currentDate.getDate() + 1);
+        // Clone currentDate for start and end times for the current day
+        const newDay = new Date(currentDate);
+        results.push(newDay);
+
+        // Move to the next day
+        currentDate.setDate(currentDate.getDate() + 1);
     }
     return results;
-  };
+};
 
 // Helper Function to upload files to S3
 const uploadFilesToS3 = async (files, applicationId, userId) => {
@@ -128,12 +128,15 @@ const emailTemplates = {
     },
     "withdrawnApplication": {
         subject: "A WFH application has been withdrawn",
+    },
+    "autoRejectedApplication": {
+        subject: "Your WFH application has been auto-rejected by the system",
     }
 }
 
 const sendNotificationEmail = async (application, requestor, recipient, eventType, cc, bcc) => {
     if (!application || !requestor || !recipient || !eventType)
-        console.error("One or more of the required parameters are missing");   
+        console.error("One or more of the required parameters are missing");
     else {
         try {
             console.log(application);
@@ -156,41 +159,49 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
             let message = "";
             const { subject } = template;
 
-            switch(eventType){
+            switch (eventType) {
                 case "createApplication":
-                    message += "Hi " + recipient.first_name +" " + recipient.last_name+
-                    ",\n\nYou have a pending Work From Home Request from "+requestor.first_name +
-                    " "+requestor.last_name+". Kindly review and make your decision at your earlier convinence.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
-                    "\nRemarks: "+ application.requestor_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    message += "Hi " + recipient.first_name + " " + recipient.last_name +
+                        ",\n\nYou have a pending Work From Home Request from " + requestor.first_name +
+                        " " + requestor.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "approvedApplication":
-                    message += "Hi " + requestor.first_name +" " + requestor.last_name+
-                    ",\n\nYour application has been approved by "+ recipient.first_name +
-                    " "+requestor.last_name+". Kindly review your application at your earlier convinence.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
-                    "\nRemarks: "+ application.approver_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    message += "Hi " + requestor.first_name + " " + requestor.last_name +
+                        ",\n\nYour application has been approved by " + recipient.first_name +
+                        " " + requestor.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "rejectedApplication":
-                    message += "Hi " + requestor.first_name +" " + requestor.last_name+
-                    ",\n\nYour application has been rejected by "+ recipient.first_name +
-                    " "+requestor.last_name+". Kindly review your application at your earlier convinence.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
-                    "\nRemarks: "+ application.approver_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    message += "Hi " + requestor.first_name + " " + requestor.last_name +
+                        ",\n\nYour application has been rejected by " + recipient.first_name +
+                        " " + requestor.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "updateApplication":
-                    message += "Hi " + recipient.first_name +" " + recipient.last_name+
-                    ",\n\nYour authorized application has been modified by "+ requestor.first_name +
-                    " "+requestor.last_name+". Kindly review and make your decision at your earlier convinence.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
-                    "\nRemarks: "+ application.requestor_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    message += "Hi " + recipient.first_name + " " + recipient.last_name +
+                        ",\n\nYour authorized application has been modified by " + requestor.first_name +
+                        " " + requestor.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "withdrawnApplication":
-                    message += "Hi " + requestor.first_name +" " + requestor.last_name+
-                    ",\n\nYour authorized application has been withdrawn by "+ recipient.first_name +
-                    " "+requestor.last_name+". Kindly reach to your team member at your earlier convinence.\n\n"+
-                    "Requested WFH Start Period: "+ startDate.toLocaleDateString()+"\nRequested WFH End Period: "+ endDate.toLocaleDateString() +
-                    "\nRemarks: "+ application.requestor_remarks+"\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    message += "Hi " + requestor.first_name + " " + requestor.last_name +
+                        ",\n\nYour authorized application has been withdrawn by " + recipient.first_name +
+                        " " + requestor.last_name + ". Kindly reach to your team member at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    break;
+                case "autoRejectedApplication":
+                    if (!cc)
+                        cc = recipient.email;
+                    message += "Hi " + requestor.first_name + " " + requestor.last_name +
+                        ",\n\nYour application has been auto-rejected by the system. Kindly review your application and resubmit at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 default:
                     break;
@@ -198,7 +209,7 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
 
             await send_email(recipient.email, subject, message, cc, bcc);
 
-        } catch(error){
+        } catch (error) {
             console.error(error);
         }
     }
