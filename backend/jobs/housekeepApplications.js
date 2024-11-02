@@ -29,8 +29,8 @@ const job = scheduler.scheduleJob('0 * * * *', async () => {
             let approver = await Employee.findByPk(requestor.reporting_manager);
             await sendNotificationEmail(
                 pendingApplications[i],
-                requestor.email,
-                approver.email,
+                requestor,
+                approver,
                 'autoRejectedApplication',
             );
         }
