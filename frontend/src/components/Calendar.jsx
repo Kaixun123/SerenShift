@@ -30,15 +30,7 @@ const Calendar = () => {
         const data = await response.json();
         setEvents(data);
       } catch (error) {
-        console.error("Error fetching schedule:", error);
-        toast({
-          title: "Error fetching schedule",
-          description: error.message,
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-          position: "top-right",
-        });
+        toast.error(error.message);
       }
     };
 
