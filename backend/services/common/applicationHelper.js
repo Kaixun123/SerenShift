@@ -276,6 +276,6 @@ module.exports = {
     splitConsecutivePeriodByDay,
     uploadFilesToS3,
     updateFileDetails,
-    generateNewFileName
+    generateNewFileName,
     sendNotificationEmail
 };
