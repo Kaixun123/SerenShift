@@ -87,27 +87,34 @@ const retrievePendingApplications = async (req, res) => {
 
                 const today = new Date();
                 if (subApplicationRes && subApplicationRes.length > 0) {
-                    subResponse.pendingApplications = subApplicationRes
-                        .filter(application => new Date(application.start_date) > today)
-                        .map(application => {
-                            const statusPending = (application.verify_by === null && application.status === 'Pending') ? 'Pending approval' : 'Pending withdrawal';
+                    subResponse.pendingApplications = await Promise.all(
+                        subApplicationRes
+                            .filter(application => new Date(application.start_date) > today)
+                            .map(async (application) => {
+                                const statusPending = (application.verify_by === null && application.status === 'Pending') 
+                                    ? 'Pending approval' 
+                                    : 'Pending withdrawal';
+                                // Retrieve file details for each application
+                                let files = await retrieveFileDetails('application', application.application_id);
 
-                            return {
-                                application_id: application.application_id,
-                                start_date: application.start_date,
-                                end_date: application.end_date,
-                                application_type: application.application_type,
-                                created_by: application.created_by,
-                                last_update_by: application.last_update_by,
-                                verify_by: application.verify_by,
-                                verify_timestamp: application.verify_timestamp,
-                                status: application.status === 'Approved' ? application.status : statusPending,
-                                requestor_remarks: application.requestor_remarks,
-                                approver_remarks: application.requestor_remarks,
-                                created_timestamp: application.created_timestamp,
-                                last_update_timestamp: application.last_update_timestamp
-                            }
-                        })
+                                return {
+                                    application_id: application.application_id,
+                                    start_date: application.start_date,
+                                    end_date: application.end_date,
+                                    application_type: application.application_type,
+                                    created_by: application.created_by,
+                                    last_update_by: application.last_update_by,
+                                    verify_by: application.verify_by,
+                                    verify_timestamp: application.verify_timestamp,
+                                    status: application.status === 'Approved' ? application.status : statusPending,
+                                    requestor_remarks: application.requestor_remarks,
+                                    approver_remarks: application.requestor_remarks,
+                                    created_timestamp: application.created_timestamp,
+                                    last_update_timestamp: application.last_update_timestamp,
+                                    files: files.length > 0 ? files : []
+                                };
+                            })
+                    );
                 } else {
                     subResponse.pendingApplications = []; // No pending applications
                 }
