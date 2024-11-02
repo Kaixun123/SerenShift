@@ -74,6 +74,7 @@ const generateWeeklyRegularApplications = (employee, startDate, weeks = 4) => {
       verify_timestamp: null,
       created_timestamp: new Date(),
       last_update_timestamp: new Date(),
+      requestor_remarks: "Seeded Regular Application",
     });
   }
   return applications;
@@ -175,6 +176,7 @@ module.exports = {
             verify_timestamp: null,
             created_timestamp: new Date(),
             last_update_timestamp: new Date(),
+            requestor_remarks: "Seeded Ad-Hoc Application",
           };
 
           // Push to the applications array
