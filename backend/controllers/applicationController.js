@@ -1,5 +1,5 @@
 const { Application, Employee, Schedule, Blacklist, Notification } = require('../models');
-const { checkforOverlap, extractRemainingDates, splitConsecutivePeriodByDay, uploadFilesToS3, sendNotificationEmail, updateFileDetails, generateNewFileName  } = require('../services/common/applicationHelper');
+const { checkforOverlap, extractRemainingDates, splitConsecutivePeriodByDay, uploadFilesToS3, sendNotificationEmail, updateFileDetails, generateNewFileName } = require('../services/common/applicationHelper');
 const { fetchSubordinates } = require('../services/common/employeeHelper');
 const { scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime, deleteCorrespondingSchedule } = require('../services/common/scheduleHelper');
 const { Op } = require('sequelize');
@@ -91,8 +91,8 @@ const retrievePendingApplications = async (req, res) => {
                         subApplicationRes
                             .filter(application => new Date(application.start_date) > today)
                             .map(async (application) => {
-                                const statusPending = (application.verify_by === null && application.status === 'Pending') 
-                                    ? 'Pending approval' 
+                                const statusPending = (application.verify_by === null && application.status === 'Pending')
+                                    ? 'Pending approval'
                                     : 'Pending withdrawal';
                                 // Retrieve file details for each application
                                 let files = await retrieveFileDetails('application', application.application_id);
@@ -343,7 +343,7 @@ const createNewApplication = async (req, res) => {
 
         await transaction.commit();
 
-        if(newApplication || employeeInfo || managerInfo){
+        if (newApplication || employeeInfo || managerInfo) {
             await sendNotificationEmail(newApplication, employeeInfo, managerInfo, "createApplication");
         }
 
@@ -415,7 +415,7 @@ const approvePendingApplication = async (req, res) => {
 
         await transaction.commit();
 
-        if(application || requestor || approver){
+        if (application || requestor || approver) {
             await sendNotificationEmail(application, requestor, approver, "approvedApplication");
         }
 
@@ -462,7 +462,7 @@ const rejectPendingApplication = async (req, res) => {
 
         await transaction.commit();
 
-        if(application || requestor || approver){
+        if (application || requestor || approver) {
             await sendNotificationEmail(application, requestor, approver, "rejectedApplication");
         }
 
@@ -522,7 +522,7 @@ const withdrawPendingApplication = async (req, res) => {
         await application.save();
 
         //send email
-        if(application || currentEmployee || managerInfo){
+        if (application || currentEmployee || managerInfo) {
             await sendNotificationEmail(application, currentEmployee, managerInfo, "withdrawnApplication");
         }
 
@@ -805,9 +805,9 @@ const updatePendingApplication = async (req, res) => {
             }
         }
         await transaction.commit();
-        
+
         //send email
-        if(application || employeeInfo || managerInfo){
+        if (application || employeeInfo || managerInfo) {
             await sendNotificationEmail(application, employeeInfo, managerInfo, "updateApplication");
         }
 
@@ -994,7 +994,7 @@ const updateApprovedApplication = async (req, res) => {
         await transaction.commit();
 
         //send email
-        if(newApplication || employeeInfo || managerInfo){
+        if (newApplication || employeeInfo || managerInfo) {
             await sendNotificationEmail(newApplication, employeeInfo, managerInfo, "updateApplication");
         }
 
@@ -1058,26 +1058,27 @@ const withdrawSpecificDates = async (req, res) => {
         console.log("in withdraw specific dates functions");
 
         // Apply Moment to all items in withdrawDates -- for date comparison later
-        const withdrawMoments = withdrawDates.map(selectedDate => {return moment(selectedDate).format('YYYY-MM-DD'); }); 
+        const withdrawMoments = withdrawDates.map(selectedDate => { return moment(selectedDate).format('YYYY-MM-DD'); });
         // Retrieve existing approved application 
         let existingApprovedApp = await Application.findOne({
             where: {
                 application_id: application_id,
                 status: 'Approved'
-            }});
+            }
+        });
 
         if (existingApprovedApp) {  // Check if a record was found
             // Access start_date and end_date from dataValues
             const { start_date, end_date } = existingApprovedApp.dataValues;
             let existingMoments = [];
-            
+
             if (start_date && end_date) { // Check if start_date and end_date exist
                 existingMoments = splitConsecutivePeriodByDay(start_date, end_date);
                 console.log("existing moments", existingMoments);
             } else {
                 console.log("Missing start_date or end_date for application:", existingApprovedApp);
             }
-            
+
             // Set original application to withdrawn
             try {
                 existingApprovedApp.status = 'Withdrawn';
@@ -1094,7 +1095,7 @@ const withdrawSpecificDates = async (req, res) => {
             const deleteSchedule = await deleteCorrespondingSchedule(existingApprovedApp);
             if (!deleteSchedule) {
                 console.error("Error deleting corresponding schedule:", error);
-                    return res.status(500).json({ error: "An error occurred while deleting corresponding schedule." });
+                return res.status(500).json({ error: "An error occurred while deleting corresponding schedule." });
             } else {
                 console.log("Schedule successfully deleted");
             }
@@ -1124,7 +1125,7 @@ const withdrawSpecificDates = async (req, res) => {
             console.log("No approved application found for application_id:", application_id);
         };
 
-    } catch (error) {  
+    } catch (error) {
         console.error("Error withdrawing specific dates:", error);
         return res.status(500).json({ error: "An error occurred while withdrawing specific dates." });
     };
@@ -1151,7 +1152,7 @@ const createSimilarApplication = async (newStartEnd, existingApprovedApp, files,
                     status: 'Approved'
                 }
             })
-                // retrieve approved schedules based on user id
+            // retrieve approved schedules based on user id
             let approvedSchedules = await Schedule.findAll({
                 where: { created_by: employee_id }
             })
@@ -1163,16 +1164,16 @@ const createSimilarApplication = async (newStartEnd, existingApprovedApp, files,
                 return { status: 400, message: "Invalid application period. New application cannot overlap with the existing or approved application." };
             } else {
                 const newApplication = await Application.create({
-                start_date: combinedStartDateTime,
-                end_date: combinedEndDateTime,
-                application_type: existingApprovedApp.application_type,
-                created_by: employee_id,
-                last_update_by: manager_id, // Manager will be put as the last updated user
-                verify_by: manager_id,
-                verify_timestamp: existingApprovedApp.verify_timestamp,
-                status: 'Approved',
-                requestor_remarks: existingApprovedApp.requestor_remarks,
-                approver_remarks: existingApprovedApp.approver_remarks,
+                    start_date: combinedStartDateTime,
+                    end_date: combinedEndDateTime,
+                    application_type: existingApprovedApp.application_type,
+                    created_by: employee_id,
+                    last_update_by: manager_id, // Manager will be put as the last updated user
+                    verify_by: manager_id,
+                    verify_timestamp: existingApprovedApp.verify_timestamp,
+                    status: 'Approved',
+                    requestor_remarks: existingApprovedApp.requestor_remarks,
+                    approver_remarks: existingApprovedApp.approver_remarks,
                 }, { transaction });
 
                 await Schedule.create({
@@ -1183,9 +1184,9 @@ const createSimilarApplication = async (newStartEnd, existingApprovedApp, files,
                     verify_by: manager_id,
                     verify_timestamp: new Date(),
                     last_update_by: manager_id
-                    }, { transaction });
-                
-                console.log("Files ",files);
+                }, { transaction });
+
+                console.log("Files ", files);
                 // Upload files from original application using the new application ID
                 if (files && files.length > 0) {
                     console.log("in file upload function")
@@ -1205,12 +1206,12 @@ const createSimilarApplication = async (newStartEnd, existingApprovedApp, files,
         } catch (error) {
             await transaction.rollback();
             console.error("Error creating new application:", error);
-        return { status: 500, error: "An error occurred while creating new application." };
+            return { status: 500, error: "An error occurred while creating new application." };
         };
     } catch (error) {
         console.error("Error creating similar applications:", error);
         return { status: 500, error: "An error occurred while creating similar applications." };
-      }
+    }
 };
 
 module.exports = {

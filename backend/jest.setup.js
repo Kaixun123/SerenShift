@@ -1,28 +1,3 @@
-const { Sequelize } = require('sequelize');
-
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: ':memory:',
-    logging: false,
-});
-
-global.sequelize = sequelize;
-
-beforeAll(async () => {
-    await global.sequelize.authenticate();
-    await global.sequelize.sync({ force: true });
-});
-
-afterEach(async () => {
-    await global.sequelize.truncate();
-});
-
-afterAll(async () => {
-    await global.sequelize.close();
-});
-
-jest.mock('./services/database/mysql', () => global.sequelize);
-
 jest.mock('nodemailer', () => {
     const nodemailerMock = {
         createTransport: jest.fn(() => ({
@@ -30,4 +5,20 @@ jest.mock('nodemailer', () => {
         })),
     };
     return nodemailerMock;
+});
+
+jest.mock('@aws-sdk/client-s3', () => {
+    return {
+        S3: jest.fn(() => ({
+            getObject: jest.fn().mockResolvedValue({ Body: 'mocked body' }),
+            putObject: jest.fn().mockResolvedValue({}),
+            deleteObject: jest.fn().mockResolvedValue({}),
+        })),
+    };
+});
+
+jest.mock('@aws-sdk/s3-request-presigner', () => {
+    return {
+        getSignedUrl: jest.fn().mockResolvedValue('https://mocked-url.com'),
+    };
 });
