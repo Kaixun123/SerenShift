@@ -223,28 +223,28 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                 case "approvedApplication":
                     message += "Hi " + requestor.first_name + " " + requestor.last_name +
                         ",\n\nYour application has been approved by " + recipient.first_name +
-                        " " + requestor.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
+                        " " + recipient.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
                         "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
                         "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "rejectedApplication":
                     message += "Hi " + requestor.first_name + " " + requestor.last_name +
                         ",\n\nYour application has been rejected by " + recipient.first_name +
-                        " " + requestor.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
+                        " " + recipient.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
                         "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
                         "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "updateApplication":
                     message += "Hi " + recipient.first_name + " " + recipient.last_name +
                         ",\n\nYour authorized application has been modified by " + requestor.first_name +
-                        " " + requestor.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
+                        " " + recipient.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
                         "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
                         "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "withdrawnApplication":
                     message += "Hi " + requestor.first_name + " " + requestor.last_name +
                         ",\n\nYour authorized application has been withdrawn by " + recipient.first_name +
-                        " " + requestor.last_name + ". Kindly reach to your team member at your earlier convinence.\n\n" +
+                        " " + recipient.last_name + ". Kindly reach to your team member at your earlier convinence.\n\n" +
                         "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
                         "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
