@@ -163,6 +163,8 @@ export default function EditBlacklistPage({ params }) {
             }
         } catch (error) {
             console.error("Error updating existing blacklist:", error);
+        } finally {
+            setLoading(false);
         }
     }
     const handleRetrieveExistingBlacklistDates = async () => {

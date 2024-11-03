@@ -1,4 +1,5 @@
 const moment = require('moment'); // Ensure moment.js is installed
+const { Schedule } = require('../../models');
 
 async function splitScheduleByDate(startDate, endDate) {
     let start = moment(startDate);  // Start date and time
@@ -88,9 +89,32 @@ function scheduleIsAfterCurrentTime(dateString) {
     return date >= now;
 }
 
+const deleteCorrespondingSchedule = async (application) => {
+    try {
+        const schedule = await Schedule.findOne({
+            where: {
+                created_by: application.created_by,
+                start_date: application.start_date,
+                end_date: application.end_date,
+            }
+        });
+
+        if (!schedule) {
+            console.error('Schedule not found');
+            return false;  // Return false if the schedule is not found
+        } else {
+            await schedule.destroy();
+            return true;  // Return true if the deletion is successful
+        }
+    } catch (error) {
+        console.error('Error finding or deleting schedule:', error);
+        return false;  // Return false if an error occurs
+    }
+};
 
 module.exports = {
     splitScheduleByDate,
     scheduleHasNotPassedCurrentDay,
-    scheduleIsAfterCurrentTime
+    scheduleIsAfterCurrentTime, 
+    deleteCorrespondingSchedule
 };

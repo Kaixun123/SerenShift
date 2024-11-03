@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -25,18 +25,34 @@ const formatDateTime = (dateString) => {
   return new Date(dateString).toLocaleString("en-GB", options); // en-GB formats as dd/mm/yyyy
 };
 
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplication }) => {
+const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  action,
+  selectedApplication,
+}) => {
   const toast = useToast(); // Initialize Chakra's toast hook
 
+  const [loading, setLoading] = useState(false);
   const handleConfirm = async () => {
     try {
+      setLoading(true);
       // Trigger confirmation action (approve or reject) via API call
       await onConfirm(); // Wait for the onConfirm function to execute (this will call the API)
+      setLoading(false);
 
       // Show success toast based on action
       toast({
-        title: action === "approve" ? "Application Approved" : "Application Rejected",
-        description: `The application for ${selectedApplication?.first_name} ${selectedApplication?.last_name} has been successfully ${action === "approve" ? "approved" : "rejected"}.`,
+        title:
+          action === "approve"
+            ? "Application Approved"
+            : "Application Rejected",
+        description: `The application for ${selectedApplication?.first_name} ${
+          selectedApplication?.last_name
+        } has been successfully ${
+          action === "approve" ? "approved" : "rejected"
+        }.`,
         status: "success",
         duration: 3000, // Duration for the toast in milliseconds
         isClosable: true,
@@ -53,7 +69,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplica
         status: "error",
         duration: 3000,
         isClosable: true,
-        position: "top",
+        position: "top-right",
       });
     }
   };
@@ -76,14 +92,19 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, action, selectedApplica
             ?
           </Text>
           <Text mt={2}>
-            <Text as="span" fontWeight="bold">Date: </Text>
-            {formatDateTime(selectedApplication?.start_date)} - {formatDateTime(selectedApplication?.end_date)}
+            <Text as="span" fontWeight="bold">
+              Date:{" "}
+            </Text>
+            {formatDateTime(selectedApplication?.start_date)} -{" "}
+            {formatDateTime(selectedApplication?.end_date)}
           </Text>
         </ModalBody>
         <ModalFooter>
           <Button
             colorScheme={action === "approve" ? "green" : "red"}
             mr={3}
+            isLoading={loading}
+            loadingText="Approving"
             onClick={handleConfirm} // Call the handleConfirm function
           >
             Yes

@@ -71,8 +71,10 @@ router.patch("/approveApplication", approvePendingApplicationValidationRules(), 
 router.patch("/rejectApplication", rejectPendingApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.rejectPendingApplication(req, res));
 router.patch("/withdrawPending", withdrawPendingApplicationValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.withdrawPendingApplication(req, res));
 router.patch("/withdrawApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.withdrawApprovedApplication(req, res));
+router.patch("/withdrawSpecificApproved", withdrawApprovedApplicationValidationRules(), vaildateParameters, ensureManagerAndAbove, (req, res) => applicationController.withdrawSpecificDates(req, res));
 router.patch("/updatePendingApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updatePendingApplication(req, res));
 router.patch("/withdrawApprovedApplicationByEmployee", ensureLoggedIn, (req, res) => applicationController.withdrawApprovedApplicationByEmployee(req, res));
 router.patch("/rejectWithdrawalOfApprovedApplication", ensureManagerAndAbove, (req, res) => applicationController.rejectWithdrawalOfApprovedApplication(req, res));
+router.patch("/updateApprovedApplication", ensureLoggedIn, upload.array('files'), (req, res) => applicationController.updateApprovedApplication(req, res));
 
 module.exports = router;

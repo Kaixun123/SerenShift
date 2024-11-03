@@ -25,7 +25,7 @@ const createBlacklistDateValidationRules = () => {
         check("startDateTime").isISO8601().toDate().withMessage("Invalid Start Date For Blacklist"),
         check("endDateTime").isISO8601().toDate().withMessage("Invalid End Date for Blacklist"),
         check("remarks").isString().isLength({ max: 255 }).withMessage("Remarks Is Too Long For Blacklist"),
-        check("recurrenceRule").optional().isString().isIn(['week', 'month']).withMessage("Invalid Recurrence Rule For Blacklist"),
+        check("recurrenceRule").optional().isString().isIn(['day', 'week', 'month']).withMessage("Invalid Recurrence Rule For Blacklist"),
         check("recurrenceEndDateTime").optional().isISO8601().toDate().withMessage("Invalid Recurrence End Date For Blacklist")
     ];
 };

@@ -60,20 +60,21 @@ app.use(express.static("./public"));
 app.use(morgan("tiny"));
 app.use(cookieParser());
 
+// CORN JOBS
+require("./jobs");
+
 // App Routes
 app.use("/api/auth", require("./routes/authHandling"));
 app.use("/api/application", require("./routes/applicationHandling"))
 app.use("/api/blacklist", require("./routes/blacklistHandling"));
 app.use("/api/employee", require("./routes/employeeHandling"));
+app.use("/api/notification", require("./routes/notificationHandling"));
 app.use("/api/schedule", require("./routes/scheduleHandling"));
 
 //Error Handling
 app.use((req, res, next) => {
-  const error = new Error("Not Found");
-  console.log(`Unrecognised Request: ${req.originalUrl}`);
-  error.status = 404;
-  next(error);
-  res.status(404).json({
+  console.info(`Unrecognised Request: ${req.originalUrl}`);
+  return res.status(404).json({
     status: 404,
     message: "Not Found",
   });

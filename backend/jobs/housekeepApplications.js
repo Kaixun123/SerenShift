@@ -1,0 +1,47 @@
+const scheduler = require('node-schedule');
+const { Application, Employee } = require('../models');
+const { sequelize } = require('../services/database/mysql');
+const { Op } = require('sequelize');
+const { sendNotificationEmail } = require('../services/common/applicationHelper');
+
+const job = scheduler.scheduleJob('0 * * * *', async () => {
+    const currentDate = new Date();
+    console.info('Housekeep Pending Applications Job started at ' + currentDate);
+    const transaction = await sequelize.transaction();
+    try {
+        let count = 0;
+        let pendingApplications = await Application.findAll({
+            where: {
+                status: 'Pending',
+                start_date: {
+                    [Op.lt]: currentDate,
+                },
+            },
+        });
+        for (let i = 0; i < pendingApplications.length; i++) {
+            pendingApplications[i].status = 'Rejected';
+            await pendingApplications[i].save({ transaction });
+            count++;
+        }
+        await transaction.commit();
+        for (let i = 0; i < pendingApplications.length; i++) {
+            let requestor = await Employee.findByPk(pendingApplications[i].created_by);
+            let approver = await Employee.findByPk(requestor.reporting_manager);
+            await sendNotificationEmail(
+                pendingApplications[i],
+                requestor,
+                approver,
+                'autoRejectedApplication',
+            );
+        }
+        console.info('Housekeep Pending Applications Job rejected ' + count + ' pending applications past their start date');
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Housekeep Applications Job failed');
+        console.error(error);
+    } finally {
+        console.info('Housekeep Pending Applications Job ended at ' + new Date());
+    }
+});
+
+module.exports = job;

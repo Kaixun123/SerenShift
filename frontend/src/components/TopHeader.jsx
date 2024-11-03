@@ -13,23 +13,32 @@ import {
   Badge,
   HStack,
   VStack,
-  useToast
+  Spinner,
+  Flex,
+  useToast,
+  Button,
 } from "@chakra-ui/react";
-import { IoNotificationsOutline } from "react-icons/io5"; // Import from react-icons
+import { IoNotificationsOutline } from "react-icons/io5";
+import { BsDot } from "react-icons/bs";
+import {
+  FaCheckCircle,
+  FaTimesCircle,
+  FaExclamationCircle,
+} from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
 export default function TopHeader({ mainText, subText }) {
   const [employee, setEmployee] = useState({ name: "", position: "" });
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const router = useRouter();
   const toast = useToast();
 
   const handleLogout = async () => {
-    console.log("Logout clicked");
-    let response = await fetch("/api/auth/logout", {
+    const response = await fetch("/api/auth/logout", {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
       credentials: "include",
     });
     if (response.ok) {
@@ -37,19 +46,17 @@ export default function TopHeader({ mainText, subText }) {
         title: "Logout Success",
         description: "Thank you and have a nice day!",
         status: "success",
-        isClosable: true,
         position: "top-right",
+        isClosable: true,
       });
       router.push("/auth/login");
     } else {
-      console.error("Login failed");
-      // Handle login failure here (e.g., show an error message)
       toast({
         title: "Logout Failed",
-        description: "An error has occured. Please try again later",
+        description: "An error has occurred. Please try again later",
         status: "error",
-        isClosable: true,
         position: "top-right",
+        isClosable: true,
       });
     }
   };
@@ -57,20 +64,108 @@ export default function TopHeader({ mainText, subText }) {
   const fetchEmployeeData = async () => {
     try {
       const response = await fetch("/api/auth/me");
-      if (!response.ok)
-        router.push("/auth/login");
+      if (!response.ok) router.push("/auth/login");
       const data = await response.json();
       setEmployee({
-        name: `${data.first_name} ${data.last_name}`, // Assuming first_name and last_name from API
-        position: data.position, // Assuming position is part of the data
+        name: `${data.first_name} ${data.last_name}`,
+        position: data.position,
       });
     } catch (error) {
       console.error("Error fetching employee data:", error);
     }
-  }
+  };
+
+  const renderStatusIcon = (type, read_status) => {
+    if (read_status) return null;
+    const statusIcons = {
+      Approved: <FaCheckCircle color="green" />,
+      Rejected: <FaTimesCircle color="red" />,
+      Withdrawn: <FaCheckCircle color="blue" />,
+      Pending: <FaExclamationCircle color="orange" />,
+    };
+    return statusIcons[type] || null;
+  };
+
+  const markAsRead = async (notification_id) => {
+    try {
+      const response = await fetch(
+        "/api/notification/updateNotificationReadStatus",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notification_id }),
+        }
+      );
+
+      if (response.ok) {
+        setNotifications((prevNotifications) =>
+          prevNotifications
+            .map((notification) =>
+              notification.notification_id === notification_id
+                ? { ...notification, read_status: true }
+                : notification
+            )
+            .sort((a, b) => a.read_status - b.read_status)
+        );
+      } else {
+        console.error("Failed to update notification read status");
+      }
+    } catch (error) {
+      console.error("Error updating notification read status:", error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const response = await fetch("/api/notification/markAllAsRead", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ readAll: true }),
+      });
+      if (response.ok) {
+        setNotifications((prevNotifications) =>
+          prevNotifications.map((n) => ({ ...n, read_status: true }))
+        );
+
+        // Show success toast message
+        toast({
+          description: "Your notification marked as read successfully.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+        });
+      } else {
+        console.error("Failed to clear notifications");
+      }
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch("/api/notification/retrieveNotifications");
+      const data = await response.json();
+
+      if (data.message) {
+        setErrorMessage(data.message);
+      } else {
+        const sortedNotifications = data
+          .sort((a, b) => a.read_status - b.read_status)
+          .slice(0, 5);
+        setNotifications(sortedNotifications);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchEmployeeData();
+    fetchNotifications();
   }, []);
 
   return (
@@ -80,11 +175,10 @@ export default function TopHeader({ mainText, subText }) {
         {subText && <div className="font-medium">{subText}</div>}
       </div>
       <HStack spacing={4}>
-        {/* Notification Popover */}
         <Menu>
           <MenuButton
             as={IconButton}
-            icon={<IoNotificationsOutline size={30} />} // Chakra compatible Icon
+            icon={<IoNotificationsOutline size={30} />}
             variant="ghost"
             aria-label="Notifications"
           >
@@ -96,25 +190,68 @@ export default function TopHeader({ mainText, subText }) {
                 position="absolute"
                 top="-1"
                 right="-1"
-              >
-                {/* Notification badge */}
-              </Badge>
+              />
             </Box>
           </MenuButton>
           <MenuList>
-            <MenuItem>You have new messages</MenuItem>
-            <MenuItem>Your schedule has been updated</MenuItem>
-            <MenuItem>New tasks assigned</MenuItem>
+            <Text fontWeight="bold" px={3}>
+              Click on notification to mark as read
+            </Text>
+            {loading ? (
+              <Flex justify="center" align="center">
+                <Spinner />
+              </Flex>
+            ) : notifications.length > 0 ? (
+              notifications.map((notification) => (
+                <MenuItem
+                  key={notification.notification_id}
+                  onClick={() => markAsRead(notification.notification_id)}
+                  style={{
+                    color: notification.read_status ? "lightgray" : "black",
+                  }}
+                >
+                  <Flex align="center" justify="space-between">
+                    <Flex align="center">
+                      {renderStatusIcon(
+                        notification.notification_type,
+                        notification.read_status
+                      )}
+                      <Text
+                        ml={2}
+                        whiteSpace="nowrap"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                      >
+                        {notification.content}
+                      </Text>
+                    </Flex>
+                    {!notification.read_status && (
+                      <BsDot
+                        color="red"
+                        style={{ fontSize: "24px", marginLeft: "8px" }}
+                      />
+                    )}
+                  </Flex>
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem>{errorMessage}</MenuItem>
+            )}
             <MenuDivider />
-            <MenuItem>View All Notifications</MenuItem>
+            <Button colorScheme="blue" mx={3} onClick={markAllAsRead}>
+              Mark All As Read
+            </Button>
+            <MenuDivider />
+            <MenuItem as="a" href="/">
+              View All Notifications
+            </MenuItem>
           </MenuList>
         </Menu>
 
-        {/* Profile Popover */}
         <Menu>
           <MenuButton>
             <HStack>
-              <Avatar size="md" name={employee.name} src={employee.avatar} />
+              <Avatar size="md" name={employee.name} />
               <VStack align="left" spacing="1px" ml="2">
                 <Text fontSize="sm">{employee.name || "Loading..."}</Text>
                 <Text fontSize="xs" color="gray.500">
@@ -124,7 +261,6 @@ export default function TopHeader({ mainText, subText }) {
             </HStack>
           </MenuButton>
           <MenuList>
-            <MenuItem as='a' href='/profile'>Profile</MenuItem>
             <MenuItem>Settings</MenuItem>
             <MenuDivider />
             <MenuItem onClick={handleLogout}>Logout</MenuItem>

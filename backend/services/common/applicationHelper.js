@@ -1,7 +1,8 @@
 const moment = require('moment'); // Ensure moment.js is installed
 const { splitScheduleByDate } = require('./scheduleHelper');
-const { uploadFile } = require('../uploads/s3');
-const { Application } = require('../../models');
+const { uploadFile, checkFileExists } = require('../uploads/s3');
+const { File } = require('../../models');
+const { send_email } = require('../email/emailService');
 
 const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationType) => {
     try {
@@ -49,6 +50,31 @@ const checkWhetherSameDate = (date1, date2) => {
     );
 }
 
+// Helper function to return the remaining dates after removing the withdrawal/rejected dates
+const extractRemainingDates = (existingMoments, withdrawMoments) => { // Both are arrays of Moment objects
+    let remainingDates = [];
+    let currentBlock = [];
+    // Loop through and compare the existing dates with the withdrawal dates
+    for (const currDate of existingMoments) {
+        const currMoment = moment(currDate).format('YYYY-MM-DD'); // Adjust date format for comparison
+
+        if (withdrawMoments.includes(currMoment)) {
+            if (currentBlock.length > 0) {      // if current date is in withdraw dates, 
+                remainingDates.push(currentBlock);      // end the current block and push to remaining dates
+            };
+            currentBlock = [];  // Reset and start a new block
+            continue;
+        }
+        currentBlock.push(currDate);  // if current date not in withdraw dates, add to current block
+    };
+    if (currentBlock.length > 0) {
+        remainingDates.push(currentBlock);
+    };
+    
+    // Returns array of arrays of YYYY-MM-DD dates 
+    return remainingDates;  // (all unbroken chains of consecutive dates are in the same array)
+};
+
 const splitDatesByDay = (startDate, endDate) => {
     const results = [];
     let currentDate = new Date(startDate);
@@ -71,38 +97,25 @@ const splitDatesByDay = (startDate, endDate) => {
 }
 
 const splitConsecutivePeriodByDay = (startDate, endDate) => {
-    const results = [];
-    // Validate dates
+    // Validation of date inputs
     if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
-      console.error("Invalid dates provided:", startDate, endDate);
-      return [];
+        console.error("Invalid dates provided:", startDate, endDate);
+        return [];
     } else {
-      console.log("Splitting consecutive period by day:", startDate, endDate);
-      console.log("Valid dates provided:", startDate, endDate);
+        console.log("Splitting consecutive period by day:", startDate, endDate);
+        console.log("Valid dates provided:", startDate, endDate);
     }
 
-    let currentDate = new Date(startDate);
-    const endDateTime = new Date(endDate);
-    currentDate.setUTCHours(0, 0, 0, 0);
-    endDateTime.setUTCHours(0, 0, 0, 0);
+    const results = [];
+    let currentDate = moment(startDate);
+    const endDateTime = moment(endDate);
 
-    if (currentDate > endDateTime) {
-      console.error("startDate is after endDate:", startDate, endDate);
-      return [];
-    } else {
-      console.log("startDate is before or equal to endDate:", startDate, endDate);
-    }
-
-    while (currentDate <= endDateTime) {
-      // Clone currentDate for start and end times for the current day
-      const newDay = new Date(currentDate);
-      results.push(newDay);
-  
-      // Move to the next day
-      currentDate.setDate(currentDate.getDate() + 1);
+    while (currentDate.isSameOrBefore(endDateTime, 'day')) {
+        results.push(currentDate.format('YYYY-MM-DD'));  // Push date in 'YYYY-MM-DD' format
+        currentDate.add(1, 'day');  // Move to the next day
     }
     return results;
-  };
+};
 
 // Helper Function to upload files to S3
 const uploadFilesToS3 = async (files, applicationId, userId) => {
@@ -112,10 +125,157 @@ const uploadFilesToS3 = async (files, applicationId, userId) => {
     await Promise.all(uploadPromises);
 };
 
+const updateFileDetails = async(fileId, newApplicationId, newS3Key, file, isFirstBlock) => {
+    try {
+        const fileExists = await checkFileExists(newS3Key);
+        if (fileExists && !isFirstBlock) {
+            // Update the existing file row
+            await File.update(
+                {
+                    related_entity_id: newApplicationId,
+                    s3_key: newS3Key,
+                },
+                {
+                    where: { file_id: fileId },
+                }
+            );
+            console.log(`File details updated successfully for file ID ${fileId}`);
+        } else {
+
+            // Create a new file row
+            await File.create({
+                related_entity_id: newApplicationId,
+                s3_key: newS3Key,
+                file_name: file.file_name,
+                file_extension: file.file_extension,
+                related_entity: "Application",
+                created_by: file.created_by,
+                last_update_by: file.created_by,
+            });
+            console.log(`New file row created successfully for file ID ${fileId}`);
+        }
+    } catch (error) {
+        console.error("Error updating file details:", error);
+        throw error;
+    }
+}
+
+const generateNewFileName = (fileName, userId, newApplicationId, fileExtension) => {
+    const currentDateTime = new Date().toISOString().replace(/[:.-]/g, '');
+    const prefix = fileName.substring(0, fileName.indexOf('_'));
+    return `${prefix}_${userId}_${newApplicationId}_${currentDateTime}.${fileExtension}`;
+};
+
+const emailTemplates = {
+    "createApplication": {
+        subject: "A WFH application is pending your approval",
+    },
+    "approvedApplication": {
+        subject: "Your WFH Application has been approved",
+    },
+    "rejectedApplication": {
+        subject: "Your WFH application has been rejected",
+    },
+    "updateApplication": {
+        subject: "A WFH is pending your reapproval",
+    },
+    "withdrawnApplication": {
+        subject: "A WFH application has been withdrawn",
+    },
+    "autoRejectedApplication": {
+        subject: "Your WFH application has been auto-rejected by the system",
+    }
+}
+
+const sendNotificationEmail = async (application, requestor, recipient, eventType, cc, bcc) => {
+    if (!application || !requestor || !recipient || !eventType)
+        console.error("One or more of the required parameters are missing");
+    else {
+        try {
+            console.log(application);
+            console.log(requestor);
+            console.log(recipient);
+            const template = emailTemplates[eventType];
+            if (!template) {
+                console.error(`No email template found for event type: ${eventType}`);
+                return;
+            }
+
+            const startDate = new Date(application.start_date);
+            const endDate = new Date(application.end_date);
+
+            if (isNaN(startDate) || isNaN(endDate)) {
+                console.error("Invalid start_date or end_date in application");
+                return;
+            }
+
+            let message = "";
+            const { subject } = template;
+
+            switch (eventType) {
+                case "createApplication":
+                    message += "Hi " + recipient.first_name + " " + recipient.last_name +
+                        ",\n\nYou have a pending Work From Home Request from " + requestor.first_name +
+                        " " + requestor.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    break;
+                case "approvedApplication":
+                    message += "Hi " + requestor.first_name + " " + requestor.last_name +
+                        ",\n\nYour application has been approved by " + recipient.first_name +
+                        " " + requestor.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    break;
+                case "rejectedApplication":
+                    message += "Hi " + requestor.first_name + " " + requestor.last_name +
+                        ",\n\nYour application has been rejected by " + recipient.first_name +
+                        " " + requestor.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    break;
+                case "updateApplication":
+                    message += "Hi " + recipient.first_name + " " + recipient.last_name +
+                        ",\n\nYour authorized application has been modified by " + requestor.first_name +
+                        " " + requestor.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    break;
+                case "withdrawnApplication":
+                    message += "Hi " + requestor.first_name + " " + requestor.last_name +
+                        ",\n\nYour authorized application has been withdrawn by " + recipient.first_name +
+                        " " + requestor.last_name + ". Kindly reach to your team member at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    break;
+                case "autoRejectedApplication":
+                    if (!cc)
+                        cc = recipient.email;
+                    message += "Hi " + requestor.first_name + " " + requestor.last_name +
+                        ",\n\nYour application has been auto-rejected by the system. Kindly review your application and resubmit at your earlier convinence.\n\n" +
+                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                    break;
+                default:
+                    break;
+            }
+
+            await send_email(recipient.email, subject, message, cc, bcc);
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+}
+
 module.exports = {
     checkforOverlap,
     checkWhetherSameDate,
+    extractRemainingDates,
     splitDatesByDay,
     splitConsecutivePeriodByDay,
     uploadFilesToS3,
+    updateFileDetails,
+    generateNewFileName,
+    sendNotificationEmail
 };
