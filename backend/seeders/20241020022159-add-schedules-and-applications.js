@@ -118,7 +118,7 @@ module.exports = {
       // Step 3: Create schedules for each employee, ensuring no conflicts with blacklist
       const scheduleCount = getRandomInt(1, 5); // Generate between 1 and 5 schedules per employee
       for (let i = 0; i < scheduleCount; i++) {
-        let scheduleEntry, startDate, endDate;
+        let scheduleEntry, startDate, endDate, applicationEntry;
 
         // Keep generating new start and end dates until no conflict with the blacklist
         do {
@@ -139,9 +139,23 @@ module.exports = {
           created_timestamp: new Date(),
           last_update_timestamp: new Date(),
         };
-
         // Push to the schedules array
         schedules.push(scheduleEntry);
+        applicationEntry = {
+          start_date: startDate,
+          end_date: endDate,
+          application_type: isRegularSchedule ? 'Regular' : 'Ad Hoc',
+          created_by: employee.id,
+          last_update_by: employee.id,
+          verify_by: reportingManagerId,
+          verify_timestamp: new Date(),
+          created_timestamp: new Date(),
+          last_update_timestamp: new Date(),
+          requestor_remarks: "Test Approved Application",
+          approver_remarks: "Test Approved Application",
+          status: "Approved"
+        }
+        applications.push(applicationEntry);
       }
 
       // Step 4: Create applications for each employee, ensuring no conflicts with blacklist
@@ -178,7 +192,6 @@ module.exports = {
             last_update_timestamp: new Date(),
             requestor_remarks: "Seeded Ad-Hoc Application",
           };
-
           // Push to the applications array
           applications.push(applicationEntry);
         }
