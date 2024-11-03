@@ -244,12 +244,10 @@ export default function ManageApplicationPage() {
         });
 
         if (response.ok) {
-          console.log("Application approved:", applicationId);
-          // Optionally, update the UI to reflect the approval
+          handleRefresh();
         } else {
           const errorData = await response.json();
           console.error("Error approving application:", errorData.message);
-          // Optionally, show an error message to the user
         }
       } else if (currentAction === "reject") {
         // Reject action
@@ -266,12 +264,10 @@ export default function ManageApplicationPage() {
         });
 
         if (response.ok) {
-          console.log("Application rejected:", applicationId);
-          // Optionally, update the UI to reflect the rejection
+          handleRefresh();
         } else {
           const errorData = await response.json();
           console.error("Error rejecting application:", errorData.message);
-          // Optionally, show an error message to the user
         }
       }
     } catch (error) {
@@ -521,10 +517,14 @@ export default function ManageApplicationPage() {
             <Flex mt={4} justifyContent="flex-end" gap={4}>
               <ApproveApplicationButton
                 isDisabled={!selectedApplicationDetails || isDateInvalid}
+                applicationIndex={currentApplicationIndex}
+                applicationStatus={selectedApplications}
                 onClick={handleApproveClick} // Attach onClick handler
               />
               <RejectApplicationButton
                 isDisabled={!selectedApplicationDetails || isDateInvalid}
+                applicationIndex={currentApplicationIndex}
+                applicationStatus={selectedApplications}
                 onClick={handleRejectClick} // Attach onClick handler
               />
             </Flex>
