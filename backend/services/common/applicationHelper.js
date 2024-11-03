@@ -1,7 +1,7 @@
 const moment = require('moment'); // Ensure moment.js is installed
 const { splitScheduleByDate } = require('./scheduleHelper');
-const { uploadFile } = require('../uploads/s3');
-const { Application } = require('../../models');
+const { uploadFile, checkFileExists } = require('../uploads/s3');
+const { File } = require('../../models');
 const { send_email } = require('../email/emailService');
 
 const checkforOverlap = async (newStartDate, newEndDate, dataArray, applicationType) => {
@@ -50,6 +50,31 @@ const checkWhetherSameDate = (date1, date2) => {
     );
 }
 
+// Helper function to return the remaining dates after removing the withdrawal/rejected dates
+const extractRemainingDates = (existingMoments, withdrawMoments) => { // Both are arrays of Moment objects
+    let remainingDates = [];
+    let currentBlock = [];
+    // Loop through and compare the existing dates with the withdrawal dates
+    for (const currDate of existingMoments) {
+        const currMoment = moment(currDate).format('YYYY-MM-DD'); // Adjust date format for comparison
+
+        if (withdrawMoments.includes(currMoment)) {
+            if (currentBlock.length > 0) {      // if current date is in withdraw dates, 
+                remainingDates.push(currentBlock);      // end the current block and push to remaining dates
+            };
+            currentBlock = [];  // Reset and start a new block
+            continue;
+        }
+        currentBlock.push(currDate);  // if current date not in withdraw dates, add to current block
+    };
+    if (currentBlock.length > 0) {
+        remainingDates.push(currentBlock);
+    };
+    
+    // Returns array of arrays of YYYY-MM-DD dates 
+    return remainingDates;  // (all unbroken chains of consecutive dates are in the same array)
+};
+
 const splitDatesByDay = (startDate, endDate) => {
     const results = [];
     let currentDate = new Date(startDate);
@@ -72,8 +97,7 @@ const splitDatesByDay = (startDate, endDate) => {
 }
 
 const splitConsecutivePeriodByDay = (startDate, endDate) => {
-    const results = [];
-    // Validate dates
+    // Validation of date inputs
     if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
         console.error("Invalid dates provided:", startDate, endDate);
         return [];
@@ -82,25 +106,13 @@ const splitConsecutivePeriodByDay = (startDate, endDate) => {
         console.log("Valid dates provided:", startDate, endDate);
     }
 
-    let currentDate = new Date(startDate);
-    const endDateTime = new Date(endDate);
-    currentDate.setUTCHours(0, 0, 0, 0);
-    endDateTime.setUTCHours(0, 0, 0, 0);
+    const results = [];
+    let currentDate = moment(startDate);
+    const endDateTime = moment(endDate);
 
-    if (currentDate > endDateTime) {
-        console.error("startDate is after endDate:", startDate, endDate);
-        return [];
-    } else {
-        console.log("startDate is before or equal to endDate:", startDate, endDate);
-    }
-
-    while (currentDate <= endDateTime) {
-        // Clone currentDate for start and end times for the current day
-        const newDay = new Date(currentDate);
-        results.push(newDay);
-
-        // Move to the next day
-        currentDate.setDate(currentDate.getDate() + 1);
+    while (currentDate.isSameOrBefore(endDateTime, 'day')) {
+        results.push(currentDate.format('YYYY-MM-DD'));  // Push date in 'YYYY-MM-DD' format
+        currentDate.add(1, 'day');  // Move to the next day
     }
     return results;
 };
@@ -111,6 +123,47 @@ const uploadFilesToS3 = async (files, applicationId, userId) => {
 
     const uploadPromises = files.map(file => uploadFile(file, 'application', applicationId, false, { id: userId }));
     await Promise.all(uploadPromises);
+};
+
+const updateFileDetails = async(fileId, newApplicationId, newS3Key, file, isFirstBlock) => {
+    try {
+        const fileExists = await checkFileExists(newS3Key);
+        if (fileExists && !isFirstBlock) {
+            // Update the existing file row
+            await File.update(
+                {
+                    related_entity_id: newApplicationId,
+                    s3_key: newS3Key,
+                },
+                {
+                    where: { file_id: fileId },
+                }
+            );
+            console.log(`File details updated successfully for file ID ${fileId}`);
+        } else {
+
+            // Create a new file row
+            await File.create({
+                related_entity_id: newApplicationId,
+                s3_key: newS3Key,
+                file_name: file.file_name,
+                file_extension: file.file_extension,
+                related_entity: "Application",
+                created_by: file.created_by,
+                last_update_by: file.created_by,
+            });
+            console.log(`New file row created successfully for file ID ${fileId}`);
+        }
+    } catch (error) {
+        console.error("Error updating file details:", error);
+        throw error;
+    }
+}
+
+const generateNewFileName = (fileName, userId, newApplicationId, fileExtension) => {
+    const currentDateTime = new Date().toISOString().replace(/[:.-]/g, '');
+    const prefix = fileName.substring(0, fileName.indexOf('_'));
+    return `${prefix}_${userId}_${newApplicationId}_${currentDateTime}.${fileExtension}`;
 };
 
 const emailTemplates = {
@@ -218,8 +271,11 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
 module.exports = {
     checkforOverlap,
     checkWhetherSameDate,
+    extractRemainingDates,
     splitDatesByDay,
     splitConsecutivePeriodByDay,
     uploadFilesToS3,
+    updateFileDetails,
+    generateNewFileName,
     sendNotificationEmail
 };
