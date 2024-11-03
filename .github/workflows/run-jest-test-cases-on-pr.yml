@@ -44,14 +44,13 @@ jobs:
         working-directory: backend
         env:
           DB_HOST: 127.0.0.1
-          DB_PORT: 3306
           DB_NAME: test_db
           DB_USER: test_user
           DB_PASSWORD: test_password
-          DB_ENGINE: 'mysql'
-          SESSION_SECRET: 'sessionSECRET'
-          JWT_SECRET: 'jwtSECRET'
-          AWS_SES_SENDER_EMAIL: 'noreply@allinone.org'
+          DB_ENGINE: mysql
+          SESSION_SECRET: sessionSECRET
+          JWT_SECRET: jwtSECRET
+          AWS_SES_SENDER_EMAIL: noreply@allinone.org
         run: npm test -- --coverage
       - name: Upload Jest Coverage
         if: success()
