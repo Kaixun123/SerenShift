@@ -9,6 +9,17 @@ jobs:
   test:
     name: Run Jest Tests
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,8 +30,28 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm install
+      - name: Run Sequelize-CLI migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: mysql://test_user:test_password@127.0.0.1:3306/test_db
+        run: npx sequelize-cli db:migrate --url $DATABASE_URL
+      - name: Seed the testing database
+        working-directory: backend
+        env:
+          DATABASE_URL: mysql://test_user:test_password@127.0.0.1:3306/test_db
+        run: npx sequelize-cli db:seed:all --url $DATABASE_URL      
       - name: Run Jest tests
         working-directory: backend
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_ENGINE: 'mysql'
+          SESSION_SECRET: 'sessionSECRET'
+          JWT_SECRET: 'jwtSECRET'
+          AWS_SES_SENDER_EMAIL: 'noreply@allinone.org'
         run: npm test -- --coverage
       - name: Upload Jest Coverage
         if: success()
