@@ -3,7 +3,7 @@
 import TopHeader from "@/components/TopHeader";
 import ApplicationCard from "@/components/ApplicationCard";
 import RefreshButton from "@/components/RefreshButton";
-import ApplicationReviewCard from "@/components/ReviewApplicationCard";
+import ApplicationDetailsCard from "@/components/ApplicationDetailsCard";
 import ApproverRemarks from "@/components/RemarksCard";
 import ApproveApplicationButton from "@/components/ApproveButton";
 import RejectApplicationButton from "@/components/RejectButton";
@@ -472,7 +472,7 @@ export default function ManageApplicationPage() {
             )}
             {selectedApplicationDetails ? (
               <>
-                <ApplicationReviewCard
+                <ApplicationDetailsCard
                   startDate={selectedApplicationDetails.start_date}
                   endDate={selectedApplicationDetails.end_date}
                   applicationType={selectedApplicationDetails.application_type}
@@ -482,7 +482,7 @@ export default function ManageApplicationPage() {
                   requestor_remarks={
                     selectedApplicationDetails.requestor_remarks
                   }
-                  supportingDocs={selectedApplicationDetails.supportingDocs}
+                  supportingDocs={selectedApplicationDetails.files}
                 />
                 {selectedApplications.length > 1 && (
                   <Pagination
@@ -494,7 +494,7 @@ export default function ManageApplicationPage() {
                 )}
               </>
             ) : (
-              <ApplicationReviewCard
+              <ApplicationDetailsCard
                 startDate=""
                 endDate=""
                 applicationType=""
