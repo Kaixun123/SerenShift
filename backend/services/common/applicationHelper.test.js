@@ -2,19 +2,38 @@ const {
     checkforOverlap,
     checkWhetherSameDate,
     splitDatesByDay,
+    splitConsecutivePeriodByDay,
+    extractRemainingDates,
+    updateFileDetails,
+    generateNewFileName,
+    sendNotificationEmail,
     uploadFilesToS3
 } = require('./applicationHelper');
 const { splitScheduleByDate } = require('./scheduleHelper');
-const { uploadFile } = require('../uploads/s3');
+const { uploadFile, checkFileExists } = require('../uploads/s3');
+const { File } = require('../../models');
+const { send_email } = require('../email/emailService');
 const moment = require('moment');
 
 // Mock dependencies
 jest.mock('./scheduleHelper', () => ({
-    splitScheduleByDate: jest.fn()
+    splitScheduleByDate: jest.fn(),
 }));
 
 jest.mock('../uploads/s3', () => ({
-    uploadFile: jest.fn()
+    uploadFile: jest.fn(),
+    checkFileExists: jest.fn(),
+}));
+
+jest.mock('../email/emailService', () => ({
+    send_email: jest.fn(),
+}));
+
+jest.mock('../../models', () => ({
+    File: {
+        update: jest.fn(),
+        create: jest.fn(),
+    },
 }));
 
 describe('Application Helper', () => {
@@ -46,15 +65,25 @@ describe('Application Helper', () => {
             const dataArray = [
                 { start_date: '2024-10-01', end_date: '2024-10-01' }
             ];
-
-            splitScheduleByDate.mockResolvedValue([
-                { date: '2024-10-01', start_time: '08:00', end_time: '17:00' }
-            ]);
-
+        
+            // Mock `splitScheduleByDate` to return different blocks for new date and existing data
+            splitScheduleByDate.mockImplementation((startDate) => {
+                if (startDate === newStartDate) {
+                    return [
+                        { date: '2024-10-03', start_time: '08:00', end_time: '17:00' },
+                        { date: '2024-10-04', start_time: '08:00', end_time: '17:00' }
+                    ];
+                } else if (startDate === dataArray[0].start_date) {
+                    return [
+                        { date: '2024-10-01', start_time: '08:00', end_time: '17:00' }
+                    ];
+                }
+            });
+        
             const result = await checkforOverlap(newStartDate, newEndDate, dataArray, 'existing');
             expect(result).toBe(false);
-            expect(splitScheduleByDate).toHaveBeenCalledTimes(2);
-        });
+            expect(splitScheduleByDate).toHaveBeenCalledTimes(3);
+        });        
 
         it('should throw an error if splitScheduleByDate fails', async () => {
             const newStartDate = '2024-10-01';
@@ -105,10 +134,11 @@ describe('Application Helper', () => {
                 { filename: 'file2.txt' }
             ];
             const userId = 1;
+            const applicationId = 1;
 
             uploadFile.mockResolvedValue(true);
 
-            await uploadFilesToS3(files, userId);
+            await uploadFilesToS3(files, applicationId, userId);
 
             expect(uploadFile).toHaveBeenCalledTimes(2);
             expect(uploadFile).toHaveBeenCalledWith(files[0], 'application', userId, false, { id: userId });
@@ -122,6 +152,124 @@ describe('Application Helper', () => {
             await uploadFilesToS3(files, userId);
 
             expect(uploadFile).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('extractRemainingDates', () => {
+        it('should return remaining dates after withdrawal dates are removed', () => {
+            const existingMoments = [moment('2024-10-01'), moment('2024-10-02'), moment('2024-10-03')];
+            const withdrawMoments = ['2024-10-02'];
+
+            const result = extractRemainingDates(existingMoments, withdrawMoments);
+
+            expect(result).toEqual([
+                [existingMoments[0]],  // '2024-10-01'
+                [existingMoments[2]],  // '2024-10-03'
+            ]);
+        });
+
+        it('should return an empty array if all dates are withdrawn', () => {
+            const existingMoments = [moment('2024-10-01'), moment('2024-10-02')];
+            const withdrawMoments = ['2024-10-01', '2024-10-02'];
+
+            const result = extractRemainingDates(existingMoments, withdrawMoments);
+
+            expect(result).toEqual([]);
+        });
+    });
+
+    describe('splitConsecutivePeriodByDay', () => {
+        it('should split a period into consecutive days', () => {
+            const startDate = '2024-10-01';
+            const endDate = '2024-10-03';
+
+            const result = splitConsecutivePeriodByDay(startDate, endDate);
+
+            expect(result).toEqual(['2024-10-01', '2024-10-02', '2024-10-03']);
+        });
+
+        it('should return an empty array if dates are invalid', () => {
+            const startDate = 'invalid-date';
+            const endDate = 'another-invalid-date';
+
+            const result = splitConsecutivePeriodByDay(startDate, endDate);
+
+            expect(result).toEqual([]);
+        });
+    });
+
+    describe('updateFileDetails', () => {
+        it('should update file details if file exists and is not the first block', async () => {
+            checkFileExists.mockResolvedValue(true);
+
+            await updateFileDetails(1, 101, 's3-key', { file_name: 'file.txt', file_extension: 'txt', created_by: 1 }, false);
+
+            expect(File.update).toHaveBeenCalledWith(
+                {
+                    related_entity_id: 101,
+                    s3_key: 's3-key',
+                },
+                {
+                    where: { file_id: 1 },
+                }
+            );
+        });
+
+        it('should create a new file row if file does not exist or is the first block', async () => {
+            checkFileExists.mockResolvedValue(false);
+
+            await updateFileDetails(1, 101, 's3-key', { file_name: 'file.txt', file_extension: 'txt', created_by: 1 }, true);
+
+            expect(File.create).toHaveBeenCalledWith({
+                related_entity_id: 101,
+                s3_key: 's3-key',
+                file_name: 'file.txt',
+                file_extension: 'txt',
+                related_entity: "Application",
+                created_by: 1,
+                last_update_by: 1,
+            });
+        });
+    });
+
+    describe('generateNewFileName', () => {
+        it('should generate a new file name with the expected format', () => {
+            // Mock the current date to a specific fixed date
+            const mockDate = new Date('2024-11-07T08:20:36.435Z');
+            jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+    
+            const result = generateNewFileName('report_file', 1, 101, 'pdf');
+            expect(result).toBe('report_1_101_20241107T082036435Z.pdf');
+    
+            // Restore the original Date function after the test
+            jest.restoreAllMocks();
+        });
+    });    
+
+    describe('sendNotificationEmail', () => {
+        it('should send an email with the correct subject and message', async () => {
+            const application = { start_date: '2024-10-01', end_date: '2024-10-03', requestor_remarks: 'Need approval' };
+            const requestor = { first_name: 'John', last_name: 'Doe' };
+            const recipient = { first_name: 'Jane', last_name: 'Smith', email: 'jane@example.com' };
+            const eventType = 'createApplication';
+
+            await sendNotificationEmail(application, requestor, recipient, eventType, null, null);
+
+            expect(send_email).toHaveBeenCalledWith(
+                'jane@example.com',
+                'A WFH application is pending your approval',
+                expect.stringContaining('You have a pending Work From Home Request from John Doe'), // Partial message check
+                null,
+                null
+            );
+        });
+
+        it('should log an error if a required parameter is missing', async () => {
+            console.error = jest.fn();
+
+            await sendNotificationEmail(null, null, null, null, null, null);
+
+            expect(console.error).toHaveBeenCalledWith("One or more of the required parameters are missing");
         });
     });
 });

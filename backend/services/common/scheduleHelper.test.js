@@ -80,7 +80,7 @@ describe('Schedule Helper', () => {
             ]);
         });
 
-        it('should correctly split a partial day schedule', async () => {
+        it('should correctly split a partial day schedule (morning)', async () => {
             const startDate = '2024-10-01T09:00:00';
             const endDate = '2024-10-01T12:00:00';
 
@@ -96,7 +96,7 @@ describe('Schedule Helper', () => {
             ]);
         });
 
-        it('should correctly split a partial day schedule pm', async () => {
+        it('should correctly split a partial day schedule (afternoon)', async () => {
             const startDate = '2024-10-01T15:00:00';
             const endDate = '2024-10-01T20:00:00';
 
@@ -111,7 +111,6 @@ describe('Schedule Helper', () => {
                 }
             ]);
         });
-        
     });
 
     describe('scheduleHasNotPassedCurrentDay', () => {
@@ -133,17 +132,17 @@ describe('Schedule Helper', () => {
 
     describe('scheduleIsAfterCurrentTime', () => {
         it('should return true for a future date', () => {
-            const futureDate = '2024-10-30T12:00:00Z'; // 1 day in the future
+            const futureDate = moment().add(1, 'day').toISOString(); // 1 day in the future
             expect(scheduleIsAfterCurrentTime(futureDate)).toBe(true);
         });
     
         it('should return false for a past date', () => {
-            const pastDate = '2024-10-28T12:00:00Z'; // 1 day in the past
+            const pastDate = moment().subtract(1, 'day').toISOString(); // 1 day in the past
             expect(scheduleIsAfterCurrentTime(pastDate)).toBe(false);
         });
     
         it('should return false for a date just before the current time', () => {
-            const justBeforeCurrentDate = '2024-10-29T11:59:59Z'; // Just before current time
+            const justBeforeCurrentDate = moment().subtract(1, 'second').toISOString(); // Just before current time
             expect(scheduleIsAfterCurrentTime(justBeforeCurrentDate)).toBe(false);
         });
     });
