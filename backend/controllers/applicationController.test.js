@@ -24,15 +24,6 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../services/database/mysql');
 const moment = require('moment');
 
-jest.mock('../services/database/mysql', () => ({
-    sequelize: {
-        transaction: jest.fn(() => ({
-            commit: jest.fn(),
-            rollback: jest.fn(),
-        })),
-    },
-}));
-
 jest.mock('../models', () => ({
     Application: {
         findAll: jest.fn(),
@@ -2138,7 +2129,7 @@ describe('Application Controller Additional Tests', () => {
 
     // describe('withdrawSpecificDates', () => {
     //     let req, res, transaction;
-    
+
     //     beforeEach(() => {
     //         req = {
     //             body: {
@@ -2154,7 +2145,7 @@ describe('Application Controller Additional Tests', () => {
     //         transaction = sequelize.transaction();
     //         jest.clearAllMocks();
     //     });
-    
+
     //     it('should successfully withdraw specific dates and create new applications for remaining dates', async () => {
     //         const existingApprovedApp = {
     //             application_id: 1,
@@ -2162,9 +2153,9 @@ describe('Application Controller Additional Tests', () => {
     //             status: 'Approved',
     //             save: jest.fn().mockResolvedValue(true),
     //         };
-    
+
     //         const remainingDates = [['2024-01-01'], ['2024-01-04', '2024-01-05']];
-    
+
     //         Application.findOne.mockResolvedValue(existingApprovedApp);
     //         splitConsecutivePeriodByDay.mockReturnValue([
     //             '2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05',
@@ -2172,12 +2163,12 @@ describe('Application Controller Additional Tests', () => {
     //         extractRemainingDates.mockReturnValue(remainingDates);
     //         deleteCorrespondingSchedule.mockResolvedValue(true);
     //         retrieveFileDetails.mockResolvedValue([]);
-    
+
     //         // Spy on createSimilarApplication within the same module
     //         const createSimilarApplicationSpy = jest.spyOn(applicationController, 'createSimilarApplication').mockResolvedValue(true);
-    
+
     //         await applicationController.withdrawSpecificDates(req, res);
-    
+
     //         expect(Application.findOne).toHaveBeenCalledWith({
     //             where: { application_id: 1, status: 'Approved' },
     //         });

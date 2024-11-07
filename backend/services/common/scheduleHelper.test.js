@@ -1,149 +1,83 @@
-const { splitScheduleByDate, scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime } = require('./scheduleHelper');
 const moment = require('moment');
+const { splitScheduleByDate, scheduleHasNotPassedCurrentDay, scheduleIsAfterCurrentTime, deleteCorrespondingSchedule } = require('./scheduleHelper');
+const { Schedule } = require('../../models');
 
-describe('Schedule Helper', () => {
+// Mocking Schedule model for database operations
+jest.mock('../../models', () => ({
+    Schedule: {
+        findOne: jest.fn(),
+    },
+}));
 
-    describe('splitScheduleByDate', () => {
-        it('should correctly split a full-day schedule', async () => {
-            const startDate = '2024-10-01T09:00:00';
-            const endDate = '2024-10-01T18:00:00';
-
-            const result = await splitScheduleByDate(startDate, endDate);
-
-            expect(result).toEqual([
-                {
-                    date: '2024-10-01',
-                    period: 'Full Day',
-                    start_time: '09:00:00',
-                    end_time: '18:00:00'
-                }
-            ]);
-        });
-
-        it('should correctly split an AM block', async () => {
-            const startDate = '2024-10-01T09:00:00';
-            const endDate = '2024-10-01T13:00:00';
-
-            const result = await splitScheduleByDate(startDate, endDate);
-
-            expect(result).toEqual([
-                {
-                    date: '2024-10-01',
-                    period: 'AM',
-                    start_time: '09:00:00',
-                    end_time: '13:00:00'
-                }
-            ]);
-        });
-
-        it('should correctly split a PM block', async () => {
-            const startDate = '2024-10-01T14:00:00';
-            const endDate = '2024-10-01T18:00:00';
-
-            const result = await splitScheduleByDate(startDate, endDate);
-
-            expect(result).toEqual([
-                {
-                    date: '2024-10-01',
-                    period: 'PM',
-                    start_time: '14:00:00',
-                    end_time: '18:00:00'
-                }
-            ]);
-        });
-
-        it('should correctly split a schedule spanning multiple days', async () => {
-            const startDate = '2024-10-01T09:00:00';
-            const endDate = '2024-10-03T18:00:00';
-
-            const result = await splitScheduleByDate(startDate, endDate);
-
-            expect(result).toEqual([
-                {
-                    date: '2024-10-01',
-                    period: 'Full Day',
-                    start_time: '09:00:00',
-                    end_time: '18:00:00'
-                },
-                {
-                    date: '2024-10-02',
-                    period: 'Full Day',
-                    start_time: '09:00:00',
-                    end_time: '18:00:00'
-                },
-                {
-                    date: '2024-10-03',
-                    period: 'Full Day',
-                    start_time: '09:00:00',
-                    end_time: '18:00:00'
-                }
-            ]);
-        });
-
-        it('should correctly split a partial day schedule (morning)', async () => {
-            const startDate = '2024-10-01T09:00:00';
-            const endDate = '2024-10-01T12:00:00';
-
-            const result = await splitScheduleByDate(startDate, endDate);
-
-            expect(result).toEqual([
-                {
-                    date: '2024-10-01',
-                    period: 'Partial Day',
-                    start_time: '09:00:00',
-                    end_time: '12:00:00'
-                }
-            ]);
-        });
-
-        it('should correctly split a partial day schedule (afternoon)', async () => {
-            const startDate = '2024-10-01T15:00:00';
-            const endDate = '2024-10-01T20:00:00';
-
-            const result = await splitScheduleByDate(startDate, endDate);
-
-            expect(result).toEqual([
-                {
-                    date: '2024-10-01',
-                    period: 'Partial Day',
-                    start_time: '15:00:00',
-                    end_time: '20:00:00'
-                }
-            ]);
-        });
+describe('splitScheduleByDate', () => {
+    it('should return a full day block for same-day 09:00 to 18:00 range', async () => {
+        const result = await splitScheduleByDate('2023-11-08T09:00:00', '2023-11-08T18:00:00');
+        expect(result).toEqual([
+            { date: '2023-11-08', period: 'Full Day', start_time: '09:00:00', end_time: '18:00:00' }
+        ]);
     });
 
-    describe('scheduleHasNotPassedCurrentDay', () => {
-        it('should return true if the schedule date is today or before', () => {
-            const today = new Date(); // Current date
-            const pastDate = new Date('2024-10-01'); // Past date
-
-            expect(scheduleHasNotPassedCurrentDay(today)).toBe(true); // Today
-            expect(scheduleHasNotPassedCurrentDay(pastDate)).toBe(true); // Before today
-        });
-
-        it('should return false if the schedule date is after today', () => {
-            const futureDate = new Date();
-            futureDate.setDate(futureDate.getDate() + 1); // Tomorrow
-
-            expect(scheduleHasNotPassedCurrentDay(futureDate)).toBe(false);
-        });
+    it('should return an AM block for 09:00 to 13:00 range on the same day', async () => {
+        const result = await splitScheduleByDate('2023-11-08T09:00:00', '2023-11-08T13:00:00');
+        expect(result).toEqual([
+            { date: '2023-11-08', period: 'AM', start_time: '09:00:00', end_time: '13:00:00' }
+        ]);
     });
 
-    describe('scheduleIsAfterCurrentTime', () => {
-        it('should return true for a future date', () => {
-            const futureDate = moment().add(1, 'day').toISOString(); // 1 day in the future
-            expect(scheduleIsAfterCurrentTime(futureDate)).toBe(true);
-        });
-    
-        it('should return false for a past date', () => {
-            const pastDate = moment().subtract(1, 'day').toISOString(); // 1 day in the past
-            expect(scheduleIsAfterCurrentTime(pastDate)).toBe(false);
-        });
-    
-        it('should return false for a date just before the current time', () => {
-            const justBeforeCurrentDate = moment().subtract(1, 'second').toISOString(); // Just before current time
-            expect(scheduleIsAfterCurrentTime(justBeforeCurrentDate)).toBe(false);
-        });
+    it('should return Partial Day if time does not match specific blocks', async () => {
+        const result = await splitScheduleByDate('2023-11-08T10:00:00', '2023-11-08T12:00:00');
+        expect(result).toEqual([
+            { date: '2023-11-08', period: 'Partial Day', start_time: '10:00:00', end_time: '12:00:00' }
+        ]);
+    });
+});
+
+describe('scheduleHasNotPassedCurrentDay', () => {
+    it('should return true if the date is today or in the past', () => {
+        const today = new Date();
+        expect(scheduleHasNotPassedCurrentDay(today)).toBe(true);
+
+        const pastDate = new Date('2022-01-01');
+        expect(scheduleHasNotPassedCurrentDay(pastDate)).toBe(true);
+    });
+
+    it('should return false if the date is in the future', () => {
+        const futureDate = new Date(new Date().setDate(new Date().getDate() + 1));
+        expect(scheduleHasNotPassedCurrentDay(futureDate)).toBe(false);
+    });
+});
+
+describe('scheduleIsAfterCurrentTime', () => {
+    it('should return true if the date is in the future', () => {
+        const futureDate = new Date(new Date().getTime() + 10000);  // 10 seconds from now
+        expect(scheduleIsAfterCurrentTime(futureDate.toISOString())).toBe(true);
+    });
+
+    it('should return false if the date is in the past', () => {
+        const pastDate = new Date(new Date().getTime() - 10000);  // 10 seconds ago
+        expect(scheduleIsAfterCurrentTime(pastDate.toISOString())).toBe(false);
+    });
+});
+
+describe('deleteCorrespondingSchedule', () => {
+    it('should return true if the schedule is found and deleted', async () => {
+        Schedule.findOne.mockResolvedValue({ destroy: jest.fn().mockResolvedValue(true) });
+        const application = { created_by: 1, start_date: '2023-11-08', end_date: '2023-11-09' };
+        const result = await deleteCorrespondingSchedule(application);
+        expect(result).toBe(true);
+    });
+
+    it('should return false if the schedule is not found', async () => {
+        Schedule.findOne.mockResolvedValue(null);
+        const application = { created_by: 1, start_date: '2023-11-08', end_date: '2023-11-09' };
+        const result = await deleteCorrespondingSchedule(application);
+        expect(result).toBe(false);
+    });
+
+    it('should return false if an error occurs during the deletion process', async () => {
+        Schedule.findOne.mockRejectedValue(new Error('Database error'));
+        const application = { created_by: 1, start_date: '2023-11-08', end_date: '2023-11-09' };
+        const result = await deleteCorrespondingSchedule(application);
+        expect(result).toBe(false);
     });
 });

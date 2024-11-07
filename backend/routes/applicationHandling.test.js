@@ -7,11 +7,17 @@ const applicationController = require('../controllers/applicationController');
 jest.mock('../controllers/applicationController', () => ({
     retrieveApplications: jest.fn(),
     retrievePendingApplications: jest.fn(),
+    retrieveApprovedApplications: jest.fn(),
     createNewApplication: jest.fn(),
     approvePendingApplication: jest.fn(),
     rejectPendingApplication: jest.fn(),
     withdrawPendingApplication: jest.fn(),
     withdrawApprovedApplication: jest.fn(),
+    withdrawSpecificDates: jest.fn(),
+    updatePendingApplication: jest.fn(),
+    withdrawApprovedApplicationByEmployee: jest.fn(),
+    rejectWithdrawalOfApprovedApplication: jest.fn(),
+    updateApprovedApplication: jest.fn(),
 }));
 
 jest.mock('../middlewares/authMiddleware', () => ({
@@ -28,12 +34,12 @@ describe('Application Handling Routes', () => {
         jest.clearAllMocks();
     });
 
-    describe('GET /retrieveApplication', () => {
+    describe('GET /retrieveApplications', () => {
         it('should retrieve applications when valid parameters are provided', async () => {
             applicationController.retrieveApplications.mockImplementation((req, res) => res.status(200).json({ message: 'Success' }));
 
             const response = await request(app)
-                .get('/retrieveApplication')
+                .get('/retrieveApplications')
                 .query({ id: 1, status: 'Pending' });
 
             expect(response.status).toBe(200);
@@ -43,11 +49,37 @@ describe('Application Handling Routes', () => {
 
         it('should return 422 for invalid query parameters', async () => {
             const response = await request(app)
-                .get('/retrieveApplication')
+                .get('/retrieveApplications')
                 .query({ id: 'invalid', status: 'Pending' });
 
             expect(response.status).toBe(422);
-            expect(response.body).toHaveProperty('message', 'Invaild Input Received');
+            expect(response.body).toHaveProperty('message', 'Invalid Input Received');
+        });
+    });
+
+    describe('GET /retrievePendingApplications', () => {
+        it('should retrieve pending applications for manager', async () => {
+            applicationController.retrievePendingApplications.mockImplementation((req, res) => res.status(200).json({ message: 'Pending Applications Retrieved' }));
+
+            const response = await request(app)
+                .get('/retrievePendingApplications');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ message: 'Pending Applications Retrieved' });
+            expect(applicationController.retrievePendingApplications).toHaveBeenCalled();
+        });
+    });
+
+    describe('GET /retrieveApprovedApplications', () => {
+        it('should retrieve approved applications for manager', async () => {
+            applicationController.retrieveApprovedApplications.mockImplementation((req, res) => res.status(200).json({ message: 'Approved Applications Retrieved' }));
+
+            const response = await request(app)
+                .get('/retrieveApprovedApplications');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ message: 'Approved Applications Retrieved' });
+            expect(applicationController.retrieveApprovedApplications).toHaveBeenCalled();
         });
     });
 
@@ -79,16 +111,16 @@ describe('Application Handling Routes', () => {
                 });
 
             expect(response.status).toBe(422);
-            expect(response.body).toHaveProperty('message', 'Invaild Input Received');
+            expect(response.body).toHaveProperty('message', 'Invalid Input Received');
         });
     });
 
-    describe('PUT /approveApplication', () => {
+    describe('PATCH /approveApplication', () => {
         it('should approve an application when valid data is provided', async () => {
             applicationController.approvePendingApplication.mockImplementation((req, res) => res.status(200).json({ message: 'Application Approved' }));
 
             const response = await request(app)
-                .put('/approveApplication')
+                .patch('/approveApplication')
                 .send({
                     application_id: 1,
                     approverRemarks: 'Approved'
@@ -101,23 +133,23 @@ describe('Application Handling Routes', () => {
 
         it('should return 422 for invalid input data', async () => {
             const response = await request(app)
-                .put('/approveApplication')
+                .patch('/approveApplication')
                 .send({
                     application_id: 'invalid',
                     approverRemarks: 'Approved'
                 });
 
             expect(response.status).toBe(422);
-            expect(response.body).toHaveProperty('message', 'Invaild Input Received');
+            expect(response.body).toHaveProperty('message', 'Invalid Input Received');
         });
     });
 
-    describe('PUT /rejectApplication', () => {
+    describe('PATCH /rejectApplication', () => {
         it('should reject an application when valid data is provided', async () => {
             applicationController.rejectPendingApplication.mockImplementation((req, res) => res.status(200).json({ message: 'Application Rejected' }));
 
             const response = await request(app)
-                .put('/rejectApplication')
+                .patch('/rejectApplication')
                 .send({
                     application_id: 1,
                     approverRemarks: 'Rejected'
@@ -130,23 +162,23 @@ describe('Application Handling Routes', () => {
 
         it('should return 422 for invalid input data', async () => {
             const response = await request(app)
-                .put('/rejectApplication')
+                .patch('/rejectApplication')
                 .send({
                     application_id: 'invalid',
                     approverRemarks: 'Rejected'
                 });
 
             expect(response.status).toBe(422);
-            expect(response.body).toHaveProperty('message', 'Invaild Input Received');
+            expect(response.body).toHaveProperty('message', 'Invalid Input Received');
         });
     });
 
-    describe('PUT /withdrawPending', () => {
+    describe('PATCH /withdrawPending', () => {
         it('should withdraw a pending application when valid data is provided', async () => {
             applicationController.withdrawPendingApplication.mockImplementation((req, res) => res.status(200).json({ message: 'Application Withdrawn' }));
 
             const response = await request(app)
-                .put('/withdrawPending')
+                .patch('/withdrawPending')
                 .send({ application_id: 1 });
 
             expect(response.status).toBe(200);
@@ -156,34 +188,81 @@ describe('Application Handling Routes', () => {
 
         it('should return 422 for invalid input data', async () => {
             const response = await request(app)
-                .put('/withdrawPending')
+                .patch('/withdrawPending')
                 .send({ application_id: 'invalid' });
 
             expect(response.status).toBe(422);
-            expect(response.body).toHaveProperty('message', 'Invaild Input Received');
+            expect(response.body).toHaveProperty('message', 'Invalid Input Received');
         });
     });
 
-    describe('PUT /withdrawApproved', () => {
-        it('should withdraw an approved application when valid data is provided', async () => {
-            applicationController.withdrawApprovedApplication.mockImplementation((req, res) => res.status(200).json({ message: 'Approved Application Withdrawn' }));
+    describe('PATCH /withdrawSpecificApproved', () => {
+        it('should withdraw specific dates from approved application', async () => {
+            applicationController.withdrawSpecificDates.mockImplementation((req, res) => res.status(200).json({ message: 'Specific Dates Withdrawn' }));
 
             const response = await request(app)
-                .put('/withdrawApproved')
+                .patch('/withdrawSpecificApproved')
+                .send({ application_id: 1, withdrawDates: ['2024-10-03'] });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ message: 'Specific Dates Withdrawn' });
+            expect(applicationController.withdrawSpecificDates).toHaveBeenCalled();
+        });
+    });
+
+    describe('PATCH /updatePendingApplication', () => {
+        it('should update a pending application', async () => {
+            applicationController.updatePendingApplication.mockImplementation((req, res) => res.status(200).json({ message: 'Pending Application Updated' }));
+
+            const response = await request(app)
+                .patch('/updatePendingApplication')
+                .send({ application_id: 1, newStartDate: '2024-10-05', newEndDate: '2024-10-10' });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ message: 'Pending Application Updated' });
+            expect(applicationController.updatePendingApplication).toHaveBeenCalled();
+        });
+    });
+
+    describe('PATCH /withdrawApprovedApplicationByEmployee', () => {
+        it('should submit withdrawal request for approved application by employee', async () => {
+            applicationController.withdrawApprovedApplicationByEmployee.mockImplementation((req, res) => res.status(200).json({ message: 'Withdrawal request sent to manager' }));
+
+            const response = await request(app)
+                .patch('/withdrawApprovedApplicationByEmployee')
                 .send({ application_id: 1 });
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual({ message: 'Approved Application Withdrawn' });
-            expect(applicationController.withdrawApprovedApplication).toHaveBeenCalled();
+            expect(response.body).toEqual({ message: 'Withdrawal request sent to manager' });
+            expect(applicationController.withdrawApprovedApplicationByEmployee).toHaveBeenCalled();
         });
+    });
 
-        it('should return 422 for invalid input data', async () => {
+    describe('PATCH /rejectWithdrawalOfApprovedApplication', () => {
+        it('should reject withdrawal of approved application by manager', async () => {
+            applicationController.rejectWithdrawalOfApprovedApplication.mockImplementation((req, res) => res.status(200).json({ message: 'Reject withdrawal of approved application' }));
+
             const response = await request(app)
-                .put('/withdrawApproved')
-                .send({ application_id: 'invalid' });
+                .patch('/rejectWithdrawalOfApprovedApplication')
+                .send({ application_id: 1 });
 
-            expect(response.status).toBe(422);
-            expect(response.body).toHaveProperty('message', 'Invaild Input Received');
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ message: 'Reject withdrawal of approved application' });
+            expect(applicationController.rejectWithdrawalOfApprovedApplication).toHaveBeenCalled();
+        });
+    });
+
+    describe('PATCH /updateApprovedApplication', () => {
+        it('should update an approved application', async () => {
+            applicationController.updateApprovedApplication.mockImplementation((req, res) => res.status(200).json({ message: 'Approved Application Updated' }));
+
+            const response = await request(app)
+                .patch('/updateApprovedApplication')
+                .send({ application_id: 1, newStartDate: '2024-10-15', newEndDate: '2024-10-20' });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ message: 'Approved Application Updated' });
+            expect(applicationController.updateApprovedApplication).toHaveBeenCalled();
         });
     });
 });

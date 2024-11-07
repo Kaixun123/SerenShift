@@ -106,7 +106,7 @@ describe('Employee Handling Routes', () => {
                 .query({ id: 'invalid' });
 
             expect(response.status).toBe(422);
-            expect(response.body).toHaveProperty('message', 'Invaild Input Received');
+            expect(response.body).toHaveProperty('message', 'Invalid Input Received');
         });
     });
 });

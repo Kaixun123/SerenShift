@@ -52,7 +52,7 @@ describe('Auth Handling Routes', () => {
                 });
 
             expect(response.status).toBe(422);
-            expect(response.body).toHaveProperty('message', 'Invaild Input Received');
+            expect(response.body).toHaveProperty('message', 'Invalid Input Received');
             expect(response.body.errors).toHaveLength(2);  // Expect 2 validation errors
         });
     });

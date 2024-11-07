@@ -10,19 +10,6 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetO
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { File } = require('../../models');
 
-// Mock AWS SDK functions
-jest.mock('@aws-sdk/client-s3', () => ({
-    S3Client: jest.fn(),
-    PutObjectCommand: jest.fn(),
-    DeleteObjectCommand: jest.fn(),
-    HeadObjectCommand: jest.fn(),
-    GetObjectCommand: jest.fn(),
-}));
-
-jest.mock('@aws-sdk/s3-request-presigner', () => ({
-    getSignedUrl: jest.fn(),
-}));
-
 // Mock the File model
 jest.mock('../../models', () => ({
     File: {
