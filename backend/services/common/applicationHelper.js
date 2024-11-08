@@ -75,27 +75,6 @@ const extractRemainingDates = (existingMoments, withdrawMoments) => { // Both ar
     return remainingDates;  // (all unbroken chains of consecutive dates are in the same array)
 };
 
-const splitDatesByDay = (startDate, endDate) => {
-    const results = [];
-    let currentDate = new Date(startDate);
-    // Set time on end date to be the same time as startDate for consistent pairs
-    const endDateTime = new Date(endDate);
-    endDateTime.setHours(startDate.getHours(), startDate.getMinutes(), startDate.getSeconds(), startDate.getMilliseconds());
-    while (currentDate <= endDate) {
-        // Clone currentDate for start and end times for the current day
-        const startOfDay = new Date(currentDate);
-        const endOfDay = new Date(currentDate);
-        // Set the time of the start and end date for the current day
-        startOfDay.setHours(startDate.getHours(), startDate.getMinutes(), startDate.getSeconds(), startDate.getMilliseconds());
-        endOfDay.setHours(endDate.getHours(), endDate.getMinutes(), endDate.getSeconds(), endDate.getMilliseconds());
-        // Add the pair to the result array
-        results.push([startOfDay, endOfDay]);
-        // Move to the next day
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-    return results;
-}
-
 const splitConsecutivePeriodByDay = (startDate, endDate) => {
     // Validation of date inputs
     if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
@@ -218,7 +197,7 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                         cc = recipient.email;
                     message += "Hi " + recipient.first_name + " " + recipient.last_name +
                         ",\n\nYou have a pending Work From Home Request from " + requestor.first_name +
-                        " " + requestor.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
+                        " " + requestor.last_name + ". Kindly review and make your decision at your earliest convenience.\n\n" +
                         "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
                         "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
@@ -281,7 +260,6 @@ module.exports = {
     checkforOverlap,
     checkWhetherSameDate,
     extractRemainingDates,
-    splitDatesByDay,
     splitConsecutivePeriodByDay,
     uploadFilesToS3,
     updateFileDetails,

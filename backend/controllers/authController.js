@@ -14,8 +14,9 @@ const login = (req, res) => {
         if (err) return res.status(500).json({ error: err });
         if (!user) return res.status(401).json({ message: info.message });
         req.logIn(user, (err) => {
-            if (err)
+            if (err) {
                 return res.status(500).json({ error: err });
+            };
             let issuedToken = jwt.sign(
                 { id: user.id },
                 process.env.JWT_SECRET,
@@ -35,14 +36,15 @@ const login = (req, res) => {
 
 const me = async (req, res) => {
     let retrievedEmployee = await Employee.findByPk(req.user.id);
-    let retrievedManager = await Employee.findByPk(retrievedEmployee.reporting_manager);
-    if (!retrievedEmployee)
+    if (!retrievedEmployee) {
         req.logout(() => {
             res.clearCookie('jwt');
             res.clearCookie('connect.sid');
             res.status(404).json({ message: 'Employee not found' });
         });
+    }
     else {
+        let retrievedManager = await Employee.findByPk(retrievedEmployee.reporting_manager);
         let response = {
             id: retrievedEmployee.id,
             first_name: retrievedEmployee.first_name,
