@@ -1,7 +1,6 @@
 const {
     checkforOverlap,
     checkWhetherSameDate,
-    splitDatesByDay,
     splitConsecutivePeriodByDay,
     extractRemainingDates,
     updateFileDetails,
@@ -65,7 +64,7 @@ describe('Application Helper', () => {
             const dataArray = [
                 { start_date: '2024-10-01', end_date: '2024-10-01' }
             ];
-        
+
             // Mock `splitScheduleByDate` to return different blocks for new date and existing data
             splitScheduleByDate.mockImplementation((startDate) => {
                 if (startDate === newStartDate) {
@@ -79,11 +78,11 @@ describe('Application Helper', () => {
                     ];
                 }
             });
-        
+
             const result = await checkforOverlap(newStartDate, newEndDate, dataArray, 'existing');
             expect(result).toBe(false);
             expect(splitScheduleByDate).toHaveBeenCalledTimes(3);
-        });        
+        });
 
         it('should throw an error if splitScheduleByDate fails', async () => {
             const newStartDate = '2024-10-01';
@@ -111,19 +110,6 @@ describe('Application Helper', () => {
 
             const result = checkWhetherSameDate(date1, date2);
             expect(result).toBe(false);
-        });
-    });
-
-    describe('splitDatesByDay', () => {
-        it('should correctly split dates into day ranges', () => {
-            const startDate = new Date('2024-10-01T08:00:00');
-            const endDate = new Date('2024-10-03T17:00:00');
-
-            const result = splitDatesByDay(startDate, endDate);
-
-            expect(result.length).toBe(3);
-            expect(result[0][0].toISOString()).toBe('2024-10-01T08:00:00.000Z');
-            expect(result[2][1].toISOString()).toBe('2024-10-03T17:00:00.000Z');
         });
     });
 
@@ -237,14 +223,14 @@ describe('Application Helper', () => {
             // Mock the current date to a specific fixed date
             const mockDate = new Date('2024-11-07T08:20:36.435Z');
             jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
-    
+
             const result = generateNewFileName('report_file', 1, 101, 'pdf');
             expect(result).toBe('report_1_101_20241107T082036435Z.pdf');
-    
+
             // Restore the original Date function after the test
             jest.restoreAllMocks();
         });
-    });    
+    });
 
     describe('sendNotificationEmail', () => {
         it('should send an email with the correct subject and message', async () => {
@@ -258,9 +244,8 @@ describe('Application Helper', () => {
             expect(send_email).toHaveBeenCalledWith(
                 'jane@example.com',
                 'A WFH application is pending your approval',
-                expect.stringContaining('You have a pending Work From Home Request from John Doe'), // Partial message check
+                'Hi Jane Smith,\n\nYou have a pending Work From Home Request from John Doe. Kindly review and make your decision at your earlier convinence.\n\nRequested WFH Start Period: 01/10/2024\nRequested WFH End Period: 03/10/2024\nRemarks: Need approval\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email", "jane@example.com',
                 null,
-                null
             );
         });
 

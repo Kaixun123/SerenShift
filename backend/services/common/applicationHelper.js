@@ -75,27 +75,6 @@ const extractRemainingDates = (existingMoments, withdrawMoments) => { // Both ar
     return remainingDates;  // (all unbroken chains of consecutive dates are in the same array)
 };
 
-const splitDatesByDay = (startDate, endDate) => {
-    const results = [];
-    let currentDate = new Date(startDate);
-    // Set time on end date to be the same time as startDate for consistent pairs
-    const endDateTime = new Date(endDate);
-    endDateTime.setHours(startDate.getHours(), startDate.getMinutes(), startDate.getSeconds(), startDate.getMilliseconds());
-    while (currentDate <= endDate) {
-        // Clone currentDate for start and end times for the current day
-        const startOfDay = new Date(currentDate);
-        const endOfDay = new Date(currentDate);
-        // Set the time of the start and end date for the current day
-        startOfDay.setHours(startDate.getHours(), startDate.getMinutes(), startDate.getSeconds(), startDate.getMilliseconds());
-        endOfDay.setHours(endDate.getHours(), endDate.getMinutes(), endDate.getSeconds(), endDate.getMilliseconds());
-        // Add the pair to the result array
-        results.push([startOfDay, endOfDay]);
-        // Move to the next day
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-    return results;
-}
-
 const splitConsecutivePeriodByDay = (startDate, endDate) => {
     // Validation of date inputs
     if (isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
@@ -281,7 +260,6 @@ module.exports = {
     checkforOverlap,
     checkWhetherSameDate,
     extractRemainingDates,
-    splitDatesByDay,
     splitConsecutivePeriodByDay,
     uploadFilesToS3,
     updateFileDetails,

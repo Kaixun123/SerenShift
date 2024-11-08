@@ -48,7 +48,7 @@ describe('Housekeep Notifications Job', () => {
         expect(Notification.findAll).toHaveBeenCalledWith({
             where: {
                 read_status: true,
-                createdAt: expect.any(Object), // Matcher to check date condition
+                created_timestamp: expect.any(Object), // Matcher to check date condition
                 paranoid: false
             }
         });

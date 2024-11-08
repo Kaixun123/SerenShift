@@ -41,7 +41,7 @@ describe('Housekeep Pending Applications Job', () => {
         // Mock data for applications and employees
         const mockApplications = [
             { id: 1, start_date: new Date('2023-01-01'), status: 'Pending', created_by: 1, save: jest.fn() },
-            { id: 2, start_date: new Date('2023-01-02'), status: 'Pending', created_by: 2, save: jest.fn() }
+            { id: 2, start_date: new Date('2023-01-01'), status: 'Pending', created_by: 2, save: jest.fn() }
         ];
         const mockRequester = { id: 1, reporting_manager: 2 };
         const mockApprover = { id: 2 };

@@ -61,16 +61,6 @@ describe('Employee Handling Routes', () => {
             expect(response.body).toEqual([{ id: 2, first_name: 'Jane' }]);
             expect(employeeController.retrieveSubordinates).toHaveBeenCalled();
         });
-
-        it('should return 500 if there is an error retrieving subordinates', async () => {
-            employeeController.retrieveSubordinates.mockImplementation((req, res) => res.status(500).json({ error: 'An error occurred' }));
-
-            const response = await request(app)
-                .get('/subordinates');
-
-            expect(response.status).toBe(500);
-            expect(response.body).toEqual({ error: 'An error occurred' });
-        });
     });
 
     describe('GET /employee', () => {

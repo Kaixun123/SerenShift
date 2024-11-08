@@ -22,6 +22,22 @@ jest.mock('../../models', () => ({
     },
 }));
 
+// Mock the Date class
+const mockDate = '2024-01-01T00:00:00.000Z';
+jest.spyOn(global.Date.prototype, 'toISOString').mockReturnValue(mockDate);
+
+jest.mock('@aws-sdk/client-s3', () => ({
+    S3Client: jest.fn(),
+    PutObjectCommand: jest.fn(),
+    DeleteObjectCommand: jest.fn(),
+    HeadObjectCommand: jest.fn(),
+    GetObjectCommand: jest.fn(),
+}));
+
+jest.mock('@aws-sdk/s3-request-presigner', () => ({
+    getSignedUrl: jest.fn(),
+}));
+
 describe('S3 Helper', () => {
 
     afterEach(() => {
@@ -44,7 +60,7 @@ describe('S3 Helper', () => {
             expect(File.findOne).toHaveBeenCalled();
             expect(S3Client.prototype.send).toHaveBeenCalledWith(expect.any(PutObjectCommand));
             expect(File.create).toHaveBeenCalledWith(expect.objectContaining({
-                file_name: 'test',
+                file_name: file.originalname + '_' + user.id + '_' + relatedEntityID + '_20220101000000000',
                 file_extension: 'txt',
                 related_entity: relatedEntityType,
                 related_entity_id: relatedEntityID,
