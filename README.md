@@ -38,7 +38,7 @@ To run SerenShift locally, follow these steps:
 
 1. **Clone the repository**: 
    ```bash
-   git clone <link>https://github.com/Kaixun123/SerenShift.git</link>
+   git clone https://github.com/Kaixun123/SerenShift.git
    cd SerenShift
 
 2. **Install dependencies for both frontend and backend**:
@@ -80,3 +80,11 @@ npm test
 ## Hosted Instance
 
 A live version of the application is available at: <link>https://www.ereceiptify.app</link>
+
+## Login Information
+
+Use the following format to log in to the application:
+
+### For Example
+Email Address: Jack.Sim@allinone.com.sg
+Password: P@ssw0rd (Same password applies to every account)
