@@ -190,6 +190,9 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
 
             let message = "";
             const { subject } = template;
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const startDateTimeString = startDate.toLocaleString('en-GB', options);
+            const endDateTimeString = endDate.toLocaleString('en-GB', options);
 
             switch (eventType) {
                 case "createApplication":
@@ -198,8 +201,8 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                     message += "Hi " + recipient.first_name + " " + recipient.last_name +
                         ",\n\nYou have a pending Work From Home Request from " + requestor.first_name +
                         " " + requestor.last_name + ". Kindly review and make your decision at your earliest convenience.\n\n" +
-                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
-                        "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
+                        "Requested WFH Start Period: " + String(startDateTimeString) + "\n\nRequested WFH End Period: " + String(endDateTimeString) +
+                        "\n\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "approvedApplication":
                     if (!cc)
@@ -207,7 +210,7 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                     message += "Hi " + requestor.first_name + " " + requestor.last_name +
                         ",\n\nYour application has been approved by " + recipient.first_name +
                         " " + recipient.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
-                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "Requested WFH Start Period: " + String(startDateTimeString) + "\nRequested WFH End Period: " + String(endDateTimeString) +
                         "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "rejectedApplication":
@@ -216,7 +219,7 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                     message += "Hi " + requestor.first_name + " " + requestor.last_name +
                         ",\n\nYour application has been rejected by " + recipient.first_name +
                         " " + recipient.last_name + ". Kindly review your application at your earlier convinence.\n\n" +
-                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "Requested WFH Start Period: " + String(startDateTimeString) + "\nRequested WFH End Period: " + String(endDateTimeString) +
                         "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "updateApplication":
@@ -225,7 +228,7 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                     message += "Hi " + recipient.first_name + " " + recipient.last_name +
                         ",\n\nYour authorized application has been modified by " + requestor.first_name +
                         " " + recipient.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
-                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "Requested WFH Start Period: " + String(startDateTimeString) + "\nRequested WFH End Period: " + String(endDateTimeString) +
                         "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "withdrawnApplication":
@@ -234,7 +237,7 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                     message += "Hi " + requestor.first_name + " " + requestor.last_name +
                         ",\n\nYour authorized application has been withdrawn by " + recipient.first_name +
                         " " + recipient.last_name + ". Kindly reach to your team member at your earlier convinence.\n\n" +
-                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "Requested WFH Start Period: " + String(startDateTimeString) + "\nRequested WFH End Period: " + String(endDateTimeString) +
                         "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 case "autoRejectedApplication":
@@ -242,7 +245,7 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                         cc = recipient.email;
                     message += "Hi " + requestor.first_name + " " + requestor.last_name +
                         ",\n\nYour application has been auto-rejected by the system. Kindly review your application and resubmit at your earlier convinence.\n\n" +
-                        "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
+                        "Requested WFH Start Period: " + String(startDateTimeString) + "\nRequested WFH End Period: " + String(endDateTimeString) +
                         "\nRemarks: " + application.approver_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
                 default:

@@ -324,6 +324,11 @@ const createNewApplication = async (req, res) => {
                     requestor_remarks: requestor_remarks,
                     status: 'Pending',
                 }, { transaction });
+
+                // Upload files using the application ID
+                if (files && files.length > 0) {
+                    await uploadFilesToS3(files, newRegularApp.application_id, employeeInfo.id);
+                }
             }
         }
 
