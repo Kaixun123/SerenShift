@@ -7,6 +7,8 @@ const helmet = require("helmet");
 const cors = require("cors");
 const app = express();
 const cookieParser = require("cookie-parser");
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 
 require("dotenv").config();
 const EXPRESS_PORT = process.env.EXPRESS_PORT;
@@ -59,6 +61,33 @@ app.use(passport.session());
 app.use(express.static("./public"));
 app.use(morgan("tiny"));
 app.use(cookieParser());
+
+//API documentation
+const APIdocumentation = {
+  definition: {
+    openapi: "3.1.0",
+    info: {
+      title: "Serenshift Express API with Swagger",
+      version: "0.1.0",
+      description:
+        "This is sernenshift made with Express and documented with Swagger",
+      contact: {
+        name: "Sereneshift",
+        url: "https://www.ereceiptify.app",
+        email: "serenShift@allinone.com",
+      },
+    },
+    servers: [
+      {
+        url: "http://localhost:4000",
+      },
+    ],
+  },
+  apis: ["./routes/*.js", './controllers/*.js'],
+}
+
+const specs = swaggerJsdoc(APIdocumentation);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // CORN JOBS
 require("./jobs");

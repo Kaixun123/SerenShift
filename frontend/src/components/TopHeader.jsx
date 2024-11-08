@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 export default function TopHeader({ mainText, subText }) {
   const [employee, setEmployee] = useState({ name: "", position: "" });
   const [notifications, setNotifications] = useState([]);
+  const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -151,9 +152,28 @@ export default function TopHeader({ mainText, subText }) {
       if (data.message) {
         setErrorMessage(data.message);
       } else {
-        const sortedNotifications = data
-          .sort((a, b) => a.read_status - b.read_status)
-          .slice(0, 5);
+        // Separate unread and read notifications
+        const unreadNotifications = data
+          .filter((notification) => !notification.read_status)
+          .sort(
+            (a, b) =>
+              new Date(b.created_timestamp) - new Date(a.created_timestamp)
+          );
+
+        const readNotifications = data
+          .filter((notification) => notification.read_status)
+          .sort(
+            (a, b) =>
+              new Date(b.created_timestamp) - new Date(a.created_timestamp)
+          );
+
+        // Combine unread notifications on top and read notifications at the bottom
+        const sortedNotifications = [
+          ...unreadNotifications,
+          ...readNotifications,
+        ];
+
+        setUnreadNotifications(unreadNotifications);
         setNotifications(sortedNotifications);
       }
     } catch (error) {
@@ -167,6 +187,28 @@ export default function TopHeader({ mainText, subText }) {
     fetchEmployeeData();
     fetchNotifications();
   }, []);
+
+  function formatRelativeTime(timestamp) {
+    const now = new Date();
+    const notificationDate = new Date(timestamp);
+    const secondsDiff = Math.floor((now - notificationDate) / 1000);
+
+    if (secondsDiff < 60) {
+      return `${secondsDiff} seconds ago`;
+    } else if (secondsDiff < 3600) {
+      const minutes = Math.floor(secondsDiff / 60);
+      return `${minutes} minutes ago`;
+    } else if (secondsDiff < 86400) {
+      const hours = Math.floor(secondsDiff / 3600);
+      return `${hours} hours ago`;
+    } else if (secondsDiff < 604800) {
+      const days = Math.floor(secondsDiff / 86400);
+      return `${days} days ago`;
+    } else {
+      const weeks = Math.floor(secondsDiff / 604800);
+      return `${weeks} weeks ago`;
+    }
+  }
 
   return (
     <div className="flex h-[100px] px-[30px] py-5 border-b border-b-gray-secondary items-center justify-between">
@@ -195,45 +237,58 @@ export default function TopHeader({ mainText, subText }) {
           </MenuButton>
           <MenuList>
             <Text fontWeight="bold" px={3}>
-              Click on notification to mark as read
+              Notifications (Unread: {unreadNotifications.length})
             </Text>
             {loading ? (
               <Flex justify="center" align="center">
                 <Spinner />
               </Flex>
             ) : notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <MenuItem
-                  key={notification.notification_id}
-                  onClick={() => markAsRead(notification.notification_id)}
-                  style={{
-                    color: notification.read_status ? "lightgray" : "black",
-                  }}
-                >
-                  <Flex align="center" justify="space-between">
-                    <Flex align="center">
-                      {renderStatusIcon(
-                        notification.notification_type,
-                        notification.read_status
+              <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                {notifications.map((notification) => (
+                  <MenuItem
+                    key={notification.notification_id}
+                    onClick={() => markAsRead(notification.notification_id)}
+                    style={{
+                      color: notification.read_status ? "lightgray" : "black",
+                    }}
+                  >
+                    <Flex align="center" justify="space-between">
+                      <Flex align="center">
+                        {renderStatusIcon(
+                          notification.notification_type,
+                          notification.read_status
+                        )}
+                        <Flex flexDirection={"column"} ml={5}>
+                          <Text
+                            width={"350px"}
+                            overflow="hidden"
+                            textOverflow="ellipsis"
+                          >
+                            {notification.senderInfo.first_name}{" "}
+                            {notification.senderInfo.last_name}{" "}
+                            {notification.content}
+                            {" on "}
+                            {new Date(
+                              notification.application_info.start_date
+                            ).toDateString()}
+                          </Text>
+                          {!notification.read_status && (
+                            <Text fontSize="xs" color="blue">
+                              {formatRelativeTime(
+                                notification.created_timestamp
+                              )}
+                            </Text>
+                          )}
+                        </Flex>
+                      </Flex>
+                      {!notification.read_status && (
+                        <BsDot color="red" style={{ fontSize: "48px" }} />
                       )}
-                      <Text
-                        ml={2}
-                        whiteSpace="nowrap"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                      >
-                        {notification.content}
-                      </Text>
                     </Flex>
-                    {!notification.read_status && (
-                      <BsDot
-                        color="red"
-                        style={{ fontSize: "24px", marginLeft: "8px" }}
-                      />
-                    )}
-                  </Flex>
-                </MenuItem>
-              ))
+                  </MenuItem>
+                ))}
+              </div>
             ) : (
               <MenuItem>{errorMessage}</MenuItem>
             )}

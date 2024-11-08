@@ -33,11 +33,9 @@ const send_email = async (mainRecipient, subject, message, cc, bcc) => {
     mailOptions.to = process.env.AWS_DUMMY_RECEIVER_EMAIL;
     if (cc) {
       mailOptions.text += "\nCc: " + cc;
-      mailOptions.cc = cc;
     }
     if (bcc) {
       mailOptions.text += "\nBcc: " + bcc;
-      mailOptions.bcc = bcc
     }
     mailOptions.text += "\nSubject: " + subject + "\n\n" + message;
   } else {

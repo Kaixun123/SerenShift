@@ -1,6 +1,6 @@
 {
     "name": "serenshift-backend",
-    "version": "0.3.0",
+    "version": "1.0.0",
     "main": "app.js",
     "scripts": {
         "start": "node app.js",
@@ -40,7 +40,9 @@
         "passport-local": "^1.0.0",
         "sequelize": "^6.37.3",
         "serenshift-backend": "file:",
-        "serve-favicon": "^2.5.0"
+        "serve-favicon": "^2.5.0",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.1"
     },
     "devDependencies": {
         "concurrently": "^9.0.1",

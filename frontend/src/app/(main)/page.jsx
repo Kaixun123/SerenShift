@@ -250,6 +250,7 @@ export default function Home() {
           color: notification.read_status ? "lightgray" : "black",
         }}
       >
+        {notification.senderInfo.first_name} {notification.senderInfo.last_name}{" "}
         {notification.content}
       </Td>
       <Td
@@ -257,7 +258,7 @@ export default function Home() {
           color: notification.read_status ? "lightgray" : "black",
         }}
       >
-        {`${notification.senderInfo.first_name} ${notification.senderInfo.last_name} (${notification.senderInfo.position}, ${notification.senderInfo.department})`}
+        {notification.senderInfo.position},{notification.senderInfo.department}
       </Td>
       <Td
         style={{
@@ -307,15 +308,19 @@ export default function Home() {
         subText="Glad to see you back in the office"
       />
       <div className="p-[30px]">
-        <Flex justify="flex-end" mt={4} gap={3}>
-          <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
-          <Button colorScheme="blue" onClick={markAllAsRead}>
-            Mark All as Read
-          </Button>
-          <Button colorScheme="red" onClick={clearAllNotifications}>
-            Clear All Notifications
-          </Button>
-        </Flex>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Notifications</h1>
+          <Flex justify="flex-end" gap={3}>
+            <RefreshButton isRefresh={handleRefresh} isLoading={refreshing} />
+            <Button colorScheme="blue" onClick={markAllAsRead}>
+              Mark All as Read
+            </Button>
+            <Button colorScheme="red" onClick={clearAllNotifications}>
+              Clear All Notifications
+            </Button>
+          </Flex>
+        </div>
+
         <Box mt={4} className="flex justify-center">
           {loading ? (
             <Spinner size="xl" />
@@ -325,7 +330,7 @@ export default function Home() {
                 <Tr>
                   <Th>Type</Th>
                   <Th>Description</Th>
-                  <Th>Sender</Th>
+                  <Th>Department</Th>
                   <Th>Application Details</Th>
                   <Th>Date</Th>
                   <Th>Actions</Th>
