@@ -24,17 +24,23 @@ const retrieveSubordinates = async (req, res, next) => {
 }
 
 const getEmployee = async (req, res, next) => {
-    let retrievedEmployee = await Employee.findByPk(req.query.id);
-    let response = {
-        first_name: retrievedEmployee.first_name,
-        last_name: retrievedEmployee.last_name,
-        department: retrievedEmployee.department,
-        position: retrievedEmployee.position,
-        country: retrievedEmployee.country,
-        email: retrievedEmployee.email,
+    try {
+        let retrievedEmployee = await Employee.findByPk(req.query.id);
+        let response = {
+            first_name: retrievedEmployee.first_name,
+            last_name: retrievedEmployee.last_name,
+            department: retrievedEmployee.department,
+            position: retrievedEmployee.position,
+            country: retrievedEmployee.country,
+            email: retrievedEmployee.email,
+        };
+        return res.status(200).json(response);
+    } catch (error) {
+        console.error("Error retrieving employee:", error);
+        return res.status(500).json({ error: "An error occurred while retrieving employee details" });
     }
-    return res.status(200).json(response);
-}
+};
+
 
 module.exports = {
     retrieveColleagues,

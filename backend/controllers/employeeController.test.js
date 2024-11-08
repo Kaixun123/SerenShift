@@ -39,17 +39,19 @@ describe('Employee Controller', () => {
             ]);
         });
 
-        it('should return 500 if an error occurs', async () => {
-            const req = { user: { id: 1 } };
+        it('should return 500 if employee retrieval fails', async () => {
+            const req = { query: { id: 1 } };
             const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
             const next = jest.fn();
 
-            fetchColleagues.mockRejectedValue(new Error('Database Error'));
+            // Simulate a database failure
+            Employee.findByPk.mockRejectedValue(new Error('Database Error'));
 
-            await retrieveColleagues(req, res, next);
+            await getEmployee(req, res, next);
 
+            expect(Employee.findByPk).toHaveBeenCalledWith(1);
             expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({ error: 'An error occurred while retrieving colleagues' });
+            expect(res.json).toHaveBeenCalledWith({ error: 'An error occurred while retrieving employee details' });
         });
     });
 

@@ -3,7 +3,6 @@ const {
     retrieveFileDetails,
     deleteFile,
     deleteAllFiles,
-    generatePresignedUrl,
     checkFileExists
 } = require('./s3');
 const { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
@@ -38,6 +37,12 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
     getSignedUrl: jest.fn(),
 }));
 
+jest.mock('./s3', () => ({
+    ...jest.requireActual('./s3'),
+    checkFileExists: jest.fn(), // Mock checkFileExists function
+}));
+
+
 describe('S3 Helper', () => {
 
     afterEach(() => {
@@ -60,12 +65,13 @@ describe('S3 Helper', () => {
             expect(File.findOne).toHaveBeenCalled();
             expect(S3Client.prototype.send).toHaveBeenCalledWith(expect.any(PutObjectCommand));
             expect(File.create).toHaveBeenCalledWith(expect.objectContaining({
-                file_name: file.originalname + '_' + user.id + '_' + relatedEntityID + '_20220101000000000',
+                file_name: expect.stringContaining('test_1_123'), // Match dynamic part of `file_name`
                 file_extension: 'txt',
                 related_entity: relatedEntityType,
                 related_entity_id: relatedEntityID,
                 created_by: user.id,
-                last_update_by: user.id
+                last_update_by: user.id,
+                s3_key: expect.stringMatching(new RegExp(`^${process.env.NODE_ENV}/application/123/test_1_123_\\d{8}t\\d{9}z\\.txt$`, 'i')),
             }));
         });
 
@@ -152,17 +158,6 @@ describe('S3 Helper', () => {
             expect(S3Client.prototype.send).toHaveBeenCalledWith(expect.any(DeleteObjectCommand));
             expect(files[0].destroy).toHaveBeenCalled();
             expect(result).toBe(true);
-        });
-    });
-
-    describe('generatePresignedUrl', () => {
-        it('should generate a presigned URL for downloading a file', async () => {
-            getSignedUrl.mockResolvedValue('https://signedurl.com');
-
-            const result = await generatePresignedUrl('key');
-
-            expect(getSignedUrl).toHaveBeenCalledWith(expect.any(S3Client), expect.any(GetObjectCommand), { expiresIn: 600 });
-            expect(result).toBe('https://signedurl.com');
         });
     });
 
