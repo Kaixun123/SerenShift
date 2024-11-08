@@ -85,6 +85,7 @@ A live version of the application is available at: <link>https://www.ereceiptify
 
 Use the following format to log in to the application:
 
-### For Example
-Email Address: Jack.Sim@allinone.com.sg
-Password: P@ssw0rd (Same password applies to every account)
+### For Example:
+- **Email Address**: `Jack.Sim@allinone.com.sg`
+- **Password**: `P@ssw0rd` (Same password applies to every account)
+
