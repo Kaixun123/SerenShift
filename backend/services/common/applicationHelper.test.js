@@ -238,10 +238,15 @@ describe('Application Helper', () => {
             const requestor = { first_name: 'John', last_name: 'Doe' };
             const recipient = { first_name: 'Jane', last_name: 'Smith', email: 'jane@example.com' };
             const eventType = 'createApplication';
-
             await sendNotificationEmail(application, requestor, recipient, eventType, null, null);
-
-            const expectedMessage = 'Hi Jane Smith,\n\nYou have a pending Work From Home Request from John Doe. Kindly review and make your decision at your earliest convenience.\n\nRequested WFH Start Period: 01/10/2024, 08:00:00\n\nRequested WFH End Period: 03/10/2024, 08:00:00\n\nRemarks: Need approval\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email';
+            const startDateObject = new Date(application.start_date);
+            startDateObject.setHours(8, 0, 0, 0);
+            const endDateObject = new Date(application.end_date);
+            endDateObject.setHours(8, 0, 0, 0);
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const startDateTimeString = startDateObject.toLocaleString('en-GB', options);
+            const endDateTimeString = endDateObject.toLocaleString('en-GB', options);
+            const expectedMessage = 'Hi Jane Smith,\n\nYou have a pending Work From Home Request from John Doe. Kindly review and make your decision at your earliest convenience.\n\nRequested WFH Start Period: ' + String(startDateTimeString) + '\n\nRequested WFH End Period: ' + String(endDateTimeString) + '\n\nRemarks: Need approval\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email';
 
 
             expect(send_email).toHaveBeenCalledWith(
