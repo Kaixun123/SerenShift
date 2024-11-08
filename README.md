@@ -52,15 +52,27 @@ To run SerenShift locally, follow these steps:
      cd ../backend
      npm install
      ```
+3. **Build the frontend**
+   ```bash
+   npm run build
+   ```
+
+4. **Setup the Backend**
+
+   Copy the .env file receieved seperately into the backend folder. To use your own MySQL server, change the following enviroment variables
+
+```
+DB_HOST=''
+DB_NAME=''
+DB_USER=''
+DB_PASSWORD=''
+```   
 
 ## Running the Application
 
 ### Frontend
 To build and run the frontend:
-```bash
-cd frontend
-npm run build
-```
+
 
 ### Backend
 To build and run the backend:
