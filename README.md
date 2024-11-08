@@ -42,12 +42,12 @@ To run SerenShift locally, follow these steps:
    cd SerenShift
 
 2. **Install dependencies for both frontend and backend**:
-   - For the frontend:
+   For the frontend:
      ```bash
      cd frontend
      npm install
      ```
-   - For the backend:
+   For the backend:
      ```bash
      cd ../backend
      npm install
@@ -60,10 +60,23 @@ To build and run the frontend:
 ```bash
 cd frontend
 npm run build
+```
 
 ### Backend
 To build and run the backend:
-```
+```bash
 cd backend
 npm run start
+```
 
+## Running Tests
+
+To execute the backend tests using Jest:
+```bash
+cd backend
+npm test
+```
+
+## Hosted Instance
+
+A live version of the application is available at: <link>https://www.ereceiptify.app</link>
