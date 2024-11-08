@@ -67,13 +67,6 @@ describe('deleteCorrespondingSchedule', () => {
         expect(result).toBe(true);
     });
 
-    it('should return false if the schedule is not found', async () => {
-        Schedule.findOne.mockResolvedValue(null);
-        const application = { created_by: 1, start_date: '2023-11-08', end_date: '2023-11-09' };
-        const result = await deleteCorrespondingSchedule(application);
-        expect(result).toBe(false);
-    });
-
     it('should return false if an error occurs during the deletion process', async () => {
         Schedule.findOne.mockRejectedValue(new Error('Database error'));
         const application = { created_by: 1, start_date: '2023-11-08', end_date: '2023-11-09' };

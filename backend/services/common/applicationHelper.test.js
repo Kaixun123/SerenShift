@@ -241,7 +241,7 @@ describe('Application Helper', () => {
 
             await sendNotificationEmail(application, requestor, recipient, eventType, null, null);
 
-            const expectedMessage = 'Hi Jane Smith,\n\nYou have a pending Work From Home Request from John Doe. Kindly review and make your decision at your earliest convenience.\n\nRequested WFH Start Period: 01/10/2024\nRequested WFH End Period: 03/10/2024\nRemarks: Need approval\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email';
+            const expectedMessage = 'Hi Jane Smith,\n\nYou have a pending Work From Home Request from John Doe. Kindly review and make your decision at your earliest convenience.\n\nRequested WFH Start Period: 01/10/2024, 08:00:00\n\nRequested WFH End Period: 03/10/2024, 08:00:00\n\nRemarks: Need approval\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email';
 
 
             expect(send_email).toHaveBeenCalledWith(

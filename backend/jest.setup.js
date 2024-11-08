@@ -1,3 +1,5 @@
+const scheduler = require('node-schedule');
+
 jest.mock('nodemailer', () => {
     const nodemailerMock = {
         createTransport: jest.fn(() => ({
@@ -27,3 +29,7 @@ jest.mock('@aws-sdk/client-s3', () => ({
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
     getSignedUrl: jest.fn(),
 }));
+
+afterAll(async () => {
+    await scheduler.gracefulShutdown();
+});
