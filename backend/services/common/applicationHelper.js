@@ -197,7 +197,7 @@ const sendNotificationEmail = async (application, requestor, recipient, eventTyp
                         cc = recipient.email;
                     message += "Hi " + recipient.first_name + " " + recipient.last_name +
                         ",\n\nYou have a pending Work From Home Request from " + requestor.first_name +
-                        " " + requestor.last_name + ". Kindly review and make your decision at your earlier convinence.\n\n" +
+                        " " + requestor.last_name + ". Kindly review and make your decision at your earliest convenience.\n\n" +
                         "Requested WFH Start Period: " + startDate.toLocaleDateString() + "\nRequested WFH End Period: " + endDate.toLocaleDateString() +
                         "\nRemarks: " + application.requestor_remarks + "\n\nThank You,\nSerenShift\n\nThis is an automated email notification, please do not reply to this email"
                     break;
