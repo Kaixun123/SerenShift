@@ -281,7 +281,6 @@ export default function CreateBlacklistPage() {
                                     onChange={(e) => setRecurrenceRule(e.target.value)}
                                 >
                                     <option value={"None"} selected>None</option>
-                                    <option value={"day"}>Daily</option>
                                     <option value={"week"}>Weekly</option>
                                     <option value={"month"}>Monthly</option>
                                 </Select>
