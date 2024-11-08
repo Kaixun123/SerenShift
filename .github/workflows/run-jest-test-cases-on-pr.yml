@@ -54,7 +54,7 @@ jobs:
           SESSION_SECRET: sessionSECRET
           JWT_SECRET: jwtSECRET
           AWS_SES_SENDER_EMAIL: noreply@allinone.org
-        run: npm test -- --coverage
+        run: npx jest -- --silent  -- --coverage
       - name: Upload Jest Coverage
         if: success()
         uses: actions/upload-artifact@v4
