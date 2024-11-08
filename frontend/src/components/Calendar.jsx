@@ -37,17 +37,32 @@ const Calendar = () => {
     fetchSchedule();
   }, [isRefresh]);
 
-  const eventsWithColors = events.map((event) => {
-    if (event.extendedProps.type === "AM") {
-      return { ...event, color: "#e4b91c" };
+  const eventsWithLabels = events.map((event) => {
+    let title;
+    switch (event.extendedProps.type) {
+      case "9a WFH (AM)":
+        title = "WFH (AM)";
+        break;
+      case "PM":
+        title = "WFH (PM)";
+        break;
+      case "Full Day":
+        title = "WFH (Full Day)";
+        break;
+      default:
+        title = event.title; // fallback in case of an unexpected type
     }
-    if (event.extendedProps.type === "PM") {
-      return { ...event, color: "#3E9CE9" };
-    }
-    if (event.extendedProps.type === "Full Day") {
-      return { ...event, color: "#41b671" };
-    }
-    return event;
+    return {
+      ...event,
+      title, // set the formatted title
+      backgroundColor:
+        event.extendedProps.type === "AM"
+          ? "#e4b91c"
+          : event.extendedProps.type === "PM"
+          ? "#3E9CE9"
+          : "#41b671", // color based on type
+      display: "block", // ensures the event appears as a block with the label
+    };
   });
 
   const handleEventDidMount = (eventInfo) => {
@@ -97,7 +112,7 @@ const Calendar = () => {
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
         initialView="dayGridMonth"
-        events={eventsWithColors}
+        events={eventsWithLabels}
         eventDidMount={handleEventDidMount}
         headerToolbar={{
           left: "prev,next today",
