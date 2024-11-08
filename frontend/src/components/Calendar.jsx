@@ -122,6 +122,7 @@ const Calendar = () => {
         height="calc(100vh - 250px)"
         slotMinTime="09:00:00"
         slotMaxTime="18:00:00"
+        displayEventTime={false}
       />
     </div>
   );
