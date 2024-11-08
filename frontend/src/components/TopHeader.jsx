@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Box,
   Avatar,
@@ -216,7 +217,8 @@ export default function TopHeader({ mainText, subText }) {
         <div className="text-3xl font-bold">{mainText}</div>
         {subText && <div className="font-medium">{subText}</div>}
       </div>
-      <HStack spacing={4}>
+      <HStack 
+        spacing={4}>
         <Menu>
           <MenuButton
             as={IconButton}
@@ -224,7 +226,8 @@ export default function TopHeader({ mainText, subText }) {
             variant="ghost"
             aria-label="Notifications"
           >
-            <Box position="relative">
+            <Box 
+              position="relative">
               <Badge
                 colorScheme="red"
                 borderRadius="full"
@@ -316,7 +319,9 @@ export default function TopHeader({ mainText, subText }) {
             </HStack>
           </MenuButton>
           <MenuList>
-            <MenuItem>Settings</MenuItem>
+            <MenuItem as={Link} href="/profile">
+              Profile
+            </MenuItem>
             <MenuDivider />
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </MenuList>

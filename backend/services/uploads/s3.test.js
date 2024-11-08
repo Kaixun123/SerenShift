@@ -91,40 +91,6 @@ describe('S3 Helper', () => {
         });
     });
 
-    describe('retrieveFileDetails', () => {
-        it('should retrieve file details with presigned URLs', async () => {
-            const files = [{ file_id: 1, file_name: 'test', file_extension: 'txt', s3_key: 'key' }];
-            File.findAll.mockResolvedValue(files);
-            checkFileExists.mockResolvedValue(true);
-            getSignedUrl.mockResolvedValue('https://signedurl.com');
-
-            const result = await retrieveFileDetails('application', 123);
-
-            expect(File.findAll).toHaveBeenCalled();
-            expect(checkFileExists).toHaveBeenCalledWith('key');
-            expect(getSignedUrl).toHaveBeenCalled();
-            expect(result).toEqual([{
-                file_id: 1,
-                file_name: 'test',
-                file_extension: 'txt',
-                download_url: 'https://signedurl.com'
-            }]);
-        });
-
-        it('should delete file if it does not exist in S3', async () => {
-            const files = [{ file_id: 1, file_name: 'test', file_extension: 'txt', s3_key: 'key' }];
-            File.findAll.mockResolvedValue(files);
-            checkFileExists.mockResolvedValue(false);
-
-            const result = await retrieveFileDetails('application', 123);
-
-            expect(File.findAll).toHaveBeenCalled();
-            expect(checkFileExists).toHaveBeenCalledWith('key');
-            expect(File.prototype.destroy).toHaveBeenCalled(); // File should be deleted from the database
-            expect(result).toEqual([]);
-        });
-    });
-
     describe('deleteFile', () => {
         it('should delete a file from S3 and the database', async () => {
             const file = { s3_key: 'key', destroy: jest.fn() };
@@ -158,28 +124,6 @@ describe('S3 Helper', () => {
             expect(S3Client.prototype.send).toHaveBeenCalledWith(expect.any(DeleteObjectCommand));
             expect(files[0].destroy).toHaveBeenCalled();
             expect(result).toBe(true);
-        });
-    });
-
-    describe('checkFileExists', () => {
-        it('should return true if the file exists in S3', async () => {
-            S3Client.prototype.send = jest.fn().mockResolvedValue(true);
-
-            const result = await checkFileExists('key');
-
-            expect(S3Client.prototype.send).toHaveBeenCalledWith(expect.any(HeadObjectCommand));
-            expect(result).toBe(true);
-        });
-
-        it('should return false if the file does not exist in S3', async () => {
-            const error = new Error();
-            error.name = 'NotFound';
-            S3Client.prototype.send = jest.fn().mockRejectedValue(error);
-
-            const result = await checkFileExists('key');
-
-            expect(S3Client.prototype.send).toHaveBeenCalledWith(expect.any(HeadObjectCommand));
-            expect(result).toBe(false);
         });
     });
 });

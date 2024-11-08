@@ -1,6 +1,6 @@
 html, body {
   overflow: hidden;
-  height: 100%
+  height: 100%;
 }
 
 .fc {
@@ -8,8 +8,30 @@ html, body {
 }
 
 .fc-event {
-  text-indent: 5px;
+  color: white !important;
+  padding: 5px !important;
   font-weight: bold;
+  text-indent: 0 !important;
+}
+
+/* Specific colors for each type */
+.am-event {
+  background-color: #e4b91c;
+}
+
+.pm-event {
+  background-color: #3E9CE9;
+}
+
+.full-day-event {
+  background-color: #41b671;
+}
+
+/* Ensure labels appear in all views */
+.fc-event-title {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: ellipsis;
 }
 
 .calendar {
@@ -56,7 +78,6 @@ html, body {
 
 .event {
   background-color: #68D391;
-  /* Green for work-from-home */
   color: white;
   padding: 5px;
   border-radius: 5px;
@@ -69,117 +90,65 @@ html, body {
 
 .legend {
   display: flex;
-  /* Use flexbox for horizontal layout */
   justify-content: left;
-  /* Space items evenly */
   padding: 10px;
-  /* Add some padding */
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  /* Center the text vertically */
   margin: 0 10px;
-  /* Space between items */
 }
 
 .legend-color {
   width: 20px;
-  /* Width of color box */
   height: 20px;
-  /* Height of color box */
   margin-right: 5px;
-  /* Space between color box and text */
   border-radius: 3px;
-  /* Optional: Add rounded corners */
 }
 
 .am-color {
   background-color: #e4b91c;
-  /* Color for AM */
 }
 
 .pm-color {
   background-color: #3E9CE9;
-  /* Color for PM */
 }
 
 .full-day-color {
   background-color: #41b671;
-
 }
 
-/* Color for Full Day */
-/* Remove the dot from the list view */
 .fc-list-event-dot {
   display: none !important;
-  /* Hide the colored dots */
 }
 
 .fc-list-event-title,
 .fc-list-event-time {
   color: #000 !important;
-  /* Event text color */
 }
 
 .fc-list-event {
   background-color: transparent !important;
-  /* Make the background transparent */
-  /* border: none !important; */
   padding: 5px !important;
 }
 
-/* Ensure equal height for all day boxes, even without events */
 .fc-daygrid-day-frame {
   min-height: 90px !important;
-  /* Adjust the height as per your requirement */
 }
 
-/* Remove the dot from the list view */
-.fc-list-event-dot {
-  display: inline-block !important;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: currentColor; /* Use event's color */
-  margin-right: 5px;
-}
-
-.fc-list-event-title,
-.fc-list-event-time {
-  color: #000 !important;
-}
-
-.fc-list-event {
-  background-color: transparent !important;
-  border: none !important;
-  padding: 5px !important;
-}
-
-/* Ensure that event text is truncated */
 .fc-event-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Add hover effect */
 .fc-event:hover .fc-event-title {
     white-space: normal;
     overflow: visible;
 }
 
-/* Remove the outline (border) on focus or hover */
 .fc-event {
     border: none !important;
     box-shadow: none !important;
-}
-
-.fc-event-timeGridWeek{
-    background-color: black
-}
-.fc-view-list .fc-list-event-title,
-.fc-view-list .fc-list-event-time {
-    color: #ffffff !important; /* Set text color */
 }

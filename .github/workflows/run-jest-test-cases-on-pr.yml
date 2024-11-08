@@ -24,6 +24,12 @@ jobs:
           - 3306:3306
         options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
+      - name: Set Timezone
+        uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: "Asia/Singapore"
+          timezoneMacos: "Asia/Singapore"
+          timezoneWindows: "Singapore Standard Time"
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set up Node.js
@@ -54,7 +60,7 @@ jobs:
           SESSION_SECRET: sessionSECRET
           JWT_SECRET: jwtSECRET
           AWS_SES_SENDER_EMAIL: noreply@allinone.org
-        run: npm test -- --coverage
+        run: npx jest --silent --coverage
       - name: Upload Jest Coverage
         if: success()
         uses: actions/upload-artifact@v4

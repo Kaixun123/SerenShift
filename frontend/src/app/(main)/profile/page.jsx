@@ -42,6 +42,7 @@ const ProfilePage = () => {
                 mainText={`My Profile`}
             />
             <Box
+                mt={10}
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
@@ -54,9 +55,6 @@ const ProfilePage = () => {
                     borderRadius={8}
                     boxShadow="lg"
                 >
-                    <Heading as="h1" size="lg" textAlign="center" mb={4}>
-                        My Profile
-                    </Heading>
                     <VStack spacing={4}>
                         <FormControl id="employeeId">
                             <FormLabel>My Employee ID</FormLabel>
