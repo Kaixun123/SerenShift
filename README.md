@@ -38,7 +38,7 @@ To run SerenShift locally, follow these steps:
 
 1. **Clone the repository**: 
    ```bash
-   git clone <repository_url>
+   git clone <link>https://github.com/Kaixun123/SerenShift.git</link>
    cd SerenShift
 
 2. **Install dependencies for both frontend and backend**:
