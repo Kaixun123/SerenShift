@@ -8,23 +8,11 @@ html, body {
 }
 
 .fc-event {
+  background-color: transparent !important;
   color: white !important;
   padding: 5px !important;
   font-weight: bold;
   text-indent: 0 !important;
-}
-
-/* Specific colors for each type */
-.am-event {
-  background-color: #e4b91c;
-}
-
-.pm-event {
-  background-color: #3E9CE9;
-}
-
-.full-day-event {
-  background-color: #41b671;
 }
 
 /* Ensure labels appear in all views */
@@ -77,7 +65,6 @@ html, body {
 }
 
 .event {
-  background-color: #68D391;
   color: white;
   padding: 5px;
   border-radius: 5px;
@@ -105,18 +92,6 @@ html, body {
   height: 20px;
   margin-right: 5px;
   border-radius: 3px;
-}
-
-.am-color {
-  background-color: #e4b91c;
-}
-
-.pm-color {
-  background-color: #3E9CE9;
-}
-
-.full-day-color {
-  background-color: #41b671;
 }
 
 .fc-list-event-dot {
