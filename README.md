@@ -2,6 +2,14 @@
 
 **SerenShift** is a web-based application designed for All-In-One, a leading printing solution equipment servicing company, to manage flexible work-from-home arrangements. This system provides staff, managers, and HR/senior management with a seamless platform for applying, approving, and tracking work-from-home schedules across departments. The application ensures efficient planning, transparency, and ease of use for all user roles.
 
+## Team Members
+ - [Dylan Chua](https://github.com/DylanChua2001)
+ - [Fern](https://github.com/fernfern0011)
+ - [Hansen Lim](https://github.com/hanlim83)
+ - [Jay](https://github.com/jaye3)
+ - [Jon](https://github.com/jong515)
+ - [Kai Xun](https://github.com/Kaixun123)
+
 ## Features
 
 ### User Roles and Functionalities
@@ -71,8 +79,12 @@ DB_PASSWORD=''
 ## Running the Application
 
 ### Frontend
-To build and run the frontend:
+To start the frontend, run the following commands:
 
+```bash
+npm run start
+```
+Note: The frontend must be built before starting it. Otherwise you can run `npm run dev` instead but performance would be slow.
 
 ### Backend
 To build and run the backend:
