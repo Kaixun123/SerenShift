@@ -12,7 +12,7 @@ const job = scheduler.scheduleJob('0 * * * *', async () => {
         let readNotifications = await Notification.findAll({
             where: {
                 read_status: true,
-                createdAt: {
+                created_timestamp: {
                     [Op.lt]: currentDate.setFullYear(currentDate.getFullYear() - 1),
                 },
                 paranoid: false,

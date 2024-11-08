@@ -58,7 +58,7 @@ const vaildateParameters = (req, res, next) => {
         return next();
     }
     return res.status(422).json({
-        message: "Invaild Input Received",
+        message: "Invalid Input Received",
         errors: errors.array()
     });
 };
