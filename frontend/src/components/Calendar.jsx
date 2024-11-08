@@ -37,33 +37,37 @@ const Calendar = () => {
     fetchSchedule();
   }, [isRefresh]);
 
-  const eventsWithLabels = events.map((event) => {
-    let title;
-    switch (event.extendedProps.type) {
-      case "9a WFH (AM)":
-        title = "WFH (AM)";
-        break;
-      case "PM":
-        title = "WFH (PM)";
-        break;
-      case "Full Day":
-        title = "WFH (Full Day)";
-        break;
-      default:
-        title = event.title; // fallback in case of an unexpected type
-    }
-    return {
-      ...event,
-      title, // set the formatted title
-      backgroundColor:
-        event.extendedProps.type === "AM"
-          ? "#e4b91c"
-          : event.extendedProps.type === "PM"
-          ? "#3E9CE9"
-          : "#41b671", // color based on type
-      display: "block", // ensures the event appears as a block with the label
-    };
-  });
+  const eventsWithLabels = (eventInfo) => {
+  // Determine the background colour based on the event type
+  let ribbonColor;
+  if (eventInfo.event.extendedProps.type === "Full Day") {
+    ribbonColor = "#41b671"; // Green for Full Day
+  } else if (eventInfo.event.extendedProps.type === "AM") {
+    ribbonColor = "#e4b91c"; // Yellow for AM
+  } else if (eventInfo.event.extendedProps.type === "PM") {
+    ribbonColor = "#3E9CE9"; // Blue for PM
+  }
+
+  return (
+    <div
+      style={{
+        backgroundColor: ribbonColor,
+        color: "#fff",
+        padding: "3px 8px",
+        borderRadius: "4px",
+        fontSize: "12px",
+        width: "100%",
+        height: "100%",
+        boxSizing: "border-box",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      }}
+    >
+      {eventInfo.event.title}
+    </div>
+  );
+};
 
   const handleEventDidMount = (eventInfo) => {
     const startTime = eventInfo.event.allDay
@@ -112,7 +116,8 @@ const Calendar = () => {
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
         initialView="dayGridMonth"
-        events={eventsWithLabels}
+        events={events}
+        eventContent={eventsWithLabels}
         eventDidMount={handleEventDidMount}
         headerToolbar={{
           left: "prev,next today",
@@ -122,6 +127,7 @@ const Calendar = () => {
         height="calc(100vh - 250px)"
         slotMinTime="09:00:00"
         slotMaxTime="18:00:00"
+        displayEventTime={false}
       />
     </div>
   );

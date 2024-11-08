@@ -613,7 +613,6 @@ export default function NewApplicationPage() {
                       value={recurrenceRule}
                       onChange={(e) => setRecurrenceRule(e.target.value)}
                     >
-                      <option value={"day"}>Daily</option>
                       <option value={"week"}>Weekly</option>
                       <option value={"month"}>Monthly</option>
                     </Select>

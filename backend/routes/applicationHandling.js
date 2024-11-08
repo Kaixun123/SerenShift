@@ -6,14 +6,6 @@ const { ensureLoggedIn, ensureManagerAndAbove, ensureManager } = require("../mid
 const applicationController = require("../controllers/applicationController");
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Retireve Applications Validation Rules
-const retrieveApplicationsValidationRules = () => {
-    return [
-        check("id").isInt({ allow_leading_zeroes: false, gt: 0 }).withMessage("Invalid User ID"),
-        check("status").isString().isIn(['Pending', 'Approved']).withMessage("Invalid Status"),
-    ]
-};
-
 // Create New Application Validation Rules
 const createNewApplicationValidationRules = () => {
     return [
@@ -147,7 +139,7 @@ const vaildateParameters = (req, res, next) => {
  *       500:
  *         description: An error occurred while fetching application
  */
-router.get("/retrieveApplications", retrieveApplicationsValidationRules(), vaildateParameters, ensureLoggedIn, (req, res) => applicationController.retrieveApplications(req, res));
+router.get("/retrieveApplications", ensureLoggedIn, (req, res) => applicationController.retrieveApplications(req, res));
 
 /**
  * @swagger
