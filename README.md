@@ -40,3 +40,30 @@ To run SerenShift locally, follow these steps:
    ```bash
    git clone <repository_url>
    cd SerenShift
+
+2. **Install dependencies for both frontend and backend**:
+   - For the frontend:
+     ```bash
+     cd frontend
+     npm install
+     ```
+   - For the backend:
+     ```bash
+     cd ../backend
+     npm install
+     ```
+
+## Running the Application
+
+### Frontend
+To build and run the frontend:
+```bash
+cd frontend
+npm run build
+
+### Backend
+To build and run the backend:
+```
+cd backend
+npm run start
+
