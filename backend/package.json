@@ -12,7 +12,7 @@
     "dependencies": {
         "@aws-sdk/client-s3": "^3.676.0",
         "@aws-sdk/client-ses": "^3.679.0",
-        "@aws-sdk/credential-provider-node": "^3.679.0",
+        "@aws-sdk/credential-provider-node": "^3.716.0",
         "@aws-sdk/s3-request-presigner": "^3.675.0",
         "body-parser": "^1.20.2",
         "connect-session-sequelize": "^7.1.7",
